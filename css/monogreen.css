@@ -1,0 +1,131 @@
+/* AcmlmBoard XD - Mono Green board theme */
+
+body
+{
+	background: black;
+	color: lime;
+	font-family: "Consolas", "Courier New", monospace;
+}
+
+h3
+{
+	border-top: 1px solid lime;
+	border-bottom: 1px solid lime;
+	font-family: "Consolas", "Courier New", monospace;
+}
+
+h4
+{
+	font-family: "Consolas", "Courier New", monospace;
+}
+
+a, a:link, a:visited, a:hover, a:active
+{
+	color: #8F8;
+	text-decoration: underline;
+}
+
+table
+{
+	color: lime;
+}
+
+.border
+{
+	border-color: green;
+}
+
+td
+{
+	border-color: #040;
+}
+
+th
+{
+	background: black;
+	border-color: green;
+}
+
+table.post
+{
+	border-color: green;
+	background: #040;
+}
+
+table.post td.post
+{
+	background: black;
+	border-left-color: green;
+	border-top-color: green;
+}
+
+table.post td.meta
+{
+	border-bottom-color: green;
+}
+
+table.post td.links
+{
+	border-bottom-color: green;
+}
+
+.cell0
+{
+	background: black;
+}
+
+.cell1
+{
+	background: black;
+}
+
+.cell2
+{
+	background: #040;
+}
+
+.header0 th
+{
+	background: #040;
+	color: white;
+	border: 1px solid #040;
+}
+
+.header1 th
+{
+	background: green;
+	color: white;
+}
+
+.header0
+{
+	border-color: green;
+}
+
+.header1
+{
+	border-color: green;
+}
+
+td.post code.Code
+{
+	background: #040;
+	color: lime;	
+}
+
+.errort
+{
+	background: #040;
+	color: white;
+	border: 1px solid green;
+}
+
+.errorc
+{
+	background: black;
+	text-align: center;
+	color: lime;
+	border-left: 1px solid green;
+	border-right: 1px solid green;
+	border-bottom: 1px solid green;
+}
