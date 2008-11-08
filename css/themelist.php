@@ -1,0 +1,12 @@
+<?php
+//  AcmlmBoard XD - Theme list
+
+//This file lists all the possible choices for user themes.
+
+$themes = array(
+	"default"=>"Default",
+	"grayscale"=>"Grayscale",
+	"monogreen"=>"Mono Green",
+	"dos"=>"DOS-like",
+);
+?>
