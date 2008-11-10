@@ -1,0 +1,289 @@
+/* AcmlmBoard XD - Shared elements */
+
+body
+{
+	background: #040420 url(../img/themes/default/back2c.png) fixed;
+	color: white;
+	font-family: "Verdana", "Arial", sans-serif;
+	font-size: 10pt;
+}
+
+h3
+{
+	font-family: "Verdana", "Arial", sans-serif;
+	font-size: 12pt;
+	font-weight: bold;
+	border-top: 1px solid #669;
+	border-bottom: 1px solid #669;
+	margin: 0px;
+}
+
+h4
+{
+	font-family: "Verdana", "Arial", sans-serif;
+	font-size: 10pt;
+	margin: 0px;
+}
+
+a
+{
+	text-decoration: none;
+	font-weight: bold;
+}
+
+a:link
+{
+	color: #FFC040;
+}
+a:visited
+{
+	color: #C09030;
+}
+a:active
+{
+	color: #FFEA60;
+}
+a:hover
+{
+	color:#FFFFFF;
+}
+
+.border
+{
+	border: 1px solid #669;
+	margin-bottom: 4px;
+}
+
+.width100
+{
+	width: 100%;
+}
+
+.width50
+{
+	width: 50%;
+}
+
+.width25
+{
+	width: 25%;
+}
+
+
+table
+{
+	color: white;
+	border-collapse: collapse;
+	width: 100%;
+	font-weight: normal;
+}
+
+td
+{
+	font-size: 10pt;
+	border: 1px solid #000;
+}
+
+th
+{
+	background: #336;
+	font-size: 12px;
+	border: 1px solid #000;
+	text-align: left;
+}
+
+table.post
+{
+	width: 100%;
+	background: url(../img/themes/default/back2t1.png) #303678;
+	margin-bottom: 8px;
+	border: 1px solid #000;
+}
+
+table.post td.side
+{
+	width: 10%;
+	vertical-align: top;
+	border: 0px none;
+}
+
+table.post td.post
+{
+	background: #222 url(../img/themes/default/back2g.png) fixed;
+	border: 1px solid #000;
+	vertical-align: top;
+	height: 100px;
+}
+
+table.post td.post td
+{
+	border: 0px none;
+}
+
+table.post td.meta
+{
+	font-size: 8pt;
+	height: 16px;
+	border: 0px none;
+}
+
+table.post td.links
+{
+	font-size: 8pt;
+	height: 16px;
+	border: 0px none;
+}
+
+.PoRT
+{
+	float: right;
+}
+
+.PoRT td, .PoRT th, .smallFonts td, .smallFonts
+{
+	font-size: 8pt;
+}
+
+.right
+{
+	text-align: right;
+}
+
+.center
+{
+	text-align: center;
+}
+
+.underline
+{
+	text-decoration: underline;
+}
+
+.footer
+{
+	text-align: center;
+	width: 100%;
+	font-size: 10pt;
+}
+
+.footer *
+{
+	border: 0px none;
+}
+
+.links
+{
+	font-size: 10pt;
+	text-align: right;
+}
+
+.cell0
+{
+	background: #24285C url(../img/themes/default/back2t2.png);
+}
+
+.cell1
+{
+	background: #1F224F url(../img/themes/default/back2t3.png);
+}
+
+.cell2
+{
+	background: #303678 url(../img/themes/default/back2t1.png);
+}
+
+.header0 th
+{
+	background: #373E89 url(../img/themes/default/backc2.png) repeat-x;
+	text-align: center;
+	color: #EEE;
+	font-size: 8pt;
+	border-top: 0px none;
+	border-bottom: 0px none;
+}
+
+.header1 th
+{
+	background:  #4E5174 url(../img/themes/default/backh.png) repeat-x;
+	text-align: center;
+	font-size: 8pt;
+	color: #DDD;
+	border: 0px none #000;
+}
+
+.header0
+{
+	border: 1px solid #000;
+}
+.header1
+{
+	border: 1px solid #000;
+}
+
+table.breadcrumbs, table.breadcrumbs td
+{
+	font-size: 10pt;
+	border: 0px none;
+}
+
+.pages
+{
+	padding: 4px 0px;
+}
+
+.faq
+{
+	background: #222 url(../img/themes/default/back2g.png) fixed;
+	padding: 4px;
+}
+
+/* Name color table */
+.nc0x { color: #888888; } .nc1x { color: #888888; } .nc2x { color: #888888; }
+.nc00 { color: #97ACEF; } .nc10 { color: #F185C9; } .nc20 { color: #7C60B0; }
+.nc01 { color: #D8E8FE; } .nc11 { color: #FFB3F3; } .nc21 { color: #EEB9BA; }
+.nc02 { color: #AFFABE; } .nc12 { color: #C762F2; } .nc22 { color: #47B53C; }
+.nc03 { color: #FFEA95; } .nc13 { color: #C53A9E; } .nc23 { color: #F0C413; }
+
+/* [Quote] stuff */
+td.post blockquote
+{
+	padding: 4px;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+td.post code.Code
+{
+	background: url(../img/themes/default/back2t2.png) #24285C;
+	font-family: "Consolas", "Courier New", monospace;
+}
+
+form
+{
+	margin: 0px;
+}
+
+.errort
+{
+	background:  #4E5174 url(../img/themes/default/backh.png) repeat-x;
+	border: 1px solid #000;
+}
+
+.errorc
+{
+	text-align: center;
+	color: #EEE;
+	border: 1px solid #000;
+	border-top: 0px;
+}
+
+.minipic
+{
+	vertical-align: bottom;
+}
+
+.block
+{
+	display: block;
+}
+
