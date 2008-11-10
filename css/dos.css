@@ -1,0 +1,174 @@
+/* AcmlmBoard XD - DOS-like board theme */
+
+*
+{
+	border: 0px none !important;
+	margin: 0px;
+	font-weight: normal !important;
+}
+
+body
+{
+	background: black;
+	color: silver;
+	font-family: "Fixedsys", "Courier New", monospace;
+	margin: 22px 14px;
+}
+
+code
+{
+	font-family: "Fixedsys", "Courier New", monospace;
+}
+
+h3
+{
+	font-family: "Fixedsys", "Courier New", monospace;
+	background-color: maroon;
+	color: yellow;
+	margin-top: 14px;
+}
+
+h4
+{
+	font-family: "Fixedsys", "Courier New", monospace;
+}
+
+a:link, a:visited
+{
+	color: white;
+}
+
+a:hover, a:active
+{
+	color: yellow;
+}
+
+table
+{
+	color: silver;
+}
+
+td, .border
+{
+}
+
+th
+{
+	background: navy;
+}
+
+table.post
+{
+	background: navy;
+	color: silver;
+}
+
+table.post td.post
+{
+	background: black;
+}
+
+.PoRT td
+{
+	background: black;
+}
+
+.cell0
+{
+	background: navy;
+}
+
+.cell1
+{
+	background: navy;
+}
+
+.cell2
+{
+	background: teal;
+}
+
+.header0 th
+{
+	background: purple;
+	color: white;
+}
+
+.header1 th
+{
+	background: teal;
+	color: white;
+}
+
+.header0
+{
+}
+
+.header1
+{
+}
+
+td.post code.Code
+{
+	background: maroon;
+	font-family: "Fixedsys", "Courier New", monospace;
+}
+
+input, textarea, button, select
+{
+	background: black;
+	color: silver;
+	font-family: "Fixedsys", "Courier New", monospace;
+}
+
+.faq
+{
+	background: black;
+}
+
+.underline
+{
+	text-decoration: none;
+	color: teal;
+}
+
+strong
+{
+	color: yellow;
+}
+
+strong .underline, .underline strong
+{
+	color: lime;
+}
+
+em, i
+{
+	font-style: normal;
+	color: gray;
+}
+
+/* Name color table */
+.nc0x { color: gray; }   .nc1x { color: gray; }    .nc2x { color: gray; }
+.nc00 { color: blue; }   .nc10 { color: fuchsia; } .nc20 { color: teal; }
+.nc01 { color: aqua; }   .nc11 { color: fuchsia; } .nc21 { color: red; }
+.nc02 { color: aqua; }   .nc12 { color: purple; }  .nc22 { color: green; }
+.nc03 { color: yellow; } .nc13 { color: purple; }  .nc23 { color: yellow; }
+
+.errort
+{
+	background: maroon;
+	text-align: center;
+}
+
+.errorc
+{
+	background: navy;
+	text-align: center;
+	color: silver;
+}
+
+td.post blockquote
+{
+	padding: 8px 16px;
+}
