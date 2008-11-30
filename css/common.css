@@ -96,7 +96,6 @@ table.post
 {
 	width: 100%;
 	background: url(../img/themes/default/back2t1.png) #303678;
-	margin-bottom: 8px;
 	border: 1px solid #000;
 }
 
@@ -217,7 +216,8 @@ table.post td.links
 }
 .header1
 {
-	border: 1px solid #000;
+	/* comment this for something close to IE7's effect */
+	border: 0px solid #000;
 }
 
 table.breadcrumbs, table.breadcrumbs td
