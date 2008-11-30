@@ -125,7 +125,7 @@ function MakePost($post, $poster, $thread, $forum, $ispm=0)
 
 	$qBlock = "select * from blockedlayouts where user=".$poster['id']." and blockee=".$loguserid;
 	$rBlock = Query($qBlock);
-	$isBlocked = NumRows($rBlock) | $poster['superblocklayout'];
+	$isBlocked = NumRows($rBlock) | $poster['globalblock'] | $loguser['blocklayouts'];
 
 //Deletion behavior A -- post is simply made invisible.
 	if($post['deleted'])
