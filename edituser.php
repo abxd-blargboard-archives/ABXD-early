@@ -32,8 +32,6 @@ if(isset($_POST['location']))
 
 if($_POST['action'] == "Edit user")
 {
-	$superblock = (int)($_POST['superblock'] == "on");
-
 	//Lots of stolen avatar bullcrap
 	if($_POST['removepic'])
 	{
@@ -127,6 +125,8 @@ if($_POST['action'] == "Edit user")
 	if($ppp < 1)
 		$ppp = 0;
 
+	$globalblock = (int)($_POST['globalblock'] == "on");
+
 	if($_POST['presetdate'])
 		$_POST['dateformat'] = $_POST['presetdate'];
 	if($_POST['presettime'])
@@ -143,7 +143,6 @@ if($_POST['action'] == "Edit user")
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	$qUser.= "powerlevel = ".$_POST['level'].", ";
-	$qUser.= "superblocklayout = ".$superblock.", ";
 	$qUser.= "sex = ".$_POST['sex'].", ";
 	$qUser.= "realname = '".$_POST['realname']."', ";
 	$qUser.= "location = '".$_POST['location']."', ";
@@ -158,7 +157,8 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "threadsperpage = ".$_POST['tpp'].", ";
 	$qUser.= "postsperpage = ".$_POST['ppp'].", ";
 	$qUser.= "dateformat = '".$_POST['dateformat']."', ";
-	$qUser.= "timeformat = '".$_POST['timeformat']."' ";
+	$qUser.= "timeformat = '".$_POST['timeformat']."', ";
+	$qUser.= "globalblock = '".$globalblock."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
 	Redirect("Profile updated.","profile.php?id=".$id,"that user's profile.");
@@ -233,10 +233,6 @@ print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"level\">Power level</label></td><td>".MakeSelect("level",$user['powerlevel'],$levels)."</td>";
 print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td>Options</td>";
-print "<td><input type=\"checkbox\" id=\"sb\" name=\"superblock\"".($user['superblocklayout'] ? " checked=\"true\"" : "")."></input><label for=\"sb\">Superblock layout</label></td>";
-print "</tr>";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Personal information</th>";
@@ -297,6 +293,10 @@ print "<td><label for=\"df\">Date format</label></td><td><input type=\"text\" id
 print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
+print "</tr>";
+print "<tr class=\"cell1\">";
+print "<td></td>";
+print "<td><input type=\"checkbox\" id=\"sb\" name=\"globalblock\"".($user['globalblock'] ? " checked=\"checked\"" : "")."></input> <label for=\"sb\">Globally block layout</label></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
