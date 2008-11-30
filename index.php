@@ -249,6 +249,8 @@ if(!isset($_POST['action']))
 				"signsep tinyint(3) unsigned not null default '0',".
 				"dateformat varchar(20) not null default 'm-d-y',".
 				"timeformat varchar(20) not null default 'h:i a',".
+				"blocklayouts tinyint(1) not null default '0',".
+				"globalblock tinyint(1) not null default '0',".
 				"primary key (id),".
 				"key posts (posts),".
 				"key name (name),".

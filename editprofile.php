@@ -150,6 +150,8 @@ if($_POST['action'] == "Edit profile")
 	if($ppp < 1)
 		$ppp = 0;
 
+	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
+
 	if($_POST['presetdate'])
 		$_POST['dateformat'] = $_POST['presetdate'];
 	if($_POST['presettime'])
@@ -178,7 +180,8 @@ if($_POST['action'] == "Edit profile")
 	$qUser.= "threadsperpage = ".$_POST['tpp'].", ";
 	$qUser.= "postsperpage = ".$_POST['ppp'].", ";
 	$qUser.= "dateformat = '".$_POST['dateformat']."', ";
-	$qUser.= "timeformat = '".$_POST['timeformat']."' ";
+	$qUser.= "timeformat = '".$_POST['timeformat']."', ";
+	$qUser.= "blocklayouts = '".$blocklayouts."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
 	Redirect("Profile updated.","profile.php?id=".$id,"your profile.");
@@ -309,6 +312,10 @@ print "<td><label for=\"df\">Date format</label></td><td><input type=\"text\" id
 print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
+print "</tr>";
+print "</tr>";
+print "<tr class=\"cell1\">";
+print "<td></td><td><input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block layouts</label></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
