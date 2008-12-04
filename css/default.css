@@ -1,4 +1,4 @@
-/* AcmlmBoard XD - Default board theme */
+﻿/* AcmlmBoard XD - Default board theme */
 
 /* Normally, this would contain a truckload of CSS data, but most of it is in common.php.
 So instead we just add some little bits like form colors. */
@@ -13,4 +13,9 @@ input[type="text"], input[type="password"], input[type="file"], select, textarea
 input[type="checkbox"], input[type="radio"]
 {
 	/* Don't set a color for checkboxes. It'll be all wrong. */	
+}
+
+focus
+{
+	outline: 1px solid white;
 }
