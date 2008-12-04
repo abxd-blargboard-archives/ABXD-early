@@ -5,7 +5,7 @@ include("database.php");
 
 $queries = 0;
 
-mysql_connect("localhost", $dbuser, $dbpass);
+mysql_connect("localhost", $dbuser, $dbpass) or Kill("Could not connect to database.");
 mysql_select_db($dbname);
 unset($dbpass);
 

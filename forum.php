@@ -22,6 +22,16 @@ if(NumRows($rFora))
 } else
 	Kill("Unknown forum ID.");
 
+$qCat = "select * from categories where id=".$forum['catid'];
+$rCat = Query($qCat);
+if(NumRows($rCat))
+{
+	$cat = Fetch($rCat);
+	if($cat['minpower'] > $pl)
+		Kill("You are not allowed to see this category.");
+} else
+	Kill("Unknown category ID.");
+
 //Autolock system
 $qLocker = "select id from threads where forum=".$fid." and closed = 0 and lastpostdate < ".(time() - (2592000 * $autoLockMonths)); //Math note: 60 seconds * 60 minutes * 24 hours * 30 days
 $rLocker = Query($qLocker);

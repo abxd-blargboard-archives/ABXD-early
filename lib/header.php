@@ -24,14 +24,14 @@
             <table>
               <tr>
                 <td style="border: 0px none;">
-                  <img src="<?php print $logopic; ?>" alt="board?" />
+                  <img src="<?php print $logopic; ?>" alt="board?" title="Board2? This is KAWAAA!" />
                 </td>
                 <td style="border: 0px none;">
                   <div class="border PoRT">
                     <table class="PoRT">
                       <tr class="header1">
                         <th>
-                          Points of Required Attention
+                          Points of Required Attention Span
                         </th>
                       </tr>
                       <tr>

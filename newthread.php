@@ -123,7 +123,7 @@ if($_POST['action']=="Preview")
 		$previewPost['id'] = "???";
 		MakePost($previewPost, $loguser, 0, $fid);
 	} else
-		print "<div>Your post is empty. Enter a message and title and try again.</div>";
+		Alert("Enter a message and try again.","Your post is empty.");
 }
 
 if(!isset($_POST['iconid']))
