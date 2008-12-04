@@ -36,6 +36,9 @@ $avalib = @unserialize(file_get_contents("avalib.txt")); //in the same vein as o
 if($avalib === FALSE)
 	Kill("Could not open avatar library file. Please <a href=\"avatarlibrary.php?rebuild=1\">rebuild</a> it.");
 
+if(count($avalib) == 0)
+	Kill("The avatar library is empty.");
+
 if(isset($_GET['fid']))
 {
 	$fid = (int)$_GET['fid'];

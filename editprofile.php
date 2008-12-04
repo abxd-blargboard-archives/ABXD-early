@@ -352,7 +352,7 @@ function MakeSelect($fieldName, $checkedIndex, $choicesList)
 function TitleCheck()
 {
 	global $user;
-	if($user['title'] || $user['posts'] >= 20) return 1;
+	if($user['title'] || $user['posts'] >= 20 || $user['powerlevel'] > 0) return 1;
 	return 0;
 }
 

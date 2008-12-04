@@ -68,9 +68,9 @@ function CleanUpPost($postText, $poster = "")
 
 	//Smilies
 	for($i = 0; $i < count($smilies); $i++)
-		$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
+		$s = str_replace($smilies[$i]['code'], "Â«".$smilies[$i]['image']."Â»", $s);
 	for($i = 0; $i < count($smilies); $i++)
-		$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".$smilies[$i]['code']."\" />", $s);
+		$s = str_replace("Â«".$smilies[$i]['image']."Â»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".$smilies[$i]['code']."\" />", $s);
 
 	$s = str_replace("\n","<br />", $s);
 
@@ -194,7 +194,7 @@ function MakePost($post, $poster, $thread, $forum, $ispm=0)
 		$sideBarStuff .= $poster['title']."<br />";
 	else
 	{
-		$levelRanks = array(-1=>"Banned<br />", 0=>"", 1=>"Local mod<br />", 1=>"Full mod<br />", 1=>"Administrator<br />");
+		$levelRanks = array(-1=>"Banned<br />", 0=>"", 1=>"Local mod<br />", 2=>"Full mod<br />", 3=>"Administrator<br />");
 		$sideBarStuff .= $levelRanks[$poster['powerlevel']];
 	}
 	if($poster['picture'])

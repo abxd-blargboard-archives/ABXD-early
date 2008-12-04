@@ -4,7 +4,7 @@
 
 include("lib/common.php");
 
-if(!loguserid)
+if(!$loguserid)
 	Kill("You must be logged in to view your private messages.");
 
 $whereFrom = "where userfrom = ".$loguserid;

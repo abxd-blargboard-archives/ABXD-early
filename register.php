@@ -44,7 +44,7 @@ if(!isset($_POST['action']))
 	$name = htmlentities($_POST['name']);
 	$cname = strtolower($name);
 	$cname = str_replace(" ","",$cname);
-	$cname = str_replace(" ","",$cname);
+	$cname = str_replace("Â ","",$cname);
 
 	$qUsers = "select name from users";
 	$rUsers = Query($qUsers);
@@ -52,7 +52,7 @@ if(!isset($_POST['action']))
 	{
 		$uname = strtolower($user['name']);
 		$uname = str_replace(" ","",$uname);
-		$uname = str_replace(" ","",$uname);
+		$uname = str_replace("Â ","",$uname);
 		if($uname == $cname)
 			break;
 	}

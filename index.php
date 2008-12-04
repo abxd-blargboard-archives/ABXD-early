@@ -66,16 +66,21 @@ if(!isset($_POST['action']))
 } else if($_POST['action'] == "Install")
 {
 	print "<div class=\"border faq\">";
+	print "Trying to connect to database...<br />";
+	$dbuser = $_POST['dbuser'];
+	$dbpass = $_POST['dbpass'];
+	$dbname = $_POST['dbname'];
+	mysql_connect("localhost", $dbuser, $dbpass) or Kill("Could not connect to database.");
+	mysql_select_db($dbname) or Kill("Could not select database.");
 	print "Writing database configuration file...<br />";
 	$dbcfg = fopen("lib/database.php", "w+") or Kill("Could not open \"lib/database.php\" for writing.");
 	fwrite($dbcfg, "<?php\n");
 	fwrite($dbcfg, "//  AcmlmBoard XD support - Database settings\n\n");
-	fwrite($dbcfg, "\$dbuser = \"".$_POST['dbuser']."\";\n");
-	fwrite($dbcfg, "\$dbpass = \"".$_POST['dbpass']."\";\n");
-	fwrite($dbcfg, "\$dbname = \"".$_POST['dbname']."\";\n");
+	fwrite($dbcfg, "\$dbuser = \"".$dbuser."\";\n");
+	fwrite($dbcfg, "\$dbpass = \"".$dbpass."\";\n");
+	fwrite($dbcfg, "\$dbname = \"".$dbname."\";\n");
 	fwrite($dbcfg, "\n?>");
 	fclose($dbcfg);
-	print "Connecting to database...<br />";
 	include("lib/mysql.php");
 	print "Creating tables...<br />";
 
@@ -280,7 +285,7 @@ if(!isset($_POST['action']))
 		'@_@' => 'dizzy.gif',
 		'O_O' => 'eek.gif',
 		'>:)' => 'evil.gif',
-		'¬_¬' => 'eyeshift.gif',
+		'Â¬_Â¬' => 'eyeshift.gif',
 		':(' => 'frown.gif',
 		'8-)' => 'glasses.gif',
 		':O' => 'jawdrop.gif',
