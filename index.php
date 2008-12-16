@@ -170,9 +170,8 @@ if(!isset($_POST['action']))
 				"date int(10) unsigned not null default '0',".
 				"ip char(15) not null default '0.0.0.0',".
 				"num mediumint(8) not null default '0',".
-				"headid mediumint(8) unsigned not null default '0',".
-				"signid mediumint(8) unsigned not null default '0',".
 				"deleted tinyint(1) not null default '0',".
+				"options tinyint(4) not null default '0',".
 				"primary key (id),".
 				"key thread (thread),".
 				"key date (date),".
