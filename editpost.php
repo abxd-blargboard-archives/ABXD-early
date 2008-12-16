@@ -109,10 +109,14 @@ if($_POST['action']=="Edit")
 	if($_POST['text'])
 	{
 		$post = stripslashes($_POST['text']);
-		$post = str_replace("\n","##TSURUPETTENYOUJO##", $post);
+		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
-		$post = str_replace("##TSURUPETTENYOUJO##","\n", $post);
+		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
 		$post = mysql_real_escape_string($post);
+
+		$options = 0;
+		if($_POST['nopl']) $options |= 1;
+
 /*
 //No revisions
 		$qPostsText = "update posts_text set text='".$post."' where pid=".$pid." limit 1";
@@ -129,6 +133,9 @@ if($_POST['action']=="Edit")
 		$rPostsText = Query($qPostsText);
 //</revisions>
 
+		$qPosts = "update posts set options='".$options."' where id=".$pid." limit 1";
+		$rPosts = Query($qPosts);
+
 		Redirect("Edited!","thread.php?id=".$tid,"the thread.");
 		exit();
 	} else
@@ -138,9 +145,9 @@ if($_POST['action']=="Edit")
 if($_POST['text'])
 {
 	$prefill = stripslashes($_POST['text']);
-	$prefill = str_replace("\n","##TSURUPETTENYOUJO##", $prefill);
+	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
-	$prefill = str_replace("##TSURUPETTENYOUJO##","\n", $prefill);
+	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 
 if($_POST['action']=="Preview")
@@ -157,6 +164,7 @@ if($_POST['action']=="Preview")
 		$previewPost['text'] = $prefill;
 		$previewPost['num'] = $post['num'];
 		$previewPost['id'] = $pid;
+		if($_POST['nopl']) $previewPost['options'] = 1;
 		MakePost($previewPost, $user, 0, $fid);
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
@@ -165,6 +173,9 @@ if($_POST['action']=="Preview")
 if(!$_POST['text']) $_POST['text'] = stripslashes($post['text']);
 
 if($_POST['text']) $prefill = stripslashes($_POST['text']);
+
+if($_POST['nopl'])
+	$nopl = "checked=\"checked\"";
 
 print "<form action=\"editpost.php\" method=\"post\">";
 print "<div class=\"border width50\">";
@@ -180,6 +191,7 @@ print "<td></td>";
 print "<td>";
 print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
+print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$pid."\"></input>";
 print "</td>";
 print "</tr>";
