@@ -48,10 +48,13 @@ if($_POST['action']=="Post")
 	if($_POST['text'])
 	{
 		$post = stripslashes($_POST['text']);
-		$post = str_replace("\n","##TSURUPETTENYOUJO##", $post);
+		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
-		$post = str_replace("##TSURUPETTENYOUJO##","\n", $post);
+		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
 		$post = mysql_real_escape_string($post);
+
+		$options = 0;
+		if($_POST['nopl']) $options |= 1;
 
 		if($thread['lastposter']==$loguserid && $thread['lastpostdate']>=time()-86400 && $loguser['powerlevel']<3)
 			Kill("You can't double post until it's been at least one day.");
@@ -62,7 +65,7 @@ if($_POST['action']=="Post")
 		$qUsers = "update users set posts=".($loguser['posts']+1).", lastposttime=".time()." where id=".$loguserid." limit 1";
 		$rUsers = Query($qUsers);
 
-		$qPosts = "insert into posts (thread, user, date, ip, num) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).")";
+		$qPosts = "insert into posts (thread, user, date, ip, num, options) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.")";
 		$rPosts = Query($qPosts);
 		$pid = mysql_insert_id();
 
@@ -81,9 +84,9 @@ if($_POST['action']=="Post")
 if($_POST['text'])
 {
 	$prefill = stripslashes($_POST['text']);
-	$prefill = str_replace("\n","##TSURUPETTENYOUJO##", $prefill);
+	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
-	$prefill = str_replace("##TSURUPETTENYOUJO##","\n", $prefill);
+	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 
 if($_POST['action']=="Preview")
@@ -93,6 +96,7 @@ if($_POST['action']=="Preview")
 		$previewPost['text'] = $prefill;
 		$previewPost['num'] = "???";
 		$previewPost['id'] = "???";
+		if($_POST['nopl']) $previewPost['options'] = 1;
 		MakePost($previewPost, $loguser, 0, $fid);
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
@@ -123,6 +127,9 @@ if($_GET['quote'])
 	}
 }
 
+if($_POST['nopl'])
+	$nopl = "checked=\"checked\"";
+
 print "<form action=\"newreply.php\" method=\"post\">";
 print "<div class=\"border width50\">";
 print "<table>";
@@ -137,6 +144,7 @@ print "<td></td>";
 print "<td>";
 print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
+print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
 print "</td>";
 print "</tr>";
