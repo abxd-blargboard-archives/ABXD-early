@@ -15,7 +15,8 @@ if($_POST['action'] == "Edit")
 	Redirect("Edited!","./","the main page.");
 }
 
-print "<table class=\"PoRT\" style=\"float: right; width: 48%; \" id=\"preview\">";
+print "<div class=\"border\" style=\"width: 48%; float: right;\">";
+print "<table class=\"PoRT\" id=\"preview\">";
 print "<tr class=\"header1\">";
 print "<th>Demonstration of Required Attention Span</th>";
 print "</tr>";
@@ -24,14 +25,15 @@ print "<td class=\"cell0\" id=\"previewtext\">";
 print "</td>";
 print "</tr>";
 print "</table>";
+print "</div>";
 
 print "<form action=\"editpora.php\" method=\"post\">";
 print "<div class=\"border width50\">";
 print "<table id=\"t\">";
 print "<tr class=\"cell0\">";
 print "<td>Content (HTML)</td>";
-print "<td>";
-print "<textarea name=\"text\" rows=\"16\" cols=\"60\" id=\"box\">".$misc['porabox']."</textarea>";
+print "<td style=\"width: 80%;\">";
+print "<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"box\">".$misc['porabox']."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
