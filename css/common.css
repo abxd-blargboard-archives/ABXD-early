@@ -1,4 +1,4 @@
-﻿/* AcmlmBoard XD - Shared elements */
+/* AcmlmBoard XD - Shared elements */
 
 body
 {
@@ -216,8 +216,7 @@ table.post td.links
 }
 .header1
 {
-	/* comment this for something close to IE7's effect */
-	border: 0px solid #000;
+	border: 1px solid #000;
 }
 
 table.breadcrumbs, table.breadcrumbs td
