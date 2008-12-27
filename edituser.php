@@ -4,16 +4,25 @@
 
 include("lib/common.php");
 
-if($loguser['powerlevel']<3)
-	Kill("You're not allowed to edit other users' profiles.");
+if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
+	if($_POST['id'] != $loguserid)
+		Kill("You're not allowed to edit other users' profiles.");
 
 if(isset($_POST['id']) && !isset($_GET['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("User ID unspecified.");
+	$_GET['id'] = $loguserid;
+//	Kill("User ID unspecified.");
 
 $id = (int)$_GET['id'];
+
+$adminmode = ($loguser['powerlevel'] == 3);
+if(!$adminmode)
+{
+	if(isset($_POST['name']) || isset($_POST['powerlevel']) || isset($_POST['globalblock']))
+		Kill("Admin-only changes detected.");
+}
 
 $qUser = "select * from users where id=".$id;
 $rUser = Query($qUser);
@@ -66,8 +75,33 @@ if($_POST['action'] == "Edit user")
 			$tmpfile = $_FILES['picture']['tmp_name'];
 			$file = "img/avatars/".$id;
 
-			//All that crap about resizing it? Don't if it's admin-induced.
-			copy($tmpfile,$file);
+			if($loguser['powerlevel'])	//Are we at least a local mod?
+				copy($tmpfile,$file);	//Then ignore the 100x100 rule.
+			else
+			{
+				list($width, $height, $type) = getimagesize($tmpfile);
+
+				if($type == 1) $img1 = imagecreatefromgif ($tmpfile);
+				if($type == 2) $img1 = imagecreatefromjpeg($tmpfile);
+				if($type == 3) $img1 = imagecreatefrompng ($tmpfile);
+
+				if($width <= $dimx && $height <= $dimy && $type<=3)
+					copy($tmpfile,$file);
+				elseif($type <= 3)
+				{
+					if($r > 1)
+					{
+						$img2=imagecreatetruecolor($dimx,$dimy/$r);
+						imagecopyresampled($img2,$img1,0,0,0,0,$dimx,$dimy/$r,imagesx($img1),imagesy($img1));
+					} else
+					{
+						$img2=imagecreatetruecolor($dimx*$r,$dimy);
+						imagecopyresampled($img2,$img1,0,0,0,0,$dimx*$r,$dimy,imagesx($img1),imagesy($img1));
+					}
+					imagepng($img2,$file);
+				} else
+					$error.="<li>Invalid format.</li>";
+			}
 			$usepic = $file;
 		} else
 			Kill("Could not update your avatar for the following reason(s):<ul>".$error."</ul>");
@@ -126,6 +160,7 @@ if($_POST['action'] == "Edit user")
 		$ppp = 0;
 
 	$globalblock = (int)($_POST['globalblock'] == "on");
+	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
 
 	if($_POST['presetdate'])
 		$_POST['dateformat'] = $_POST['presetdate'];
@@ -134,15 +169,23 @@ if($_POST['action'] == "Edit user")
 
 	if($_POST['birthday'])
 		$bday = strtotime($_POST['birthday']);
+	else
+		$bday = 0;
 
 	$qUser = "update users set ";
-	$qUser.= "name = '".$_POST['name']."', ";
+	if($adminmode)
+		$qUser.= "name = '".$_POST['name']."', ";
 	if($_POST['newPW']) $qUser.= "password='".md5($_POST['newPW'])."', ";
 	$qUser.= "rankset = ".$_POST['rankset'].", ";
-	$qUser.= "title = '".$_POST['title']."', ";
+	if(TitleCheck())
+		$qUser.= "title = '".$_POST['title']."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
-	$qUser.= "powerlevel = ".$_POST['level'].", ";
+	if($adminmode)
+	{
+		$qUser.= "powerlevel = ".$_POST['level'].", ";
+		$qUser.= "globalblock = ".$globalblock.", ";
+	}
 	$qUser.= "sex = ".$_POST['sex'].", ";
 	$qUser.= "realname = '".$_POST['realname']."', ";
 	$qUser.= "location = '".$_POST['location']."', ";
@@ -158,7 +201,7 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "postsperpage = ".$_POST['ppp'].", ";
 	$qUser.= "dateformat = '".$_POST['dateformat']."', ";
 	$qUser.= "timeformat = '".$_POST['timeformat']."', ";
-	$qUser.= "globalblock = '".$globalblock."' ";
+	$qUser.= "blocklayouts = '".$blocklayouts."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
 	Redirect("Profile updated.","profile.php?id=".$id,"that user's profile.");
@@ -203,7 +246,13 @@ print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Login information</th>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"un\">User name</label></td><td><input type=\"text\" id=\"un\" name=\"name\" value=\"".$user['name']."\" size=\"40\" maxlength=\"60\" /></td>";
+if($adminmode)
+{
+	print "<td><label for=\"un\">User name</label></td><td><input type=\"text\" id=\"un\" name=\"name\" value=\"".$user['name']."\" size=\"40\" maxlength=\"60\" /></td>";
+} else
+{
+	print "<td>User name</td><td>".$user['name']."</td>";
+}
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td><label for=\"pw\">Password</label></td><td><input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\"></input></td>";
@@ -215,9 +264,12 @@ print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"rankset\">Rank set</label></td><td>".MakeSelect("rankset",$user['rankset'],$ranksets)."</td>";
 print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".$user['title']."\" size=\"40\" maxlength=\"255\" /></td>";
-print "</tr>";
+if(TitleCheck())
+{
+	print "<tr class=\"cell1\">";
+	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".$user['title']."\" size=\"40\" maxlength=\"255\" /></td>";
+	print "</tr>";
+}
 print "<tr class=\"cell0\">";
 print "<td><label for=\"pic\">Picture</label></td><td><input type=\"file\" id=\"pic\" name=\"picture\" size=\"40\"></input> ";
 print "<input type=\"checkbox\" id=\"rp\" name=\"removepic\"></input><label for=\"rp\">Remove</label></td>";
@@ -227,12 +279,19 @@ print "<td><label for=\"mpic\">Minipic</label></td><td><input type=\"file\" id=\
 print "<input type=\"checkbox\" id=\"rmp\" name=\"removempic\"></input><label for=\"rmp\">Remove</label></td>";
 print "</tr>";
 
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Administrative stuff</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"level\">Power level</label></td><td>".MakeSelect("level",$user['powerlevel'],$levels)."</td>";
-print "</tr>";
+if($adminmode)
+{
+	print "<tr class=\"header0\">";
+	print "<th colspan=\"2\">Administrative stuff</th>";
+	print "</tr>";
+	print "<tr class=\"cell0\">";
+	print "<td><label for=\"level\">Power level</label></td><td>".MakeSelect("level",$user['powerlevel'],$levels)."</td>";
+	print "</tr>";
+	print "<tr class=\"cell1\">";
+	print "<td>Goggles</td>";
+	print "<td><input type=\"checkbox\" id=\"sb\" name=\"globalblock\"".($user['globalblock'] ? " checked=\"checked\"" : "")."></input> <label for=\"sb\">Globally block layout</label></td>";
+	print "</tr>";
+}
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Personal information</th>";
@@ -250,17 +309,17 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"bd\">Birthday</label></td><td><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" size=\"40\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" cols=\"60\">".$user['bio']."</textarea></td>";
+print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".$user['bio']."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Post layout</th>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"5\" cols=\"60\">".$user['postheader']."</textarea></td>";
+print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"5\" style=\"width: 98%;\">".$user['postheader']."</textarea></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"sig\">Signature</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"5\" cols=\"60\">".$user['signature']."</textarea></td>";
+print "<td><label for=\"sig\">Signature</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"5\" style=\"width: 98%;\">".$user['signature']."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -295,8 +354,7 @@ print "<tr class=\"cell0\">";
 print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td></td>";
-print "<td><input type=\"checkbox\" id=\"sb\" name=\"globalblock\"".($user['globalblock'] ? " checked=\"checked\"" : "")."></input> <label for=\"sb\">Globally block layout</label></td>";
+print "<td></td><td><input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block all layouts</label></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -329,6 +387,13 @@ function MakeSelect($fieldName, $checkedIndex, $choicesList)
 		$result .= "<option value=\"".$key."\"".$checks[$key].">".$val."</option>";
 	$result .= "</select>";
 	return $result;
+}
+
+function TitleCheck()
+{
+	global $user, $adminmode;
+	if($adminmode || $user['title'] || $user['posts'] >= 200 || $user['powerlevel'] > 0) return 1;
+	return 0;
 }
 
 ?>
