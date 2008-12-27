@@ -77,7 +77,9 @@ if($pagelinks)
 $ppp = $loguser['postsperpage'];
 if(!$ppp) $ppp = 20;
 
-if(NumRows($rThreads))
+DoPrivateMessageBar();
+
+	if(NumRows($rThreads))
 {
 	print "<div class=\"border width100\">";
 	print "<table>";

@@ -89,6 +89,8 @@ $links = substr($links, 0, strlen($links) - 2);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
 
+DoPrivateMessageBar();
+
 if($thread['poll'])
 {
 	$qPoll = "select * from poll where id=".$thread['poll'];
