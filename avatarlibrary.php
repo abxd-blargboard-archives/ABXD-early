@@ -14,6 +14,7 @@ if($_GET['rebuild'])
 	while(FALSE !== ($folder = readdir($library)))
 	{
 		if($folder[0] == ".") continue;
+		print $folder."...<br/>";
 		$fol = opendir("img/avatars/library/".$folder);
 		$thisFolder = array();
 		//Loop through folder images...
