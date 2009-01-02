@@ -35,6 +35,13 @@ function GetToNextRank($poster)
 	return 0;
 }
 
+function MakeSpoiler($match)
+{
+	global $spoilers;
+	$spoilers++;
+	return "<div class=\"spoiler\"><button onclick=\"document.getElementById('spoiler".$spoilers."').className='';\">Spoiler</button><div class=\"spoiled\" id=\"spoiler".$spoilers."\">";
+}
+
 function CleanUpPost($postText, $poster = "")
 {
 	global $smilies;
@@ -99,8 +106,11 @@ function CleanUpPost($postText, $poster = "")
 	$s = preg_replace("'-moz-binding'si"," -mo<z>z-binding", $s);
 	$s = preg_replace("'filter:'si","filter&#58;>", $s);
 	$s = preg_replace("'javascript:'si","javascript&#58;>", $s);
-	$s =  str_replace("[spoiler]","<div style=\"color: black; background: black;\" class=\"smallFonts\"><span style=\"color: white; font-weight: bold;\">Spoiler:</span><br />", $s);
-	$s =  str_replace("[/spoiler]","</div>", $s);
+	//$s =  str_replace("[spoiler]","<div style=\"color: black; background: black;\" class=\"smallFonts\"><span style=\"color: white; font-weight: bold;\">Spoiler:</span><br />", $s);
+	//$s =  str_replace("[/spoiler]","</div>", $s);
+	//$s = str_replace("[spoiler]","<div class=\"spoiler\"><button onclick=\"this.parentElement.children(1).className='';\">Spoiler</button><div class=\"spoiled\">", $s);
+	$s = preg_replace_callback("'\[spoiler\]'si", "MakeSpoiler", $s);
+	$s = str_replace("[/spoiler]","</div></div>", $s);
 	$s = preg_replace("'\[url\](.*?)\[/url\]'si","<a href=\"\\1\">\\1</a>", $s);
 	$s = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si","<a href=\"\\1\">\\2</a>", $s);
 	$s = preg_replace("'\[img\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\">", $s);
@@ -205,9 +215,9 @@ function MakePost($post, $poster, $thread, $forum, $ispm=0)
 	$sideBarStuff .= "<br />Posts: ".$post['num']."/".$poster['posts'];
 	$sideBarStuff .= "<br />Since: ".date($loguser['dateformat'], $poster['regdate']);
 
+	print "<div class=\"border\">";
 	if($post['id'] != "???")
 		print "<a name=\"".$post['id']."\" />";
-	print "<div class=\"border\">";
 	print "<table class=\"post\">";
 	print "<tr>";
 	print "<td class=\"side\" rowspan=\"2\">";
