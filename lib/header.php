@@ -48,7 +48,7 @@
         </tr>
         <tr class="smallFonts cell1">
           <td rowspan="2" style="text-align: center; width: 10%;">
-            Views: <?php print $misc['views']."\n"; ?>
+            Views: <?php print number_format($misc['views'])."\n"; ?>
           </td>
           <td style="text-align: center; width: 80%;">
             <?php
@@ -73,7 +73,7 @@
                 print UserLink($loguser).": \n";
             ?>
             <a href="login.php?action=logout">Log out</a> |
-            <a href="editprofile.php">Edit profile</a> |
+            <a href="edituser.php">Edit profile</a> |
             <a href="private.php">Private messages</a>
             <?php
                 if(!isset($_POST['id']) && isset($_GET['id']))
