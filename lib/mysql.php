@@ -1,7 +1,10 @@
 <?php
 //  AcmlmBoard XD support - MySQL database wrapper functions
 
-include("database.php");
+if(is_file("lib/database.php"))
+	include("database.php");
+else
+	die("You should <a href=\"install.php\">install</a> the board database first.");
 
 $queries = 0;
 
