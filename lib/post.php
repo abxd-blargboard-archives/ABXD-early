@@ -212,8 +212,16 @@ function MakePost($post, $poster, $thread, $forum, $ispm=0)
 	else
 		$sideBarStuff .= "<div style=\"width: 50px; height: 50px;\">&nbsp;</div>";
 
+	$lastpost = ($poster['lastposttime'] ? timeunits(time() - $poster['lastposttime']) : "none");
+	$lastview = timeunits(time() - $poster['lastactivity']);
+
 	$sideBarStuff .= "<br />Posts: ".$post['num']."/".$poster['posts'];
 	$sideBarStuff .= "<br />Since: ".date($loguser['dateformat'], $poster['regdate']);
+	$sideBarStuff .= "<br /><br />Last post: ".$lastpost;
+	$sideBarStuff .= "<br />Last view: ".$lastview;
+
+	if($poster['lastactivity'] > time() - 3600)
+		$sideBarStuff .= "<br />User is <strong>online</strong>";
 
 	print "<div class=\"border\">";
 	if($post['id'] != "???")
