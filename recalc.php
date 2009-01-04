@@ -9,7 +9,7 @@ print "<table>";
 
 print "<tr class=\"header1\"><th>Name</th><th>Actual</th><th>Reported</th><th>&nbsp;</th></tr>";
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting user's posts...</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">Counting user's posts…</th></tr>";
 $qUsers = "select * from users";
 $rUsers = Query($qUsers);
 while($user = Fetch($rUsers))
@@ -27,7 +27,7 @@ while($user = Fetch($rUsers))
 	$rUser = Query($qUser);
 }
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting thread replies...</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">Counting thread replies…</th></tr>";
 $qThreads = "select * from threads";
 $rThreads = Query($qThreads);
 while($thread = Fetch($rThreads))
@@ -45,7 +45,7 @@ while($thread = Fetch($rThreads))
 	$rThread = Query($qThread);
 }
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting forum threads and posts...</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">Counting forum threads and posts…</th></tr>";
 $qFora = "select * from forums";
 $rFora = Query($qFora);
 while($forum = Fetch($rFora))
