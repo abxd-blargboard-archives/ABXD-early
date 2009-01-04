@@ -204,7 +204,7 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "blocklayouts = '".$blocklayouts."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
-	Redirect("Profile updated.","profile.php?id=".$id,"that user's profile.");
+	Redirect("Profile updated.","profile.php?id=".$id,($id == $loguserid ? "your" : "that user's") . " profile");
 }
 
 $sexes = array("Male","Female","N/A");
