@@ -156,8 +156,8 @@ if(NumRows($rCategories))
 				print "".$forum['description']."";
 				print $localMods;
 				print "</td>";
-				print "<td>".$forum['numthreads']."</td>";
-				print "<td>".$forum['numposts']."</td>";
+				print "<td class=\"center\">".$forum['numthreads']."</td>";
+				print "<td class=\"center\"	>".$forum['numposts']."</td>";
 				print "<td class=\"smallFonts\">";
 				print "";
 				if($forum['lastpostdate'])
@@ -165,7 +165,7 @@ if(NumRows($rCategories))
 					$qLastPoster = "select name, id, powerlevel, sex from users where id=".$forum['lastpostuser'];
 					$rLastPoster = Query($qLastPoster);
 					$last = Fetch($rLastPoster);
-					print date($dateformat, $forum['lastpostdate'])." by ".UserLink($last);
+					print date($dateformat, $forum['lastpostdate'])."<br />by ".UserLink($last);
 				} else
 				{
 					print "----";
