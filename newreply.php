@@ -78,7 +78,7 @@ if($_POST['action']=="Post")
 		$qFora = "update forums set numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
-		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread.");
+		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
