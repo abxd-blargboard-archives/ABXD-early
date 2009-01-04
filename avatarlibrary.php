@@ -14,7 +14,6 @@ if($_GET['rebuild'])
 	while(FALSE !== ($folder = readdir($library)))
 	{
 		if($folder[0] == ".") continue;
-		print $folder."...<br/>";
 		$fol = opendir("img/avatars/library/".$folder);
 		$thisFolder = array();
 		//Loop through folder images...
@@ -76,7 +75,7 @@ if($_GET['action'] == "set")
 				//Set your profile
 				Query("update users set picture='img/avatars/".$loguserid."' where id=".$loguserid." limit 1");
 
-				Redirect("Your avatar has been set to \"".$avalib[$fid]['content'][$_GET['img']]."\".","profile.php?id=".$loguserid, "your profile.");
+				Redirect("Your avatar has been set to \"".$avalib[$fid]['content'][$_GET['img']]."\".","profile.php?id=".$loguserid, "your profile");
 			}
 }
 

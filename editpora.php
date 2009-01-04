@@ -12,7 +12,7 @@ if($_POST['action'] == "Edit")
 	TidyPost($_POST['text']);
 	$qPora = "update misc set porabox = '".$_POST['text']."'";
 	$rPora = Query($qPora);
-	Redirect("Edited!","./","the main page.");
+	Redirect("Edited!","./","the main page");
 }
 
 print "<div class=\"border\" style=\"width: 48%; float: right;\">";
