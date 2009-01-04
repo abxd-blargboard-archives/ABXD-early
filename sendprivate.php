@@ -76,7 +76,7 @@ if($_POST['action']=="Send")
 		$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$_POST['text']."')";
 		$rPMT = Query($qPMT);
 
-		Redirect("PM sent!","private.php","your PM box.");
+		Redirect("PM sent!","private.php","your PM box");
 		exit();
 	} else
 		Alert("Enter a message and try again.", "Your PM is empty.");

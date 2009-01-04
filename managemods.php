@@ -54,7 +54,7 @@ if(!isset($_GET['action']))
 
 	$qMod = "delete from forummods where forum=".$fid." and user=".$mid;
 	$rMod = Query($qMod);
-	Redirect("Removed!","managemods.php","the mod manager.");
+	Redirect("Removed!","managemods.php","the mod manager");
 } elseif($_GET['action'] == "add")
 {
 	include("lib/header.php");
@@ -89,7 +89,7 @@ if(!isset($_GET['action']))
 		$mid = (int)$_GET['mid'];
 		$qMod = "insert into forummods (forum	, user) values (".$fid.", ".$mid.")";
 		$rMod = Query($qMod);
-		Redirect("Added!","managemods.php","the mod manager.");
+		Redirect("Added!","managemods.php","the mod manager");
 	}
 } elseif($_GET['action']=="print")
 {

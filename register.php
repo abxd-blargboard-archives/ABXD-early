@@ -78,7 +78,7 @@ if(!isset($_POST['action']))
 	if(mysql_insert_id() == 1)
 		Query("update users set powerlevel = 3 where id = 1;");
 
-	Redirect("You are now registered!","login.php","the login page.");
+	Redirect("You are now registered!","login.php","the login page");
 }
 
 doFooter();
