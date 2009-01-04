@@ -1,12 +1,16 @@
 <?php
 //  AcmlmBoard XD support - Main hub
 
-//Possibility: make the date/time format string a user profile field.
+//User settings
+$boardname = "AcmlmBoard XD";
+$logoalt = "board?";
+$logotitle = "Board2? This is KAWAAA!";
+$poratitle = "Points of Required Attention Span&trade;";
 $dateformat = "M jS Y, G:i"; //"Oct 15th 2008, 16:29"
-
 $autoLockMonths = 2; //number of 30-day "months" after which to auto-close threads.
 //DO NOT set this to zero -- it is a factor in a multiplication!
-
+//Version 1.1.1 update: this has been replaced with a friendly warning in newreply.php.
+$viewcountInterval = 2000; //how many views until user 1 gets noticed in PM
 
 if($overallTidy)
 	ob_start();
