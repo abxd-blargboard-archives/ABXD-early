@@ -90,8 +90,8 @@ DoPrivateMessageBar();
 	print "<th style=\"width: 16px;\">&nbsp;</th>";
 	print "<th style=\"width: 60%;\">Title</th>";
 	print "<th>Started by</th>";
-	print "<th>Views</th>";
 	print "<th>Replies</th>";
+	print "<th>Views</th>";
 	print "<th>Last post</th>";
 	print "</tr>";
 
@@ -149,9 +149,9 @@ DoPrivateMessageBar();
 		print "<td style=\"width: 17px;\">".$ThreadIcon."</td>";
 		print "<td>".$poll."<a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>".$pl."</td>";
 		print "<td>".UserLink($starter)."</td>";
-		print "<td>".$thread['views']."</td>";
-		print "<td>".$thread['replies']."</td>";
-		print "<td class=\"smallFonts\">".date($dateformat,$thread['lastpostdate'])." by ".UserLink($last)."</td>";
+		print "<td class=\"center\">".$thread['replies']."</td>";
+		print "<td class=\"center\">".$thread['views']."</td>";
+		print "<td class=\"smallFonts\">".date($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last)."</td>";
 		print "</tr>";
 	}
 	print "</table>";
