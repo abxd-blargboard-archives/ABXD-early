@@ -73,7 +73,7 @@ if($_GET['delete'])
 	$rThreads = Query($qThreads);
 	$rFora = Query($qFora);
 	$rUsers = Query($qUsers);
-	Redirect("Deleted!","thread.php?id=".$tid,"the thread.");
+	Redirect("Deleted!","thread.php?id=".$tid,"the thread");
 	exit();
 }
 //</Deletion method B>
@@ -85,7 +85,7 @@ if($_GET['delete']==1)
 		Kill("You're not allowed to delete posts.");
 	$qPosts = "update posts set deleted=1 where id=".$pid." limit 1";
 	$rPosts = Query($qPosts);
-	Redirect("Deleted!","thread.php?id=".$tid,"the thread.");
+	Redirect("Deleted!","thread.php?id=".$tid,"the thread");
 	exit();
 } elseif($_GET['delete']==2)
 {
@@ -93,7 +93,7 @@ if($_GET['delete']==1)
 		Kill("You're not allowed to undelete posts.");
 	$qPosts = "update posts set deleted=0 where id=".$pid." limit 1";
 	$rPosts = Query($qPosts);
-	Redirect("Restored!","thread.php?id=".$tid,"the thread.");
+	Redirect("Restored!","thread.php?id=".$tid,"the thread");
 	exit();
 }
 //</Deletion method A>
@@ -136,7 +136,7 @@ if($_POST['action']=="Edit")
 		$qPosts = "update posts set options='".$options."' where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
 
-		Redirect("Edited!","thread.php?id=".$tid,"the thread.");
+		Redirect("Edited!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");

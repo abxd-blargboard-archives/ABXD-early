@@ -35,7 +35,7 @@ include("lib/feedback.php");
 if(isset($_GET['delete']))
 {
 	unlink("install.php") or Kill("Could not delete installation script.");
-	Redirect("Installation file removed.","./","the main page.");
+	Redirect("Installation file removed.","./","the main page");
 }
 
 if(!isset($_POST['action']))
@@ -72,13 +72,13 @@ if(!isset($_POST['action']))
 } else if($_POST['action'] == "Install")
 {
 	print "<div class=\"border faq\">";
-	print "Trying to connect to database...<br />";
+	print "Trying to connect to database…<br />";
 	$dbuser = $_POST['dbuser'];
 	$dbpass = $_POST['dbpass'];
 	$dbname = $_POST['dbname'];
 	mysql_connect("localhost", $dbuser, $dbpass) or Kill("Could not connect to database.");
 	mysql_select_db($dbname) or Kill("Could not select database.");
-	print "Writing database configuration file...<br />";
+	print "Writing database configuration file…<br />";
 	$dbcfg = fopen("lib/database.php", "w+") or Kill("Could not open \"lib/database.php\" for writing.");
 	fwrite($dbcfg, "<?php\n");
 	fwrite($dbcfg, "//  AcmlmBoard XD support - Database settings\n\n");
@@ -88,7 +88,7 @@ if(!isset($_POST['action']))
 	fwrite($dbcfg, "\n?>");
 	fclose($dbcfg);
 	include("lib/mysql.php");
-	print "Creating tables...<br />";
+	print "Creating tables…<br />";
 
 	CreateTable("blockedlayouts",
 				"user smallint(5) unsigned not null default '0',".
@@ -273,10 +273,10 @@ if(!isset($_POST['action']))
 				"up tinyint(1) not null");
 	print "</ul>";
 
-	print "Resetting misc counters...<br />";
-	Query("insert into misc values (0, 30, '...')");
+	print "Resetting misc counters…<br />";
+	Query("insert into misc values (0, 30, '…')");
 
-	print "Inserting smilies...<br />";
+	print "Inserting smilies…<br />";
 	$smilies = array(
 		'-_-' => 'annoyed.gif',
 		'~:o' => 'baby.gif',
@@ -314,7 +314,7 @@ if(!isset($_POST['action']))
 
 	if($_POST['addbase'])
 	{
-		print "Adding starting fora...<br />";
+		print "Adding starting fora…<br />";
 		Query("insert into categories values (1, 'Staff', 1)");
 		Query("insert into categories values (2, 'General', 0)");
 		Query("insert into categories values (3, 'Janitorial Services', 0)");

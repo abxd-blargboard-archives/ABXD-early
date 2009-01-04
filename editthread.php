@@ -32,22 +32,22 @@ if($_GET['action']=="close")
 {
 	$qThread = "update threads set closed=1 where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum.");
+	Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum");
 } elseif($_GET['action']=="open")
 {
 	$qThread = "update threads set closed=0 where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum.");
+	Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum");
 } elseif($_GET['action']=="stick")
 {
 	$qThread = "update threads set sticky=1 where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum.");
+	Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum");
 } elseif($_GET['action']=="unstick")
 {
 	$qThread = "update threads set sticky=0 where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum.");
+	Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum");
 } elseif($_POST['action']=="Move")
 {
 	//Tweak forum counters
@@ -59,7 +59,7 @@ if($_GET['action']=="close")
 
 	$qThread = "update threads set forum=".$_POST['moveTo']." where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread moved.","forum.php?id=".$_POST['moveTo'],"the new forum.");
+	Redirect("Thread moved.","forum.php?id=".$_POST['moveTo'],"the new forum");
 } elseif($_GET['action']=="delete")
 {
 	$qPosts = "select id,user from posts where thread=".$tid;
@@ -102,7 +102,7 @@ if($_GET['action']=="close")
 		$rPollChoices = Query($qPollChoices);
 	}
 
-	Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum.");
+	Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum");
 } elseif($_GET['action'] == "trash")
 {
 	$qForum = "select id, title from forums where description like '%[trash]%' limit 1";
@@ -119,7 +119,7 @@ if($_GET['action']=="close")
 		$qForum = "update forums set numthreads=numthreads+1, numposts=numposts+".($thread['replies']+1)." where id=".$forum['id'];
 		$rForum = Query($qForum);
 
-		Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum.");
+		Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
 	} else
 		Kill("Could not identify trash forum.");
 }
@@ -142,7 +142,7 @@ if($_POST['action']=="Edit")
 		$qThreads = "update threads set title='".$_POST['title']."', icon='".$iconurl."', closed=".$isClosed.", sticky=".$isSticky." where id=".$tid." limit 1";
 		$rThreads = Query($qThreads);
 
-		Redirect("Edited!","thread.php?id=".$tid,"the thread.");
+		Redirect("Edited!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
 		print "<div>Your thread title is empty. Enter a message and try again.</div>";

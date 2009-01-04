@@ -15,7 +15,7 @@ if($_GET['action'] == "logout")
 	setcookie("logdata", 0);
 
 	include("lib/header.php");
-	Redirect("You are now logged out.","./","the main page.");
+	Redirect("You are now logged out.","./","the main page");
 } elseif(!$_POST['action'])
 {
 	include("lib/header.php");
@@ -61,7 +61,7 @@ if($_GET['action'] == "logout")
 			setcookie("logdata", $logdata_s, 2147483647);
 
 		include("lib/header.php");
-		Redirect("You are now logged in.","./","the main page.");
+		Redirect("You are now logged in.","./","the main page");
 	} else
 	{
 		include("lib/header.php");
