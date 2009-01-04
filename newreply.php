@@ -43,6 +43,9 @@ if($thread['closed'] && $loguser['powerlevel'] < 3)
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
+if($thread['lastpostdate'] < time() - (2592000 * $autoLockMonths))
+	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
+
 if($_POST['action']=="Post")
 {
 	if($_POST['text'])
