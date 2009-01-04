@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
     <title>
-      AcmlmBoard XD<?php print ($title ? " - ".$title : "") ?>
+      <?php print $boardname . ($title ? " - ".$title : "") ?>
     </title>
     <meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=8" />
@@ -24,14 +24,14 @@
             <table>
               <tr>
                 <td style="border: 0px none;">
-                  <img src="<?php print $logopic; ?>" alt="board?" title="Board2? This is KAWAAA!" />
+                  <img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" />
                 </td>
                 <td style="border: 0px none;">
                   <div class="border PoRT">
                     <table class="PoRT">
                       <tr class="header1">
                         <th>
-                          Points of Required Attention Span
+                          <?php print $poratitle; ?>
                         </th>
                       </tr>
                       <tr>
