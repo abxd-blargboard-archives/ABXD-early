@@ -32,6 +32,7 @@ if(NumRows($rCat))
 } else
 	Kill("Unknown category ID.");
 
+/*
 //Autolock system
 $qLocker = "select id from threads where forum=".$fid." and closed = 0 and lastpostdate < ".(time() - (2592000 * $autoLockMonths)); //Math note: 60 seconds * 60 minutes * 24 hours * 30 days
 $rLocker = Query($qLocker);
@@ -39,6 +40,7 @@ if(NumRows($rLocker))
 	while($lockThread = Fetch($rLocker))
 		Query("update threads set closed = 1 where id = ".$lockThread['id']);
 //</autolock>
+*/
 
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
