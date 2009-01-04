@@ -21,7 +21,7 @@ function Kill($s, $t="Error")
 
 function Redirect($s,$t,$n)
 {
-	print "<div class=\"border\"><div class=\"errort\"><strong>".$s."</strong></div><div class=\"errorc cell2\">You will now be redirected to ".$n."...</div></div>";
+	print "<div class=\"border\"><div class=\"errort\"><strong>".$s."</strong></div><div class=\"errorc cell2\">You will now be redirected to <a href=\"".$t."\">".$n."</a>…</div></div>";
 	print "<meta http-equiv=\"REFRESH\" content=\"2;URL=$t\" />";
 	doFooter();
 	exit();
