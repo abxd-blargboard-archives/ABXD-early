@@ -240,7 +240,7 @@ if($loguserid)
 $links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
 $links .= $blockLayoutLink;
 $links = substr($links, 0, strlen($links) - 2);
-print "<div class=\"smallFonts\">".$links."</div>";
+print "<div class=\"smallFonts border cell1\">".$links."</div>";
 
 doFooter();
 
