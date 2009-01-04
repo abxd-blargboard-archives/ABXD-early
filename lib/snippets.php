@@ -24,7 +24,7 @@ function DoFooter()
 {
 	global $timeStart, $queries, $overallTidy;
 	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.1.1<br />";
+	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.1.2<br />";
 	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
 
 	print "<a href=\"http://validator.w3.org/check?uri=referer\"><img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" /></a>";
