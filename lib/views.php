@@ -12,7 +12,7 @@ if(!$isBot)
 	$misc = Fetch($rMisc);
 
 	//Milestone reporting
-	if($misc['views'] % 2000 == 0)
+	if($misc['views'] % $viewcountInterval == 0)
 	{
 		if($loguserid == 1)
 			$who = "you";
