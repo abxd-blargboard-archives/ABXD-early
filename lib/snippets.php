@@ -84,39 +84,6 @@ function TimeUnits($sec)
 	return floor($sec/86400)." day".($sec >= 172800 ? "s" : "");
 }
 
-/*
-function DoPrivateMessageBar()
-{
-	global $loguserid, $dateformat;
-
-	if($loguserid)
-	{
-		$qPrivates = "select * from pmsgs where userto = ".$loguserid." order by date desc limit 1";
-		$rPrivates = Query($qPrivates);
-		$privates = Fetch($rPrivates);
-		$qUnread = "select count(*) from pmsgs where userto = ".$loguserid." and msgread=0";
-		$unread= FetchResult($qUnread);
-		$qTotal = "select count(*) from pmsgs where userto = ".$loguserid;
-		$total = FetchResult($qTotal);
-		if($unread)
-		{
-			$statusImg = "<img src=\"img/status/new.png\" alt=\"NEW\" /> ";
-			$unreadPMs = " (".$unread." new)";
-		}
-		if($total)
-		{
-			$qUser = "select * from users where id = ".$privates['userfrom'];
-			$rUser = Query($qUser);
-			$user = Fetch($rUser);
-
-			$lastPM = "<a href=\"showprivate.php?id=".$privates['id']."\">Last message</a> from ".UserLink($user)." on ".date($dateformat,$privates['date']);
-		}
-		$inbox = $statusImg."You have ".$total." private message".($total!=1 ? "s" : "").$unreadPMs.". ".$lastPM;
-		print "<div class=\"border\"><table><tr class=\"cell1\"><td>".$inbox."</td></tr></table></div>";
-	}
-}
-*/
-
 //You have X new [private messages]. [Last one] from X on X.
 function DoPrivateMessageBar()
 {
@@ -142,6 +109,22 @@ function DoPrivateMessageBar()
 			print "</td></tr></table></div>";
 		}
 	}
+}
+
+function DoSmileyBar($taname = "text")
+{
+	global $smilies;
+	LoadSmilies();
+	print "<div class=\"border width25 PoRT\">";
+	print "<div class=\"errort\"><strong>Smilies</strong></div>";
+	print "<div class=\"errorc\">";
+	//for($i = 0; $i < count($smilies); $i++)
+	foreach($smilies as $s)
+	{
+		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".$s['code']."\" title=\"".$s['code']."\" onclick=\"document.getElementById('".$taname."').value+=' ".$s['code']."'\" />";
+	}
+	print "</div>";
+	print "</div>";
 }
 
 ?>
