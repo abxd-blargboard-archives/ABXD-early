@@ -101,7 +101,7 @@ table.post
 
 table.post td.side
 {
-	width: 10%;
+	width: 15%;
 	vertical-align: top;
 	border: 0px none;
 }
@@ -122,14 +122,16 @@ table.post td.post td
 table.post td.meta
 {
 	font-size: 8pt;
-	height: 16px;
+	height: 14px;
+	margin: 0px;
 	border: 0px none;
 }
 
 table.post td.links
 {
 	font-size: 8pt;
-	height: 16px;
+	height: 14px;
+	margin: 0px;
 	border: 0px none;
 }
 
