@@ -14,6 +14,17 @@ $rUsers = Query($qUsers);
 $rGuests = Query($qGuests);
 $rBots = Query($qBots);
 
+print "<div class=\"smallFonts\">";
+print "Show visitors during the last ";
+$spans = array(60, 300, 900, 3600, 86400);
+foreach($spans as $span)
+{
+	print "<a href=\"online.php?time=".$span."\">".timeunits($span)."</a>";
+	if($boo++ < count($spans)-1)
+		print " | ";
+}
+print "</div>";
+
 print "<div class=\"border\">";
 print "<table>";
 print "<tr class=\"header0\">";
@@ -38,6 +49,7 @@ while($user = Fetch($rUsers))
 	print "<td>".($user['lastposttime'] ? date("d-m-y G:i:s",$user['lastposttime']) : "Never")."</td>";
 	print "<td>".($user['lasturl'] ? "<a href=\"".$user['lasturl']."\">".str_replace(array("%20","_")," ", $user['lasturl'])."</a>" : "None")."</td>";
 	print "</tr>";
+	$i++;
 }
 
 print "</table>";
@@ -65,8 +77,9 @@ if(NumRows($rGuests))
 		print "<td title=\"".htmlspecialchars($guest['useragent'])."\">".htmlspecialchars(substr($guest['useragent'], 0, 65))."</td>";
 		print "<td>".date("d-m-y G:i:s",$guest['date'])."</td>";
 		print "<td>".($guest['date'] ? "<a href=\"".$guest['lasturl']."\">".str_replace(array("%20","_")," ", $guest['lasturl'])."</a>" : "None")."</td>";
-		print "<td>".$guest['ip']."</td>";
+		print "<td>".$guest['ip'].IP2C($guest['ip'])."</td>";
 		print "</tr>";
+		$i++;
 	}
 } else
 	print "<tr class=\"cell0\"><td colspan=\"5\">No guests</td></tr>";
@@ -86,6 +99,7 @@ if(NumRows($rBots))
 		print "<td>".($bot['date'] ? "<a href=\"".$bot['lasturl']."\">".str_replace(array("%20","_")," ", $bot['lasturl'])."</a>" : "None")."</td>";
 		print "<td>".$bot['ip']."</td>";
 		print "</tr>";
+		$i++;
 	}
 } else
 	print "<tr class=\"cell0\"><td colspan=\"5\">No bots</td></tr>";
@@ -94,5 +108,13 @@ print "</table>";
 print "</div>";
 
 doFooter();
+
+function IP2C($ip)
+{
+	$q = @mysql_query("select cc from ip2c where ip_from <= inet_aton('".$ip."') and ip_to >= inet_aton('".$ip."')") or $r['cc'] = "";
+	if($q) $r = @mysql_fetch_array($q);
+	if($r['cc'])
+		return " <img src=\"img/flags/".strtolower($r['cc']).".png\" alt=\"".$r['cc']."\" />";
+}
 
 ?>
