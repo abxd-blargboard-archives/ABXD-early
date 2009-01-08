@@ -20,14 +20,14 @@ if($_GET['action'] == "logout")
 {
 	include("lib/header.php");
 	print "<form action=\"login.php\" method=\"post\">";
-	print "<div class=\"border width25\">";
+	print "<div class=\"border width50\">";
 	print "<table>";
 	print "<tr class=\"header0\">";
 	print "<th colspan=\"2\">Log in</th>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"un\">User name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"un\" name=\"name\" size=\"25\" maxlength=\"25\"></input></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"un\" name=\"name\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"pw\">Password</label></td>";
