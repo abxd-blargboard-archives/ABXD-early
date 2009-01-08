@@ -177,13 +177,15 @@ if($_POST['text']) $prefill = stripslashes($_POST['text']);
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
+DoSmileyBar();
+
 print "<form action=\"editpost.php\" method=\"post\">";
 print "<div class=\"border width50\">";
 print "<table>";
 print "<tr class=\"cell0\">";
 print "<td>Post</td>";
 print "<td>";
-print "<textarea name=\"text\" rows=\"16\" cols=\"60\">".$prefill."</textarea><br />";
+print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea><br />";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
