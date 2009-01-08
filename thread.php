@@ -112,7 +112,7 @@ if($thread['poll'])
 		if(NumRows($rCheck))
 		{
 			$check = Fetch($rCheck);
-			$pc[$check['choice']] = "* ";
+			$pc[$check['choice']] = "<img src=\"img/pollchoice.png\" alt=\"*\" /> ";
 		}
 
 		$qVotes = "select count(*) from pollvotes where poll=".$thread['poll'];
