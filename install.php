@@ -41,22 +41,22 @@ if(isset($_GET['delete']))
 if(!isset($_POST['action']))
 {
 	print "<form action=\"install.php\" method=\"post\">";
-	print "<div class=\"border width25\">";
+	print "<div class=\"border width50\">";
 	print "<table>";
 	print "<tr class=\"header0\">";
 	print "<th colspan=\"2\">Installation options</th>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dbn\">Database name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dn\" name=\"dbname\" size=\"25\" maxlength=\"25\"></input></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"dn\" name=\"dbname\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dun\">Database user name</label></td>";
-	print "<td class=\"cell1\"><input type=\"text\" id=\"dun\" name=\"dbuser\" size=\"13\" maxlength=\"13\"></input></td>";
+	print "<td class=\"cell1\"><input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\" maxlength=\"13\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dpw\">Database user password</label></td>";
-	print "<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" size=\"13\" maxlength=\"13\"></input></td>";
+	print "<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\" maxlength=\"13\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\">Options</td>";
