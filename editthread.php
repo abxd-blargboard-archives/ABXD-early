@@ -175,7 +175,7 @@ print "<div class=\"border width50\">";
 print "<table>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tit\">Title</label></td>";
-print "<td><input type=\"text\" id=\"tit\" name=\"title\" size=\"60\" maxlength=\"60\" value=\"".$_POST['title']."\"></input><br /></td>";
+print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['title']."\"></input><br /></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td>Icon</td>";
@@ -185,21 +185,21 @@ while(is_file("img/icons/icon".$i.".gif"))
 {
 	$check = "";
 	if($_POST['iconid'] == $i) $check = "checked=\"checked\" ";
-	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input><label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".gif\" alt=\"Icon ".$i."\" /></label>";
+	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input> <label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".gif\" alt=\"Icon ".$i."\" /></label> ";
 	if($i % 10 == 9) print "<br />";
 	$i++;
 }
 $check = "";
 if($_POST['iconid'] == 0) $check = "checked=\"checked\" ";
-print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=\"0\"></input><label for=\"noicon\">None</label>";
+print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=\"0\"></input> <label for=\"noicon\">None</label> ";
 $check = "";
 if($_POST['iconid'] == 255)
 {
 	$check = "checked=\"checked\" ";
 	$iconurl = $_POST['iconurl'];
 }
-print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input>Custom:";
-print "<input type=\"text\" name=\"iconurl\" size=\"40\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
+print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input> Custom:";
+print "<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
