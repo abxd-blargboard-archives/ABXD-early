@@ -137,11 +137,11 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
 print "<form action=\"newthread.php\" method=\"post\">";
-print "<div class=\"border width50\">";
+print "<div class=\"border width75\">";
 print "<table>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tit\">Title</label></td>";
-print "<td><input type=\"text\" id=\"tit\" name=\"title\" size=\"60\" maxlength=\"60\" value=\"".$trefill."\"></input></td>";
+print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$trefill."\"></input></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td>Icon</td>";
@@ -151,17 +151,17 @@ while(is_file("img/icons/icon".$i.".gif"))
 {
 	$check = "";
 	if($_POST['iconid'] == $i) $check = "checked=\"checked\" ";
-	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input><label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".gif\" alt=\"Icon ".$i."\" /></label>";
+	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input> <label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".gif\" alt=\"Icon ".$i."\" /></label> ";
 	if($i % 10 == 9) print "<br />";
 	$i++;
 }
 $check = "";
 if($_POST['iconid'] == 0) $check = "checked=\"checked\" ";
-print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=\"0\"></input><label for=\"noicon\">None</label>";
+print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=\"0\"></input> <label for=\"noicon\">None</label> ";
 $check = "";
 if($_POST['iconid'] == 255) $check = "checked=\"checked\" ";
-print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input><label for=\"iconurl\">Custom</label>";
-print "<input type=\"text\" id=\"iconurl\" name=\"iconurl\" size=\"40\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
+print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input> <label for=\"iconurl\">Custom</label> ";
+print "<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
 print "</td>";
 print "</tr>";
 
@@ -169,7 +169,7 @@ if($_POST['poll'])
 {
 	print "<tr class=\"cell0\">";
 	print "<td><label for=\"pq\">Poll question</label></td>";
-	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".$_POST['pollQuestion']."\" size=\"60\" maxlength=\"100\"></input></td>";
+	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".$_POST['pollQuestion']."\" style=\"width: 98%;\" maxlength=\"100\"></input></td>";
 	print "</tr>";
 	print "<tr class=\"cell1\">";
 	print "<td><label for=\"pn\">Number of options</label></td>";
@@ -183,7 +183,7 @@ if($_POST['poll'])
 
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td><label for=\"p".$pops."\">Option ".($pops+1)."</label></td>";
-		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" size=\"40\" maxlength=\"40\"></input> <label for=\"c".$pops."\">Color</label> ";
+		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" style=\"width: 50%;\" maxlength=\"40\"></input> <label for=\"c".$pops."\">Color</label> ";
 		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".$_POST['pollColor'.$pops]."\" size=\"10\" maxlength=\"10\"></input></td>";
 		print "</tr>";
 	}
@@ -192,7 +192,7 @@ if($_POST['poll'])
 print "<tr class=\"cell0\">";
 print "<td><label for=\"post\">Post</label></td>";
 print "<td>";
-print "<textarea id=\"post\" name=\"text\" rows=\"16\" cols=\"60\">".$prefill."</textarea>";
+print "<textarea id=\"post\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
