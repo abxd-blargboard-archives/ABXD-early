@@ -189,7 +189,7 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "sex = ".$_POST['sex'].", ";
 	$qUser.= "realname = '".$_POST['realname']."', ";
 	$qUser.= "location = '".$_POST['location']."', ";
-	$qUser.= "birthday = ".$bday.", ";
+	$qUser.= "birthday = ".(int)$bday.", ";
 	$qUser.= "bio = '".$_POST['bio']."', ";
 	$qUser.= "postheader = '".$_POST['postheader']."', ";
 	$qUser.= "signature = '".$_POST['signature']."', ";
@@ -248,7 +248,7 @@ print "</tr>";
 print "<tr class=\"cell0\">";
 if($adminmode)
 {
-	print "<td><label for=\"un\">User name</label></td><td><input type=\"text\" id=\"un\" name=\"name\" value=\"".$user['name']."\" size=\"40\" maxlength=\"60\" /></td>";
+	print "<td><label for=\"un\">User name</label></td><td><input type=\"text\" id=\"un\" name=\"name\" value=\"".$user['name']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 } else
 {
 	print "<td>User name</td><td>".$user['name']."</td>";
@@ -267,15 +267,15 @@ print "</tr>";
 if(TitleCheck())
 {
 	print "<tr class=\"cell1\">";
-	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".$user['title']."\" size=\"40\" maxlength=\"255\" /></td>";
+	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".$user['title']."\" style=\"width: 98%;\" maxlength=\"255\" /></td>";
 	print "</tr>";
 }
 print "<tr class=\"cell0\">";
-print "<td><label for=\"pic\">Picture</label></td><td><input type=\"file\" id=\"pic\" name=\"picture\" size=\"40\"></input> ";
+print "<td><label for=\"pic\">Picture</label></td><td><input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\"></input> ";
 print "<input type=\"checkbox\" id=\"rp\" name=\"removepic\"></input><label for=\"rp\">Remove</label></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"mpic\">Minipic</label></td><td><input type=\"file\" id=\"mpic\" name=\"minipic\" size=\"40\"></input> ";
+print "<td><label for=\"mpic\">Minipic</label></td><td><input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\"></input> ";
 print "<input type=\"checkbox\" id=\"rmp\" name=\"removempic\"></input><label for=\"rmp\">Remove</label></td>";
 print "</tr>";
 
@@ -300,13 +300,13 @@ print "<tr class=\"cell0\">";
 print "<td>Sex</td><td>".MakeOptions("sex",$user['sex'],$sexes)."</td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"rn\">Real name</label></td><td><input type=\"text\" id=\"rn\" name=\"realname\" value=\"".$user['realname']."\" size=\"40\" maxlength=\"60\" /></td>";
+print "<td><label for=\"rn\">Real name</label></td><td><input type=\"text\" id=\"rn\" name=\"realname\" value=\"".$user['realname']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"loc\">Location</label></td><td><input type=\"text\" id=\"loc\" name=\"location\" value=\"".$user['location']."\" size=\"40\" maxlength=\"60\" /></td>";
+print "<td><label for=\"loc\">Location</label></td><td><input type=\"text\" id=\"loc\" name=\"location\" value=\"".$user['location']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"bd\">Birthday</label></td><td><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" size=\"40\" maxlength=\"60\" /></td>";
+print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".$user['bio']."</textarea></td>";
@@ -326,13 +326,13 @@ print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Contact information</th>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"email\">Email address</label></td><td><input type=\"text\" id=\"email\" name=\"email\" value=\"".$user['email']."\" size=\"40\" maxlength=\"60\" /></td>";
+print "<td><label for=\"email\">Email address</label></td><td><input type=\"text\" id=\"email\" name=\"email\" value=\"".$user['email']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"hpurl\">Homepage URL</label></td><td><input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"".$user['homepageurl']."\" size=\"40\" maxlength=\"200\" /></td>";
+print "<td><label for=\"hpurl\">Homepage URL</label></td><td><input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"".$user['homepageurl']."\" style=\"width: 98%;\" maxlength=\"200\" /></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"hpname\">Homepage name</label></td><td><input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"".$user['homepagename']."\" size=\"40\" maxlength=\"60\" /></td>";
+print "<td><label for=\"hpname\">Homepage name</label></td><td><input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"".$user['homepagename']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
