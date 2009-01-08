@@ -60,26 +60,37 @@ if($_POST['to'])
 	{
 		if($_POST['action']=="Send")
 			Kill("Unknown user.");
-		else
-			$_POST['to'].="<- unknown";
 	}
+} else
+{
+	if($_POST['action'] == "Send")
+		Alert("Enter a recipient and try again.", "Your PM has no recipient.");
+	$_POST['action'] = "";
 }
 
 if($_POST['action']=="Send")
 {
-	if($_POST['text'])
+	if($_POST['title'])
 	{
-		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
-		$rPM = Query($qPM);
-		$pid = mysql_insert_id();
+		if($_POST['text'])
+		{
+			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
+			$rPM = Query($qPM);
+			$pid = mysql_insert_id();
 
-		$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$_POST['text']."')";
-		$rPMT = Query($qPMT);
+			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$_POST['text']."')";
+			$rPMT = Query($qPMT);
 
-		Redirect("PM sent!","private.php","your PM box");
-		exit();
+			Redirect("PM sent!","private.php","your PM box");
+			exit();
+		} else
+		{
+			Alert("Enter a message and try again.", "Your PM is empty.");
+		}
 	} else
-		Alert("Enter a message and try again.", "Your PM is empty.");
+	{
+		Alert("Enter a title and try again.", "Your PM is untitled.");
+	}
 }
 
 $_POST['title'] = htmlentities(stripslashes($_POST['title']));
@@ -107,16 +118,16 @@ print "<div class=\"border width50\">";
 print "<table>";
 print "<tr class=\"cell0\">";
 print "<td style=\"width: 25%;\">To</td>";
-print "<td><input type=\"text\" name=\"to\" size=\"60\" maxlength=\"60\" value=\"".$_POST['to']."\"></input></td>";
+print "<td><input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['to']."\"></input></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td style=\"width: 25%;\">Title</td>";
-print "<td><input type=\"text\" name=\"title\" size=\"60\" maxlength=\"60\" value=\"".stripslashes($trefill)."\"></input></td>";
+print "<td><input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".stripslashes($trefill)."\"></input></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td>Post</td>";
 print "<td>";
-print "<textarea name=\"text\" rows=\"16\" cols=\"60\">".$prefill."</textarea>";
+print "<textarea name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
@@ -130,7 +141,7 @@ print "</table>";
 print "</div>";
 print "</form>";
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New PM"=>""), "");
+MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
 
 doFooter();
 

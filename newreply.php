@@ -133,13 +133,15 @@ if($_GET['quote'])
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
+DoSmileyBar();
+
 print "<form action=\"newreply.php\" method=\"post\">";
 print "<div class=\"border width50\">";
 print "<table>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"text\">Post</label></td>";
 print "<td>";
-print "<textarea id=\"text\" name=\"text\" rows=\"16\" cols=\"60\">".$prefill."</textarea>";
+print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
