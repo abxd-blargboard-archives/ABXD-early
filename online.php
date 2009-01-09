@@ -63,7 +63,7 @@ print "<th style=\"width: 30px;\">#</th>";
 print "<th>User agent</th>";
 print "<th style=\"width: 140px;\">Last view</th>";
 print "<th>URL</th>";
-print "<th style=\"width: 120px;\">IP</th>";
+print "<th style=\"width: 140px;\">IP</th>";
 print "</tr>";
 
 if(NumRows($rGuests))
