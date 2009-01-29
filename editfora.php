@@ -81,8 +81,8 @@ if(NumRows($rCategories))
 				print "<tr class=\"cell1\">";
 				print "<td>";
 				print "<form action=\"editfora.php\" method=\"post\">";
-				print "<input type=\"text\" name=\"title\" size=\"40\" value=\"".htmlentities($forum['title'])."\"></input><br />";
-				print "<input type=\"text\" name=\"description\" size=\"80\" value=\"".htmlentities($forum['description'])."\"></input>";
+				print "<input type=\"text\" name=\"title\" size=\"40\" value=\"".htmlentities2($forum['title'])."\"></input><br />";
+				print "<input type=\"text\" name=\"description\" size=\"80\" value=\"".htmlentities2($forum['description'])."\"></input>";
 				print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 				print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
 				print "</form>";

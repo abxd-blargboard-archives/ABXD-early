@@ -52,7 +52,7 @@ if(NumRows($rCategories))
 	{
 		print "<form action=\"editcats.php\" method=\"post\">";
 		print "<tr class=\"cell1\">";
-		print "<td><input type=\"text\" name=\"name\" style=\"width: 98%;\" value=\"".htmlentities($category['name'])."\"></input></td>";
+		print "<td><input type=\"text\" name=\"name\" style=\"width: 98%;\" value=\"".htmlentities2($category['name'])."\"></input></td>";
 		print "<td>".MakeSelect("minpower",$category['minpower'],$levels)."</td>";
 		print "<td><input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 		print "<input type=\"submit\" name=\"action\" value=\"Remove\"></input>";

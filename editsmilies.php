@@ -62,8 +62,8 @@ while($smiley = Fetch($rSmilies))
 	$i++;
 
 	print "<tr class=\"cell".$cellClass."\">";
-	print "<td><input type=\"text\" name=\"code_".$i."\" value=\"".htmlentities($smiley['code'])."\"></input><input type=\"hidden\" name=\"oldcode_".$i."\" value=\"".htmlentities($smiley['code'])."\"></input></td>";
-	print "<td><input type=\"text\" name=\"image_".$i."\" value=\"".htmlentities($smiley['image'])."\"></input><input type=\"hidden\" name=\"oldimage_".$i."\" value=\"".htmlentities($smiley['image'])."\"></input> <img src=\"img/smilies/".$smiley['image']."\" alt=\"".$smiley['code']."\"></td>";
+	print "<td><input type=\"text\" name=\"code_".$i."\" value=\"".htmlentities2($smiley['code'])."\"></input><input type=\"hidden\" name=\"oldcode_".$i."\" value=\"".htmlentities2($smiley['code'])."\"></input></td>";
+	print "<td><input type=\"text\" name=\"image_".$i."\" value=\"".htmlentities2($smiley['image'])."\"></input><input type=\"hidden\" name=\"oldimage_".$i."\" value=\"".htmlentities2($smiley['image'])."\"></input> <img src=\"img/smilies/".$smiley['image']."\" alt=\"".$smiley['code']."\"></td>";
 	print "</tr>";
 }
 
