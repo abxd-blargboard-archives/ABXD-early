@@ -50,7 +50,7 @@ if($_POST['action']=="Post")
 {
 	if($_POST['text'])
 	{
-		$post = stripslashes($_POST['text']);
+		$post = htmlentities2(stripslashes($_POST['text']));
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
@@ -86,7 +86,7 @@ if($_POST['action']=="Post")
 
 if($_POST['text'])
 {
-	$prefill = stripslashes($_POST['text']);
+	$prefill = htmlentities2(stripslashes($_POST['text']));
 	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
@@ -158,7 +158,7 @@ print "</div>";
 print "</form>";
 
 //Revisions
-$qPosts = "select * from posts where thread=".$tid." order by date desc";
+$qPosts = "select * from posts where thread=".$tid." order by date desc limit 0,20";
 //</revisions>
 /*
 //No revisions
