@@ -26,7 +26,7 @@ if(!CanMod($loguserid,$thread['forum']))
 	Kill("You are not allowed to edit threads.");
 
 if(isset($_POST['title']))
-	$_POST['title'] = htmlentities($_POST['title']);
+	$_POST['title'] = htmlentities2($_POST['title']);
 
 if($_GET['action']=="close")
 {
