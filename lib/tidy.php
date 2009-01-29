@@ -14,9 +14,25 @@ $tidyconfig = array
 	"char-encoding"=>"utf8",
 );
 
+function htmlentities2($text)
+{
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
+}
+function htmlentities3($text)
+{
+	$text = htmlentities($text, ENT_COMPAT, "UTF-8");
+	$text = str_replace("&lt;", "<", $text);
+	$text = str_replace("&gt;", ">", $text);
+	$text = str_replace("&quot;", "\"", $text);
+	$text = str_replace("&apos;", "\'", $text);
+	return $text;
+}
+
 function TidyPost(&$text)
 {
 	global $tidyconfig;
+	//print "\n\n\n".htmlentities($text, ENT_COMPAT, "UTF-8")."\n".$text."\n\n\n";
+	$text = html_entity_decode($text);
 	$text = trim(tidy_repair_string($text, $tidyconfig));
 }
 
