@@ -40,15 +40,15 @@ else
 	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Thread"=>""), $links);
 
 if(isset($_POST['title']))
-	$_POST['title'] = htmlentities($_POST['title']);
+	$_POST['title'] = htmlentities2($_POST['title']);
 if(isset($_POST['pollQuestion']))
-	$_POST['pollQuestion'] = htmlentities(stripslashes($_POST['pollQuestion']))	;
+	$_POST['pollQuestion'] = htmlentities2(stripslashes($_POST['pollQuestion']))	;
 
 if($_POST['action']=="Post")
 {
 	if($_POST['text'] && $_POST['title'])
 	{
-		$post = stripslashes($_POST['text']);
+		$post = htmlentities2(stripslashes($_POST['text']));
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
@@ -109,13 +109,13 @@ if($_POST['action']=="Post")
 
 if($_POST['text'])
 {
-	$prefill = stripslashes($_POST['text']);
+	$prefill = htmlentities2(stripslashes($_POST['text']));
 	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 if($_POST['title'])
-	$trefill = stripslashes($_POST['title']);
+	$trefill = htmlentities2(stripslashes($_POST['title']));
 
 if($_POST['action']=="Preview")
 {
@@ -179,7 +179,7 @@ if($_POST['poll'])
 	{
 		$cellClass = ($cellClass+1) % 2;
 
-		$fixed = htmlentities(stripslashes($_POST['pollOption'.$pops]));
+		$fixed = htmlentities2(stripslashes($_POST['pollOption'.$pops]));
 
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td><label for=\"p".$pops."\">Option ".($pops+1)."</label></td>";
