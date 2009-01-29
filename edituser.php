@@ -32,11 +32,11 @@ else
 	Kill("Unknown user ID.");
 
 if(isset($_POST['name']))
-	$_POST['name'] = htmlentities($_POST['name']);
+	$_POST['name'] = htmlentities2($_POST['name']);
 if(isset($_POST['realname']))
-	$_POST['realname'] = htmlentities($_POST['realname']);
+	$_POST['realname'] = htmlentities2($_POST['realname']);
 if(isset($_POST['location']))
-	$_POST['location'] = htmlentities($_POST['location']);
+	$_POST['location'] = htmlentities2($_POST['location']);
 
 
 if($_POST['action'] == "Edit user")
@@ -178,7 +178,7 @@ if($_POST['action'] == "Edit user")
 	if($_POST['newPW']) $qUser.= "password='".md5($_POST['newPW'])."', ";
 	$qUser.= "rankset = ".$_POST['rankset'].", ";
 	if(TitleCheck())
-		$qUser.= "title = '".$_POST['title']."', ";
+		$qUser.= "title = '".htmlentities3($_POST['title'])."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	if($adminmode)
@@ -190,9 +190,9 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "realname = '".$_POST['realname']."', ";
 	$qUser.= "location = '".$_POST['location']."', ";
 	$qUser.= "birthday = ".(int)$bday.", ";
-	$qUser.= "bio = '".$_POST['bio']."', ";
-	$qUser.= "postheader = '".$_POST['postheader']."', ";
-	$qUser.= "signature = '".$_POST['signature']."', ";
+	$qUser.= "bio = '".htmlentities3($_POST['bio'])."', ";
+	$qUser.= "postheader = '".htmlentities3($_POST['postheader'])."', ";
+	$qUser.= "signature = '".htmlentities3($_POST['signature'])."', ";
 	$qUser.= "email = '".$_POST['email']."', ";
 	$qUser.= "homepageurl = '".$_POST['hpurl']."', ";
 	$qUser.= "homepagename = '".$_POST['hpname']."', ";
@@ -251,7 +251,7 @@ if($adminmode)
 	print "<td><label for=\"un\">User name</label></td><td><input type=\"text\" id=\"un\" name=\"name\" value=\"".$user['name']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 } else
 {
-	print "<td>User name</td><td>".$user['name']."</td>";
+	print "<td>User name</td><td>".htmlval($user['name'])."</td>";
 }
 print "</tr>";
 print "<tr class=\"cell1\">";
@@ -267,7 +267,7 @@ print "</tr>";
 if(TitleCheck())
 {
 	print "<tr class=\"cell1\">";
-	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".$user['title']."\" style=\"width: 98%;\" maxlength=\"255\" /></td>";
+	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".htmlval($user['title'])."\" style=\"width: 98%;\" maxlength=\"255\" /></td>";
 	print "</tr>";
 }
 print "<tr class=\"cell0\">";
@@ -300,10 +300,10 @@ print "<tr class=\"cell0\">";
 print "<td>Sex</td><td>".MakeOptions("sex",$user['sex'],$sexes)."</td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"rn\">Real name</label></td><td><input type=\"text\" id=\"rn\" name=\"realname\" value=\"".$user['realname']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
+print "<td><label for=\"rn\">Real name</label></td><td><input type=\"text\" id=\"rn\" name=\"realname\" value=\"".htmlval($user['realname'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"loc\">Location</label></td><td><input type=\"text\" id=\"loc\" name=\"location\" value=\"".$user['location']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
+print "<td><label for=\"loc\">Location</label></td><td><input type=\"text\" id=\"loc\" name=\"location\" value=\"".htmlval($user['location'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
@@ -332,7 +332,7 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"hpurl\">Homepage URL</label></td><td><input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"".$user['homepageurl']."\" style=\"width: 98%;\" maxlength=\"200\" /></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"hpname\">Homepage name</label></td><td><input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"".$user['homepagename']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
+print "<td><label for=\"hpname\">Homepage name</label></td><td><input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"".htmlval($user['homepagename'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -394,6 +394,13 @@ function TitleCheck()
 	global $user, $adminmode;
 	if($adminmode || $user['title'] || $user['posts'] >= 200 || $user['powerlevel'] > 0) return 1;
 	return 0;
+}
+
+function htmlval($text)
+{
+	$text = str_replace("\"", "&quot;", $text);
+	$text = str_replace("<", "&lt;", $text);
+	return $text;
 }
 
 ?>
