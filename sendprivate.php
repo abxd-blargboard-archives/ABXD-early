@@ -72,13 +72,21 @@ if($_POST['action']=="Send")
 {
 	if($_POST['title'])
 	{
+		$_POST['title'] = htmlentities2($_POST['title']);
+
 		if($_POST['text'])
 		{
+			$post = htmlentities2(stripslashes($_POST['text']));
+			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
+			TidyPost($post);
+			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
+			$post = mysql_real_escape_string($post);
+
 			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
 			$rPM = Query($qPM);
 			$pid = mysql_insert_id();
 
-			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$_POST['text']."')";
+			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$post."')";
 			$rPMT = Query($qPMT);
 
 			Redirect("PM sent!","private.php","your PM box");
@@ -93,8 +101,8 @@ if($_POST['action']=="Send")
 	}
 }
 
-$_POST['title'] = htmlentities(stripslashes($_POST['title']));
-$_POST['text'] = stripslashes($_POST['text']);
+$_POST['title'] = htmlentities2(stripslashes($_POST['title']));
+$_POST['text'] = htmlentities2(stripslashes($_POST['text']));
 
 if($_POST['action']=="Preview")
 {
