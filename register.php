@@ -2,9 +2,11 @@
 //  AcmlmBoard XD - User account registration page
 //  Access: any, but meant for guests.
 
+$noAutoHeader = TRUE;
 include("lib/common.php");
 
 $backtomain = "<br /><a href=\"./\">Back to main</a> or <a href=\"register.php\">try again</a>.";
+$sexes = array("Male","Female","N/A");
 
 function CheckProxy()
 {
@@ -18,6 +20,7 @@ function CheckProxy()
 
 if(!isset($_POST['action']))
 {
+	include("lib/header.php");
 	print "<form action=\"register.php\" method=\"post\">";
 	print "<div class=\"border width50\">";
 	print "<table>";
@@ -32,6 +35,18 @@ if(!isset($_POST['action']))
 	print "<td class=\"cell2\"><label for=\"pw\">Password</label></td>";
 	print "<td class=\"cell1\"><input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"13\"></input></td>";
 	print "</tr>";
+	print "<tr>";
+	print "<td class=\"cell2\"><label for=\"email\">Email address</label></td>";
+	print "<td class=\"cell1\"><input type=\"text\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
+	print "</tr>";
+	print "<tr>";
+	print "<td class=\"cell2\">Sex</td>";
+	print "<td class=\"cell1\">".MakeOptions("sex",2,$sexes)."</td>";
+	print "</tr>";
+	print "<tr>";
+	print "<td class=\"cell2\"></td>";
+	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
+	print "</tr>";
 	print "<tr class=\"cell2\">";
 	print "<td></td>";
 	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input></td>";
@@ -41,7 +56,7 @@ if(!isset($_POST['action']))
 	print "</form>";
 } elseif($_POST['action'] == "Register")
 {
-	$name = htmlentities($_POST['name']);
+	$name = htmlentities2($_POST['name']);
 	$cname = strtolower($name);
 	$cname = str_replace(" ","",$cname);
 	$cname = str_replace(" ","",$cname);
@@ -64,23 +79,54 @@ if(!isset($_POST['action']))
 	$ipKnown = NumRows($rIP);
 
 	if($uname == $cname)
-		Kill("This user name is already taken. Please choose another.".$backtomain);
+		$err = "This user name is already taken. Please choose another.".$backtomain;
 	elseif($name == "" || $cname == "")
-		Kill("The user name must not be empty. Please choose one.".$backtomain);
+		$err = "The user name must not be empty. Please choose one.".$backtomain;
 	elseif($ipKnown)
-		Kill("Another user is already using this IP address.".$backtomain);
+		$err = "Another user is already using this IP address.".$backtomain;
 	elseif(strlen($_POST['pass']) < 4)
-		Kill("Your password must be at least four characters long.".$backtomain);
+		$err = "Your password must be at least four characters long.".$backtomain;
 
-	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip) values ('".$_POST['name']."', '".md5($_POST['pass'])."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."')";
+	if($err)
+	{
+		include("header.php");
+		Kill($err);
+	}
+
+	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".$_POST['name']."', '".md5($_POST['pass'])."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".$_POST['email']."', ".$_POST['sex'].")";
 	$rUsers = Query($qUsers);
 
 	if(mysql_insert_id() == 1)
 		Query("update users set powerlevel = 3 where id = 1;");
 
-	Redirect("You are now registered!","login.php","the login page");
+	if($_POST['autologin'])
+	{
+		$qUser = "select * from users where name='".$_POST['name']."' and password='".md5($_POST['pass'])."'";
+		$rUser = Query($qUser);
+		$user = Fetch($rUser);
+		$logdata['loguserid'] = $user['id'];
+		$logdata['loguserpw'] = $user['password'];
+		$logdata_s = base64_encode(serialize($logdata));
+
+		setcookie("logdata", $logdata_s, 2147483647);
+
+		include("lib/header.php");
+		Redirect("You are now registered and logged in.","./","the main page");
+	} else
+	{
+		include("header.php");
+		Redirect("You are now registered!","login.php","the login page");
+	}
 }
 
 doFooter();
+
+function MakeOptions($fieldName, $checkedIndex, $choicesList)
+{
+	$checks[$checkedIndex] = " checked=\"true\"";
+	foreach($choicesList as $key=>$val)
+		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
+	return $result;
+}
 
 ?>
