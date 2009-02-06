@@ -19,7 +19,7 @@
             <table>
               <tr>
                 <td style="border: 0px none;">
-                  <img src="img/themes/default/logo.png" alt="board?" title="Board2? This is KAWAAA!" />
+                  <img src="img/themes/default/logo.png" alt="" />
                 </td>
               </tr>
             </table>
@@ -271,6 +271,12 @@ if(!isset($_POST['action']))
 				"uid int(11) not null,".
 				"voter int(11) not null,".
 				"up tinyint(1) not null");
+	CreateTable("usercomments",
+				"id smallint(5) unsigned not null auto_increment,".
+				"uid int(11) not null,".
+				"cid int(11) not null,".
+				"text text not null,".
+				"primary key (id)");
 	print "</ul>";
 
 	print "Resetting misc counters…<br />";

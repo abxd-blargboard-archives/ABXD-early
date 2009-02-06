@@ -4,6 +4,9 @@
 
 include("lib/common.php");
 
+if(isset($_POST['id']))
+	$_GET['id'] = $_POST['id'];
+
 if(!isset($_GET['id']))
 	Kill("User ID unspecified.");
 
@@ -119,7 +122,9 @@ if($user['homepageurl'])
 		$homepage = "<a href=\"".$user['homepageurl']."\">".$user['homepageurl']."</a>";
 }
 
-print "<div class=\"border\" style=\"width: 60%;\">";
+print "<table><tr><td style=\"width: 60%;\">";
+
+print "<div class=\"border\">";
 print "<table>";
 
 print "<tr class=\"header0\">";
@@ -207,6 +212,59 @@ print "<td class=\"cell1\">".CleanUpPost($user['bio'])."</td>";
 print "</tr>";
 print "</table>";
 print "</div>";
+
+print "</td><td style=\"vertical-align: top;\">";
+
+if($_POST['action'] == "Post" && $loguserid)
+{
+	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".$_POST['text']."')";
+	$rComment = Query($qComment);
+}
+print "<div class=\"border faq\" style=\"padding: 0px;\">";
+$qComments = "select * from usercomments where uid=".$id." order by id desc limit ".($page * 10).",10";
+$rComments = Query($qComments);
+print "<table>";
+print "<tr class=\"header1\"><th colspan=\"2\">Comments about ".UserLink($user)."</th></tr>";
+if(NumRows($rComments))
+{
+	while($comment = Fetch($rComments))
+	{
+		$cellClass = ($cellClass+1) % 2;
+		$qPoster = "select * from users where id=".$comment['cid'];
+		$rPoster = Query($qPoster);
+		$poster = Fetch($rPoster);
+		$c = "<tr>";
+		$c .= "<td class=\"cell2 width25\">".UserLink($poster)."</td>";
+		$c .= "<td class=\"cell".$cellClass."\">";
+		$c .= CleanUpPost($comment['text']);
+		$c .= "</td>";
+		$c .= "</tr>";
+		$f = $c . $f;
+		if(!isset($lastCommenter))
+			$lastCommenter = $poster;
+	}
+	print $f;
+} else
+	print "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
+if($loguserid)
+{
+	print "<tr><td class=\"cell2 smallFonts\" colspan=\"2\">";
+	if($lastCommenter['id'] == $loguserid)
+		print "You already have the last word.";
+	else
+	{
+		print "<form method=\"post\" action=\"profile.php\">";
+		print "<input type=\"hidden\" name=\"id\" value=\"".$id."\"></input>";
+		print "<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\"></input> ";
+		print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
+		print "</form>";
+	}
+	print "</td></tr>";
+}
+print "</table>";
+print "</div>";
+
+print "</td></tr></table>";
 
 /*
 //Randomized previews
