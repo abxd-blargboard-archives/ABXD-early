@@ -1,3 +1,0 @@
-This directory is meant to hold plugins for the ABXD messageboard software. To install a plugin, visit http://helmet.kafuka.org/thepile/Category:ABXD_Plugins. The archives you find there have the proper internal directory structure already set up. Assuming your copy of ABXD is installed in the /board directory, extracting a plugin's archive there should place all the files in their proper locations.
-
-To disable a plugin, simply hide the "plugin.settings" file from the board software, for example by renaming it.
