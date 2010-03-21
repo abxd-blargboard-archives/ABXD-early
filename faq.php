@@ -8,7 +8,7 @@ include("lib/common.php");
 
 ?>
 
-<div class="faq border">
+<div class="faq outline margin">
 <h3 style="border-top: 0px none;">General disclaimer</h3>
 <p>
 	The site does not own and cannot be held responsible for statements made by members on the forum. This site is offered as-is to the user. Any statements made on the board may be altered or removed at the discretion of the staff. Furthermore, all users are expected to have read, understood, and agreed to this FAQ before posting.
