@@ -16,8 +16,7 @@ include("ranksets.php");
 
 $bads = array(" ","-",".",",");
 
-print "<div class=\"border width25\">";
-print "<table>";
+print "<table class=\"outline margin width25\">";
 print "<tr class=\"header1\"><th>Postcount</th><th>Rank</th></tr>";
 
 foreach($ranks as $rankset)
@@ -47,7 +46,6 @@ foreach($ranks as $rankset)
 	}
 }
 print "</table>";
-print "</div>";
 
 print "<div>The above ranks and sets have been imported.</div>";
 
