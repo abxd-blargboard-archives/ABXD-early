@@ -41,15 +41,14 @@ if($_POST['action'] == "Apply")
 		Alert($log,"Log");
 }
 
-print "<div class=\"border faq\">";
+print "<div class=\"outline margin faq\">";
 print "To add, fill in both bottom fields and apply.<br />";
 print "To edit, change either code or image fields to <em>not</em> match their hidden counterparts.";
 print "</div>";
 
 print "<form method=\"post\" action=\"editsmilies.php\">";
 
-print "<div class=\"border\" style=\"width: 30%;\">";
-print "<table>";
+print "<table class=\"outline margin\" style=\"width: 30%;\">";
 print "<tr class=\"header1\">";
 print "<th>Code</th><th>Image</th>";
 print "</tr>";
@@ -80,7 +79,6 @@ print "<td><input type=\"submit\" name=\"action\" value=\"Apply\"></td>";
 print "</tr>";
 
 print "</table>";
-print "</div>";
 print "</form>";
 
 doFooter();
