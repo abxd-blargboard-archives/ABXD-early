@@ -9,37 +9,36 @@ if($loguser['powerlevel'] < 3)
 
 elseif($_POST['action'] == "Add")
 {
-	$qCategory = "insert into categories (name, minpower) values ('".$_POST['name']."', ".$_POST['minpower'].")";
+	$qCategory = "insert into categories (name, minpower) values ('".justEscape($_POST['name'])."', ".(int)$_POST['minpower'].")";
 	$rCategory = Query($qCategory);
 	Alert("Category added.","Notice");
 } elseif($_POST['action'] == "Remove")
 {
-	$qCategory = "select * from categories where id=".$_POST['cid'];
+	$qCategory = "select * from categories where id=".(int)$_POST['cid'];
 	$rCategory = Query($qCategory);
 	$category = Fetch($rCategory);
 	print "<div class=\"errort\"><strong>Confirm deletion of \"".$category['name']."\"</strong></div>";
 	print "<div class=\"errorc cell2\">";
 	print "<form action=\"editcats.php\" method=\"post\">";
 	print "<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\"></input>";
-	print "<input type=\"hidden\" name=\"cid\" value=\"".$category['id']."\"></input>";
+	print "<input type=\"hidden\" name=\"cid\" value=\"".(int)$category['id']."\"></input>";
 	print "</form>";
 	print "</div>";
 } elseif($_POST['action'] == "Yes, do as I say.")
 {
-	$qCategory = "delete from categories where id=".$_POST['cid'];
+	$qCategory = "delete from categories where id=".(int)$_POST['cid'];
 	$rCategory = Query($qCategory);
 	Alert("Category removed.","Notice");
 } elseif($_POST['action'] == "Edit")
 {
-	$qCategory = "update categories set name='".$_POST['name']."', minpower=".$_POST['minpower']." where id=".$_POST['cid']." limit 1";
+	$qCategory = "update categories set name='".justEscape($_POST['name'])."', minpower=".(int)$_POST['minpower']." where id=".(int)$_POST['cid']." limit 1";
 	$rCategory = Query($qCategory);
 	Alert("Category edited.","Notice");
 }
 
 $levels = array(-1 => "-1 - Banned", 0 => "0 - Normal user", 1 => "1 - Local Mod", 2 => "2 - Full Mod", 3 => "3 - Admin");
 
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"header1\">";
 print "<th>Category name</th><th>Minimal power</th><th>&nbsp;</th>";
 print "</tr>";
@@ -72,7 +71,6 @@ print "<td><input type=\"submit\" name=\"action\" value=\"Add\"></input></td>";
 print "</tr>";
 print "</form>";
 print "</table>";
-print "</div>";
 print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
 
 doFooter();
