@@ -19,7 +19,7 @@ else
 $total = $user['posts'];
 $ppp = $loguser['postsperpage'];
 if(isset($_GET['from']))
-	$from = $_GET['from'];
+	$from = (int)$_GET['from'];
 else
 	$from = 0;
 
