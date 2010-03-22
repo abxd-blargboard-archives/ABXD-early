@@ -15,7 +15,7 @@ function super_sql_escape($var)
 	//	If not, escape it!
 	else
 	{
-		mysql_real_escape_string($var);
+		$var = mysql_real_escape_string($var);
 	}
 
 	return $var;
