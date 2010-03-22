@@ -57,9 +57,9 @@ if($_GET['action']=="close")
 	$rForum = Query($qForum);
 
 
-	$qThread = "update threads set forum=".$_POST['moveTo']." where id=".$tid;
+	$qThread = "update threads set forum=".(int)$_POST['moveTo']." where id=".$tid;
 	$rThread = Query($qThread);
-	Redirect("Thread moved.","forum.php?id=".$_POST['moveTo'],"the new forum");
+	Redirect("Thread moved.","forum.php?id=".(int)$_POST['moveTo'],"the new forum");
 } elseif($_GET['action']=="delete")
 {
 	$qPosts = "select id,user from posts where thread=".$tid;
@@ -136,10 +136,10 @@ if($_POST['action']=="Edit")
 			if($_POST['iconid'] < 255)
 				$iconurl = "img/icons/icon".$_POST['iconid'].".gif";
 			else
-				$iconurl = $_POST['iconurl'];
+				$iconurl = justEscape($_POST['iconurl']);
 		}
 
-		$qThreads = "update threads set title='".$_POST['title']."', icon='".$iconurl."', closed=".$isClosed.", sticky=".$isSticky." where id=".$tid." limit 1";
+		$qThreads = "update threads set title='".justEscape($_POST['title'])."', icon='".$iconurl."', closed=".$isClosed.", sticky=".$isSticky." where id=".$tid." limit 1";
 		$rThreads = Query($qThreads);
 
 		Redirect("Edited!","thread.php?id=".$tid,"the thread");
@@ -171,8 +171,7 @@ while($forum = Fetch($rFora))
 }
 
 print "<form action=\"editthread.php\" method=\"post\">";
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tit\">Title</label></td>";
 print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['title']."\"></input><br /></td>";
@@ -225,7 +224,6 @@ print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
 print "</td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 print "</form>";
 
 doFooter();
