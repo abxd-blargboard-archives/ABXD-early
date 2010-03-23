@@ -9,34 +9,34 @@ if($loguser['powerlevel'] < 3)
 
 if($_POST['action'] == "Move")
 {
-	$qForum = "update forums set forder=".(int)$_POST['order'].", catid=".$_POST['category']." where id=".$_POST['fid']." limit 1";
+	$qForum = "update forums set forder=".(int)$_POST['order'].", catid=".(int)$_POST['category']." where id=".(int)$_POST['fid']." limit 1";
 	$rForum = Query($qForum);
 	Alert("Forum moved.","Notice");
 } elseif($_POST['action'] == "Add")
 {
-	$qForum = "insert into forums (title, description, catid, forder) values ('".$_POST['title']."', '".$_POST['description']."', ".$_POST['category'].", ".$_POST['order'].")";
+	$qForum = "insert into forums (title, description, catid, forder) values ('".justEscape($_POST['title'])."', '".justEscape($_POST['description'])."', ".(int)$_POST['category'].", ".(int)$_POST['order'].")";
 	$rForum = Query($qForum);
 	Alert("Forum added.","Notice");
 } elseif($_POST['action'] == "Remove")
 {
-	$qForum = "select * from forums where id=".$_POST['fid'];
+	$qForum = "select * from forums where id=".(int)$_POST['fid'];
 	$rForum = Query($qForum);
 	$forum = Fetch($rForum);
 	print "<div class=\"errort\"><strong>Confirm deletion of \"".$forum['title']."\"</strong></div>";
 	print "<div class=\"errorc cell2\">";
 	print "<form action=\"editfora.php\" method=\"post\">";
 	print "<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\"></input>";
-	print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
+	print "<input type=\"hidden\" name=\"fid\" value=\"".(int)$forum['id']."\"></input>";
 	print "</form>";
 	print "</div>";
 } elseif($_POST['action'] == "Yes, do as I say.")
 {
-	$qForum = "delete from forums where id=".$_POST['fid'];
+	$qForum = "delete from forums where id=".(int)$_POST['fid'];
 	$rForum = Query($qForum);
 	Alert("Forum removed.","Notice");
 } elseif($_POST['action'] == "Edit")
 {
-	$qForum = "update forums set title='".$_POST['title']."', description='".$_POST['description']."' where id=".$_POST['fid']." limit 1";
+	$qForum = "update forums set title='".justEscape($_POST['title'])."', description='".justEscape($_POST['description'])."' where id=".(int)$_POST['fid']." limit 1";
 	$rForum = Query($qForum);
 	Alert("Forum edited.","Notice");
 }
@@ -45,8 +45,7 @@ $qCategories = "select * from categories";
 $rCategories = Query($qCategories);
 if(NumRows($rCategories))
 {
-	print "<div class=\"border\">";
-	print "<table>";
+	print "<table class=\"outline margin\">";
 	print "<tr class=\"header1\">";
 	print "<th>Forum title</th>";
 	print "<th>Stats</th>";
@@ -57,14 +56,14 @@ if(NumRows($rCategories))
 		print "<tr class=\"header0\">";
 		print "<th colspan=\"4\">".$category['name']."</th>";
 		print "</tr>";
-		$qFora = "select * from forums where catid=".$category['id']." order by forder";
+		$qFora = "select * from forums where catid=".(int)$category['id']." order by forder";
 		$rFora = Query($qFora);
 		if(NumRows($rFora))
 		{
 			while($forum = Fetch($rFora))
 			{
 				$localMods = "<small>No mods";
-				$qMods = "select * from forummods where forum=".$forum['id'];
+				$qMods = "select * from forummods where forum=".(int)$forum['id'];
 				$rMods = Query($qMods);
 				if(NumRows($rMods))
 				{
@@ -122,7 +121,6 @@ if(NumRows($rCategories))
 	print "</form>";
 
 	print "</table>";
-	print "</div>";
 }
 
 print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
