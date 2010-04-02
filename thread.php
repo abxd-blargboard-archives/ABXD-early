@@ -48,6 +48,8 @@ if(isset($_GET['vote']))
 {
 	if(!$loguserid)
 		Kill("You can't vote without logging in.");
+	if($thread['closed'])
+		Kill("Poll's closed!");
 	if($thread['poll'])
 	{
 		$qCheck = "select * from pollvotes where poll=".$thread['poll']." and user=".$loguserid;
@@ -80,7 +82,7 @@ if(CanMod($loguserid,$forum['id']))
 		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=unstick\">Unstick</a> | ";
 	else
 		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=stick\">Stick</a> | ";
-	$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=delete\">Delete</a> | ";
+	$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=delete\" onclick=\"if(!confirm('Are you sure you want to just up and delete this whole thread?') || !confirm('Seriously?')) return false;\">Delete</a> | ";
 	if(strpos($forum['description'],"[trash]") === FALSE)
 		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=trash\">Trash</a> | ";
 }
@@ -98,8 +100,7 @@ if($thread['poll'])
 	if(NumRows($rPoll))
 	{
 		$poll = Fetch($rPoll);
-		print "<div class=\"border\">";
-		print "<table>";
+		print "<table class=\"outline margin\">";
 		print "<tr class=\"header0\">";
 		print "<th colspan=\"2\">Poll</th>";
 		print "</tr>";
@@ -129,10 +130,10 @@ if($thread['poll'])
 
 			$cellClass = ($cellClass+1) % 2;
 			print "<tr class=\"cell".$cellClass."\">";
-			if($loguserid)
+			if($loguserid && !$thread['closed'])
 				print "<td>".$pc[$pops]."<a href=\"thread.php?id=".$thread['id']."&amp;vote=".$pops."\">".$option['choice']."</a></td>";
 			else
-				print "<td>".$option['choice']."</td>";
+				print "<td>".$pc[$pops].$option['choice']."</td>";
 			print "<td><img src=\"img/bargraph.php?z=".$votes."&amp;n=".$totalVotes."&amp;c=".str_replace("#","",$option['color'])."\" title=\"".$votes." of ".$totalVotes."\" alt=\"\" /></td>";
 			print "</tr>";
 			$pops++;
@@ -153,12 +154,14 @@ $rRead = Query($qRead);
 
 $total = $thread['replies'] + 1; //+1 for the OP
 $ppp = $loguser['postsperpage'];
+if(!$ppp) $ppp = 20;
 if(isset($_GET['from']))
 	$from = $_GET['from'];
 else
-	$from = 0;
-
-if(!$ppp) $ppp = 20;
+	if(isset($pid))
+		$from = (floor(FetchResult("select count(*) from posts where thread=".$tid." and id < ".$pid) / $ppp)) * $ppp;
+	else
+		$from = 0;
 
 //Revisions
 $qPosts = "select * from posts where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
