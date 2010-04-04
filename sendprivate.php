@@ -23,7 +23,7 @@ if($pid)
 			$user = Fetch($rUser);
 		else
 			Kill("Unknown user.");
-		$prefill = "[reply=\"".$user['name']."\" id=\"".$sauce['id']."\"]".$sauce['text']."[/quote]";
+		$prefill = "[reply=\"".$user['name']."\"]".$sauce['text']."[/quote]";
 		$trefill = "Re: ".$sauce['title'];
 		if(!isset($_POST['to']))
 			$_POST['to'] = $user['name'];
@@ -80,13 +80,13 @@ if($_POST['action']=="Send")
 			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 			TidyPost($post);
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-			$post = mysql_real_escape_string($post);
+			$post = justEscape($post);
 
 			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
 			$rPM = Query($qPM);
 			$pid = mysql_insert_id();
 
-			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".$_POST['title']."', '".$post."')";
+			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".justEscape($_POST['title'])."', '".$post."')";
 			$rPMT = Query($qPMT);
 
 			Redirect("PM sent!","private.php","your PM box");
@@ -121,9 +121,11 @@ if($_POST['title'])
 if(!isset($_POST['iconid']))
 	$_POST['iconid'] = 0;
 
+DoSmileyBar();
+DoPostHelp();
+
 print "<form action=\"sendprivate.php\" method=\"post\">";
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
 print "<td style=\"width: 25%;\">To</td>";
 print "<td><input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['to']."\"></input></td>";
@@ -135,7 +137,7 @@ print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td>Post</td>";
 print "<td>";
-print "<textarea name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
+print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
@@ -146,7 +148,6 @@ print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print "</td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 print "</form>";
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
