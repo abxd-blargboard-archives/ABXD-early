@@ -32,30 +32,29 @@ if(NumRows($rCat))
 } else
 	Kill("Unknown category ID.");
 
-/*
 //Autolock system
-$qLocker = "select id from threads where forum=".$fid." and closed = 0 and lastpostdate < ".(time() - (2592000 * $autoLockMonths)); //Math note: 60 seconds * 60 minutes * 24 hours * 30 days
-$rLocker = Query($qLocker);
-if(NumRows($rLocker))
-	while($lockThread = Fetch($rLocker))
-		Query("update threads set closed = 1 where id = ".$lockThread['id']);
+if($autoLockMonths > 0)
+{
+	$qLocker = "select id from threads where forum=".$fid." and closed = 0 and lastpostdate < ".(time() - (2592000 * $autoLockMonths)); //Math note: 60 seconds * 60 minutes * 24 hours * 30 days
+	$rLocker = Query($qLocker);
+	if(NumRows($rLocker))
+		while($lockThread = Fetch($rLocker))
+			Query("update threads set closed = 1 where id = ".$lockThread['id']);
+}
 //</autolock>
-*/
 
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
-	$links .= "<a href=\"newthread.php?id=".$fid."\">Post Thread</a> | ";
-	$links .= "<a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a> | ";
+	$links .= "<li><a href=\"newthread.php?id=".$fid."\">Post Thread</a></li>";
+	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
 }
-
-$links = substr($links, 0, strlen($links) - 2);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
 $total = $forum['numthreads'];
 $tpp = $loguser['threadsperpage'];
 if(isset($_GET['from']))
-	$from = $_GET['from'];
+	$from = (int)$_GET['from'];
 else
 	$from = 0;
 
@@ -65,6 +64,10 @@ $postread = readpostread($loguserid);
 
 $qThreads = "select * from threads where forum=".$fid." order by sticky desc, lastpostdate desc limit ".$from.", ".$tpp;
 $rThreads = Query($qThreads);
+
+$rMembers = Query("select name, id, powerlevel, sex from users");
+while($mem = Fetch($rMembers))
+	$members[$mem['id']] = $mem;
 
 $numonpage = NumRows($rThreads);
 
@@ -81,10 +84,9 @@ if(!$ppp) $ppp = 20;
 
 DoPrivateMessageBar();
 
-	if(NumRows($rThreads))
+if(NumRows($rThreads))
 {
-	print "<div class=\"border width100\">";
-	print "<table>";
+	print "<table class=\"outline margin width100\">";
 	print "<tr class=\"header1\">";
 	print "<th style=\"width: 16px;\">&nbsp;</th>";
 	print "<th style=\"width: 16px;\">&nbsp;</th>";
@@ -97,15 +99,8 @@ DoPrivateMessageBar();
 
 	while($thread = Fetch($rThreads))
 	{
-		$qLastPoster = "select * from users where id=".$thread['lastposter'];
-		$rLastPoster = Query($qLastPoster);
-		$last = Fetch($rLastPoster);
-		$qStarterPoster = "select * from users where id=".$thread['user'];
-		$rStarterPoster = Query($qStarterPoster);
-		$starter = Fetch($rStarterPoster);
-		$qLastPost = "select * from posts where thread=".$thread['id']." order by date asc limit 1";
-		$rLastPost = Query($qLastPost);
-		$lastp = Fetch($rLastPost);
+		$last = $members[$thread['lastposter']];
+		$starter = $members[$thread['user']];
 
 		$NewIcon = "";
 		if($thread['closed'])
@@ -151,11 +146,10 @@ DoPrivateMessageBar();
 		print "<td>".UserLink($starter)."</td>";
 		print "<td class=\"center\">".$thread['replies']."</td>";
 		print "<td class=\"center\">".$thread['views']."</td>";
-		print "<td class=\"smallFonts\">".date($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last)."</td>";
+		print "<td class=\"smallFonts\">".gmdate($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last)."</td>";
 		print "</tr>";
 	}
 	print "</table>";
-	print "</div>";
 } else
 	if($forum['minpowerthread'] > $loguser['powerlevel'])
 		Alert("You cannot start any threads here.", "Empty forum");
