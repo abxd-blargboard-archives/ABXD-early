@@ -20,8 +20,7 @@ if($_GET['action'] == "logout")
 {
 	include("lib/header.php");
 	print "<form action=\"login.php\" method=\"post\">";
-	print "<div class=\"border width50\">";
-	print "<table>";
+	print "<table class=\"outline margin width50\">";
 	print "<tr class=\"header0\">";
 	print "<th colspan=\"2\">Log in</th>";
 	print "</tr>";
@@ -42,11 +41,10 @@ if($_GET['action'] == "logout")
 	print "<td><input type=\"submit\" name=\"action\" value=\"Log in\"></input></td>";
 	print "</tr>";
 	print "</table>";
-	print "</div>";
 	print "</form>";
 } elseif($_POST['action'] == "Log in")
 {
-	$qUser = "select * from users where name='".$_POST['name']."' and password='".md5($_POST['pass'])."'";
+	$qUser = "select * from users where name='".justEscape($_POST['name'])."' and password='".md5($_POST['pass'])."'";
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
 	{
