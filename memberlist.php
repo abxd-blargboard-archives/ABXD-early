@@ -36,8 +36,7 @@ if(isset($pow))
 $qUsers = "select * from users where ".$where." order by ".$order;
 $rUsers = Query($qUsers);
 $numUsers = NumRows($rUsers);
-print "<div class=\"border\">";
-print "<table>";
+print "<table class=\"outline margin\">";
 print "<tr class=\"header0\">";
 print "<th colspan=\"5\">Options</th>";
 print "</tr>";
@@ -87,7 +86,7 @@ if($numUsers)
 	while($user = Fetch($rUsers))
 	{
 		$userPic = "";
-		if($user['picture'])
+		if($user['picture'] && $hacks['themenames'] != 3)
 			$userPic = "<img src=\"".str_replace("img/avatars/", "img/avatars/", $user['picture'])."\" alt=\"\" style=\"width: 60px;\" />";
 
 		$cellClass = ($cellClass+1) % 2;
@@ -97,7 +96,7 @@ if($numUsers)
 		print "<td>".UserLink($user)."</td>";
 //		print "<td>".GetRank($user)."</td>";
 		print "<td>".$user['posts']."</td>";
-		print "<td>".date("M jS Y",$user['regdate'])."</td>";
+		print "<td>".gmdate("M jS Y",$user['regdate'])."</td>";
 		print "</tr>";
 	}
 } else
@@ -107,7 +106,6 @@ if($numUsers)
 		print "</tr>";
 }
 print "</table>";
-print "</div>";
 
 doFooter();
 

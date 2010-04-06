@@ -11,8 +11,8 @@ if($loguser['powerlevel'] < 3)
 if(!isset($_GET['action']))
 {
 	include("lib/header.php");
-	print "<div class=\"faq border\">";
-	print "<h3>Moderators as of ".date("F jS Y")."</h3>";
+	print "<div class=\"faq outline margin\">";
+	print "<h3>Moderators as of ".gmdate("F jS Y")."</h3>";
 	print "<ul>";
 	$qFora = "select * from forums order by catid, forder";
 	$rFora = Query($qFora);
@@ -65,7 +65,7 @@ if(!isset($_GET['action']))
 
 	if(!isset($_GET['mid']))
 	{
-		print "<div class=\"faq border\">";
+		print "<div class=\"faq outline margin\">";
 		print "Pick a mod, any mod.";
 		print "<ul>";
 		$qMod = "select * from users where powerlevel=1 order by name asc";
@@ -93,7 +93,7 @@ if(!isset($_GET['action']))
 	}
 } elseif($_GET['action']=="print")
 {
-	print "<h3>Moderators as of ".date("F jS Y")."</h3>";
+	print "<h3>Moderators as of ".gmdate("F jS Y")."</h3>";
 	print "<ul>";
 	$qFora = "select * from forums order by catid, forder";
 	$rFora = Query($qFora);
