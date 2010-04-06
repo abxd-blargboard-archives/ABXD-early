@@ -19,7 +19,7 @@ $total = FetchResult($qTotal);
 $ppp = $loguser['postsperpage'];
 
 if(isset($_GET['from']))
-	$from = $_GET['from'];
+	$from = (int)$_GET['from'];
 else
 	$from = 0;
 
@@ -44,8 +44,7 @@ if($pagelinks)
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
 }
 
-print "<div class=\"border\">";
-print "<table>";
+print "<table class=\"outline margin\">";
 print "<tr class=\"header0\">";
 print "<th>&nbsp;</th>";
 print "<th style=\"width: 75%;\">Title</th>";
@@ -68,11 +67,10 @@ while($pm = Fetch($rPM))
 	print "</td>";
 	print "<td><a href=\"showprivate.php?id=".$pm['id']."\">".$pm['title']."</a></td>";
 	print "<td>".(NumRows($rUser) ? UserLink($user) : "???")."</td>";
-	print "<td>".date($dateformat,$pm['date'])."</td>";
+	print "<td>".gmdate($dateformat,$pm['date'])."</td>";
 	print "</tr>";
 }
 print "</table>";
-print "</div>";
 
 if($pagelinks)
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
