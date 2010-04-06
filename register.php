@@ -5,6 +5,13 @@
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
+if($publickey)
+{
+	require_once('lib/recaptchalib.php');
+	$capt_resp  = null;
+	$capt_error = null;
+}
+
 $backtomain = "<br /><a href=\"./\">Back to main</a> or <a href=\"register.php\">try again</a>.";
 $sexes = array("Male","Female","N/A");
 
@@ -22,8 +29,7 @@ if(!isset($_POST['action']))
 {
 	include("lib/header.php");
 	print "<form action=\"register.php\" method=\"post\">";
-	print "<div class=\"border width50\">";
-	print "<table>";
+	print "<table class=\"outline margin width50\">";
 	print "<tr class=\"header0\">";
 	print "<th colspan=\"2\">Register</th>";
 	print "</tr>";
@@ -43,6 +49,13 @@ if(!isset($_POST['action']))
 	print "<td class=\"cell2\">Sex</td>";
 	print "<td class=\"cell1\">".MakeOptions("sex",2,$sexes)."</td>";
 	print "</tr>";
+	if($publickey)
+	{
+		print "<tr>";
+		print "<td class=\"cell2\">Security</td>";
+		print "<td class=\"cell1\">".recaptcha_get_html($publickey)."</td>";
+		print "</tr>";
+	}
 	print "<tr>";
 	print "<td class=\"cell2\"></td>";
 	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
@@ -52,7 +65,6 @@ if(!isset($_POST['action']))
 	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input></td>";
 	print "</tr>";
 	print "</table>";
-	print "</div>";
 	print "</form>";
 } elseif($_POST['action'] == "Register")
 {
@@ -86,18 +98,27 @@ if(!isset($_POST['action']))
 		$err = "Another user is already using this IP address.".$backtomain;
 	elseif(strlen($_POST['pass']) < 4)
 		$err = "Your password must be at least four characters long.".$backtomain;
+	elseif($publickey)
+	{
+		$resp = recaptcha_check_answer ($privatekey, $_SERVER["REMOTE_ADDR"], $_POST["recaptcha_challenge_field"], $_POST["recaptcha_response_field"]);
+		if(!$resp->is_valid)
+			$err = "You got the CAPTCHA wrong.".$backtomain;
+	}
 
 	if($err)
 	{
-		include("header.php");
+		include("lib/header.php");
 		Kill($err);
 	}
 
-	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".$_POST['name']."', '".md5($_POST['pass'])."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".$_POST['email']."', ".$_POST['sex'].")";
+	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".justEscape($_POST['name'])."', '".md5($_POST['pass'])."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].")";
 	$rUsers = Query($qUsers);
 
-	if(mysql_insert_id() == 1)
+	$uid = mysql_insert_id();
+	if($uid == 1)
 		Query("update users set powerlevel = 3 where id = 1;");
+
+	Report("<message><action type=\"newuser\" id=\"".$uid."\" /><user id=\"".$uid."\">".$_POST['name']."</user></message>");
 
 	if($_POST['autologin'])
 	{
@@ -114,7 +135,7 @@ if(!isset($_POST['action']))
 		Redirect("You are now registered and logged in.","./","the main page");
 	} else
 	{
-		include("header.php");
+		include("lib/header.php");
 		Redirect("You are now registered!","login.php","the login page");
 	}
 }
@@ -123,7 +144,7 @@ doFooter();
 
 function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
-	$checks[$checkedIndex] = " checked=\"true\"";
+	$checks[$checkedIndex] = " checked=\"checked\"";
 	foreach($choicesList as $key=>$val)
 		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
 	return $result;
