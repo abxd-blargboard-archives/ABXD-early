@@ -2,10 +2,11 @@
 
 body
 {
-	background: #040420 url(../img/themes/default/back2c.png) fixed;
+	background: #040420 url(../img/themes/default/back2c.png);
 	color: white;
 	font-family: "Verdana", "Arial", sans-serif;
 	font-size: 10pt;
+	margin: 0px;
 }
 
 h3
@@ -48,12 +49,6 @@ a:hover
 	color:#FFFFFF;
 }
 
-.border
-{
-	border: 1px solid #669;
-	margin-bottom: 4px;
-}
-
 .width100
 {
 	width: 100%;
@@ -74,6 +69,15 @@ a:hover
 	width: 25%;
 }
 
+.outline
+{
+	outline: 1px solid #669;
+}
+
+.margin
+{
+	margin-bottom: 4px;
+}
 
 table
 {
@@ -113,7 +117,7 @@ table.post td.side
 
 table.post td.post
 {
-	background: #222 url(../img/themes/default/back2g.png) fixed;
+	background: #222 url(../img/themes/default/back2g.png);
 	border: 1px solid #000;
 	vertical-align: top;
 	height: 100px;
@@ -143,11 +147,17 @@ table.post td.links
 .PoRT
 {
 	float: right;
+	clear: right;
 }
 
 .PoRT td, .PoRT th, .smallFonts td, .smallFonts
 {
 	font-size: 8pt;
+}
+
+.left
+{
+	text-align: left !important;
 }
 
 .right
@@ -170,6 +180,7 @@ table.post td.links
 	text-align: center;
 	width: 100%;
 	font-size: 10pt;
+	clear: both;
 }
 
 .footer *
@@ -239,7 +250,7 @@ table.breadcrumbs, table.breadcrumbs td
 
 .faq
 {
-	background: #222 url(../img/themes/default/back2g.png) fixed;
+	background: #222 url(../img/themes/default/back2g.png);
 	padding: 4px;
 }
 
@@ -260,7 +271,7 @@ td.post blockquote
 
 td.post code.Code
 {
-	background: url(../img/themes/default/back2t2.png) #24285C;
+	background: #24285C url(../img/themes/default/back2t2.png);
 	font-family: "Consolas", "Courier New", monospace;
 }
 
@@ -293,7 +304,143 @@ form
 	display: block;
 }
 
-.spoiled
+button
+{
+	border: 1px solid #669;
+	background: #335;
+	color: #FFF;
+}
+
+div.spoiler button
+{
+	font-size: 10px;
+}
+div.spoiler div.spoiled
+{
+	background: #000;
+	color: #FFF;
+}
+div.spoiler div.hidden
 {
 	display: none;
+}
+
+ul.pipemenu
+{
+	display: inline;
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+}
+ul.pipemenu li
+{
+	display: inline;
+	border-left: 1px solid white;
+	padding-left: 4px;
+	padding-right: 2px;
+
+}
+ul.pipemenu li:first-child
+{
+	border-left: 0px none;
+}
+
+.PoRT
+{
+	font-size: 11px;
+}
+
+/* In Opera, I noticed that the PoRA Box's outline overlaps this message.
+   This really shouldn't be, and even IE8 does it right -- and you know what?
+   I DON'T CARE and neither should you, because you should only SEE this
+   message in a browser that doesn't do outlines at all! HAW HAW HAW! */
+#getabetterbrowseryoulazyfuck
+{
+	position: absolute;
+	left: 32px;
+	top: 32px;
+	background: #FFC;
+	border: 4px solid #F00;
+	color: #000;
+	font-size: 16px;
+	font-weight: bold;
+	padding: 4px;
+}
+
+.footer a img
+{
+	opacity: 0.50;
+	-o-transition: opacity 0.2s ease-in-out;
+	-moz-transition: opacity 0.2s ease-in-out;
+}
+.footer a:hover img
+{
+	opacity: 1;
+}
+
+.smilies img
+{
+	padding: 1px;
+	opacity: 0.50;
+	border: 1px solid rgba(255,255,255, 0);
+
+	-o-transition: opacity 0.2s ease-in-out;
+	-moz-transition: opacity 0.2s ease-in-out;
+}
+.smilies img:hover
+{
+	margin: 0px;
+	opacity: 1;
+	background: rgba(255,255,255, 0.25);
+	border: 1px solid rgba(255,255,255, 0.50);
+}
+
+a, a span
+{
+	-o-transition: color 0.2s ease-in-out;
+}
+a:hover span
+{
+	color: white !important;
+}
+
+
+
+
+#pmNotice
+{
+	background: #BB8;
+	color: #000 !important;
+	width: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	padding: 4px 8px;
+	font-size: 12px;
+	border: 1px none;
+	border-bottom: 2px solid black;
+	outline: 0px none;
+	opacity: 0.5;
+	-o-transition: all 0.2s ease-in-out;
+}
+#pmNotice:hover
+{
+	opacity: 1;
+	background: #FFC;	
+}
+#pmNotice a span, #pmNotice a
+{
+	color: #C09030 !important;
+}
+#pmNotice a:hover span, #pmNotice a:hover
+{
+	color: #000 !important;
+}
+#header
+{
+	outline: 0px none;
+}
+#body
+{
+	margin: 8px;
 }

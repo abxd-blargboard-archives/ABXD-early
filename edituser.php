@@ -4,8 +4,11 @@
 
 include("lib/common.php");
 
+//if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
+//	if($_POST['id'] != $loguserid)
+//		Kill("You're not allowed to edit other users' profiles.");
 if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
-	if($_POST['id'] != $loguserid)
+	if((isset($_POST['id']) && $_POST['id'] != $loguserid) || (isset($_GET['id']) && $_GET['id'] != $loguserid))
 		Kill("You're not allowed to edit other users' profiles.");
 
 if(isset($_POST['id']) && !isset($_GET['id']))
@@ -38,6 +41,31 @@ if(isset($_POST['realname']))
 if(isset($_POST['location']))
 	$_POST['location'] = htmlentities2($_POST['location']);
 
+$newMD5 = md5($_POST['newPW']);
+if($_POST['action'] == "Edit user")
+{
+	$wantToChange = FALSE;
+	$allowedToChange = FALSE;
+	//print "User PW: ".$user['password']."<br />";
+	//print "New PW: ".$newMD5."<br />";
+	if($_POST['newPW'] != "")
+	{
+		if($newMD5 != $user['password'])
+			$wantToChange = TRUE;
+	}
+	if($_POST['repeatPW'] != "")
+	{
+		if($_POST['newPW'] == $_POST['repeatPW'])
+			$allowedToChange = TRUE;
+	}
+	//print "Want to change: ".(int)$wantToChange."<br />";
+	//print "Allowed to change: ".(int)$allowedToChange."<br />";
+	if($wantToChange && !$allowedToChange)
+	{
+		Alert("To change your password, you must type it twice without error.");
+		$_POST['action'] = "Not yet.";
+	}
+}
 
 if($_POST['action'] == "Edit user")
 {
@@ -161,6 +189,7 @@ if($_POST['action'] == "Edit user")
 
 	$globalblock = (int)($_POST['globalblock'] == "on");
 	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
+	$usebanners = (int)($_POST['usebanners'] == "on");
 
 	if($_POST['presetdate'])
 		$_POST['dateformat'] = $_POST['presetdate'];
@@ -174,34 +203,35 @@ if($_POST['action'] == "Edit user")
 
 	$qUser = "update users set ";
 	if($adminmode)
-		$qUser.= "name = '".$_POST['name']."', ";
+		$qUser.= "name = '".justEscape($_POST['name'])."', ";
 	if($_POST['newPW']) $qUser.= "password='".md5($_POST['newPW'])."', ";
-	$qUser.= "rankset = ".$_POST['rankset'].", ";
+	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
 	if(TitleCheck())
-		$qUser.= "title = '".htmlentities3($_POST['title'])."', ";
+		$qUser.= "title = '".justEscape($_POST['title'])."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	if($adminmode)
 	{
-		$qUser.= "powerlevel = ".$_POST['level'].", ";
+		$qUser.= "powerlevel = ".(int)$_POST['level'].", ";
 		$qUser.= "globalblock = ".$globalblock.", ";
 	}
-	$qUser.= "sex = ".$_POST['sex'].", ";
-	$qUser.= "realname = '".$_POST['realname']."', ";
-	$qUser.= "location = '".$_POST['location']."', ";
+	$qUser.= "sex = ".(int)$_POST['sex'].", ";
+	$qUser.= "realname = '".justEscape($_POST['realname'])."', ";
+	$qUser.= "location = '".justEscape($_POST['location'])."', ";
 	$qUser.= "birthday = ".(int)$bday.", ";
-	$qUser.= "bio = '".htmlentities3($_POST['bio'])."', ";
-	$qUser.= "postheader = '".htmlentities3($_POST['postheader'])."', ";
-	$qUser.= "signature = '".htmlentities3($_POST['signature'])."', ";
-	$qUser.= "email = '".$_POST['email']."', ";
-	$qUser.= "homepageurl = '".$_POST['hpurl']."', ";
-	$qUser.= "homepagename = '".$_POST['hpname']."', ";
-	$qUser.= "scheme = '".$newscheme."', ";
-	$qUser.= "threadsperpage = ".$_POST['tpp'].", ";
-	$qUser.= "postsperpage = ".$_POST['ppp'].", ";
-	$qUser.= "dateformat = '".$_POST['dateformat']."', ";
-	$qUser.= "timeformat = '".$_POST['timeformat']."', ";
-	$qUser.= "blocklayouts = '".$blocklayouts."' ";
+	$qUser.= "bio = '".justEscape($_POST['bio'])."', ";
+	$qUser.= "postheader = '".justEscape($_POST['postheader'])."', ";
+	$qUser.= "signature = '".justEscape($_POST['signature'])."', ";
+	$qUser.= "email = '".justEscape($_POST['email'])."', ";
+	$qUser.= "homepageurl = '".justEscape($_POST['hpurl'])."', ";
+	$qUser.= "homepagename = '".justEscape($_POST['hpname'])."', ";
+	$qUser.= "scheme = '".justEscape($newscheme)."', ";
+	$qUser.= "threadsperpage = ".(int)$_POST['tpp'].", ";
+	$qUser.= "postsperpage = ".(int)$_POST['ppp'].", ";
+	$qUser.= "dateformat = '".justEscape($_POST['dateformat'])."', ";
+	$qUser.= "timeformat = '".justEscape($_POST['timeformat'])."', ";
+	$qUser.= "blocklayouts = '".$blocklayouts."', ";
+	$qUser.= "usebanners = '".$usebanners."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
 	Redirect("Profile updated.","profile.php?id=".$id,($id == $loguserid ? "your" : "that user's") . " profile");
@@ -222,25 +252,24 @@ for($i = 0; $i < count($themes); $i++)
 {
 	$qCount = "select count(*) from users where scheme=".$i;
 	$c = FetchResult($qCount);
-	$themes[$themeFiles[$i]] .= " (".$c[0].")";
+	$themes[$themeFiles[$i]] .= " (".$c.")";
 }
 
 $dateformats=array('','m-d-y','d-m-y','y-m-d','Y-m-d','m/d/Y','d.m.y','M j Y','D jS M Y');
 $timeformats=array('','h:i A','h:i:s A','H:i','H:i:s');
 
 foreach($dateformats as $format)
-	$datelist[$format] = ($format ? $format.' ('.date($format).')':'');
+	$datelist[$format] = ($format ? $format.' ('.gmdate($format).')':'');
 foreach($timeformats as $format)
-	$timelist[$format] = ($format ? $format.' ('.date($format).')':'');
+	$timelist[$format] = ($format ? $format.' ('.gmdate($format).')':'');
 
 if($user['birthday'] == 0)
 	$bday = "";
 else
-	$bday = date("F j, Y", $user['birthday']);
+	$bday = gmdate("F j, Y", $user['birthday']);
 
 print "<form action=\"edituser.php\" method=\"post\" enctype=\"multipart/form-data\">";
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Login information</th>";
@@ -255,7 +284,7 @@ if($adminmode)
 }
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"pw\">Password</label></td><td><input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\"></input></td>";
+print "<td><label for=\"pw\">Password</label></td><td><input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\"></input> / Repeat: <input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\"></input></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -309,17 +338,17 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".$user['bio']."</textarea></td>";
+print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Post layout</th>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"5\" style=\"width: 98%;\">".$user['postheader']."</textarea></td>";
+print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['postheader'])."</textarea></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"sig\">Signature</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"5\" style=\"width: 98%;\">".$user['signature']."</textarea></td>";
+print "<td><label for=\"sig\">Footer</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['signature'])."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -354,7 +383,10 @@ print "<tr class=\"cell0\">";
 print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td></td><td><input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block all layouts</label></td>";
+print "<td>Extras</td><td>";
+print "<input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block all layouts</label><br />";
+print "<input type=\"checkbox\" id=\"ub\" name=\"usebanners\" ".($user['usebanners'] ? "checked=\"checked\"" : "")."></input> <label for=\"ub\">Use nice notification banners</label>";
+print "</td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -366,14 +398,13 @@ print "<input type=\"hidden\" name=\"id\" value=\"".$id."\"></input></td>";
 print "</tr>";
 
 print "</table>";
-print "</div>";
 print "</form>";
 
 doFooter();
 
 function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
-	$checks[$checkedIndex] = " checked=\"true\"";
+	$checks[$checkedIndex] = " checked=\"checked\"";
 	foreach($choicesList as $key=>$val)
 		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
 	return $result;
@@ -381,7 +412,7 @@ function MakeOptions($fieldName, $checkedIndex, $choicesList)
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList)
 {
-	$checks[$checkedIndex] = " selected=\"true\"";
+	$checks[$checkedIndex] = " selected=\"selected\"";
 	$result = "<select id=\"".$fieldname."\" name=\"".$fieldName."\" size=\"1\">";
 	foreach($choicesList as $key=>$val)
 		$result .= "<option value=\"".$key."\"".$checks[$key].">".$val."</option>";
@@ -398,9 +429,10 @@ function TitleCheck()
 
 function htmlval($text)
 {
-	$text = str_replace("\"", "&quot;", $text);
-	$text = str_replace("<", "&lt;", $text);
-	return $text;
+	//$text = str_replace("\"", "&quot;", $text);
+	//$text = str_replace("<", "&lt;", $text);
+	//return $text;
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
 }
 
 ?>
