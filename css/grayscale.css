@@ -2,7 +2,12 @@
 
 body
 {
-	background: #383838 url(../img/themes/grayscale/back2c.png) fixed;
+	background: #383838 url(../img/themes/grayscale/back2c.png);
+}
+
+.outline
+{
+	outline-color: #666;
 }
 
 h3
@@ -23,11 +28,16 @@ a:active
 {
 	color: #E1E1E1;
 }
-
-.border
+a:hover
 {
-	border-color: #6B6B6B;
+	color: #FFF;
 }
+
+table
+{
+	outline: 1px solid #6B6B6B;
+}
+
 
 th
 {
@@ -74,7 +84,7 @@ table.post td.post
 
 .faq
 {
-	background: #222 url(../img/themes/grayscale/back2g.png) fixed;
+	background: #222 url(../img/themes/grayscale/back2g.png);
 }
 
 td.post code.Code
@@ -94,4 +104,24 @@ td.post code.Code
 	color: #EEE;
 	border: 1px solid #000;
 	border-top: 0px;
+}
+
+
+
+
+#pmNotice
+{
+	background: #777;
+}
+#pmNotice:hover
+{
+	background: #888;
+}
+#pmNotice a span, #pmNotice a
+{
+	color: #C4C4C4 !important;
+}
+#pmNotice a:hover span, #pmNotice a:hover
+{
+	color: #FFF !important;
 }
