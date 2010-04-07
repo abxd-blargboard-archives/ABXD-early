@@ -15,6 +15,11 @@ body
 	margin: 22px 14px;
 }
 
+.outline
+{
+	outline: 0px none;
+}
+
 code
 {
 	font-family: "Fixedsys", "Courier New", monospace;
@@ -171,4 +176,40 @@ em, i
 td.post blockquote
 {
 	padding: 8px 16px;
+}
+
+
+
+a, a span
+{
+	-o-transition-property: none !important;
+}
+#pmNotice
+{
+	background: silver;
+	border: 0px none;
+	padding: 0px;
+	padding-left: 8px;
+	opacity: 1;
+}
+#pmNotice:hover
+{
+	background: silver;
+}
+#pmNotice a span, #pmNotice a
+{
+	color: navy !important;
+}
+#pmNotice a:hover span, #pmNotice a:hover
+{
+	color: yellow !important;
+}
+
+#body
+{
+	margin: 0px;
+}
+.margin
+{
+	margin-bottom: 14px;
 }
