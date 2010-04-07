@@ -14,8 +14,53 @@ $isBot = 0;
 if(str_replace($bots,"x",$_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT'])
 	$isBot = 1;
 
+include("browsers.php");
+
+//Check the amount of users right now for the records
+$qMisc = "select * from misc";
+$rMisc = Query($qMisc);
+$misc = Fetch($rMisc);
+$qOnlineUsers = "select id, powerlevel, sex, name from users where lastactivity > ".(time()-300)." or lastposttime > ".(time()-300)." order by name";
+$rOnlineUsers = Query($qOnlineUsers);
+$qRecords = ""; //Thanks for inspiring me to check this out, Blackhole ;)
+$onlineUsers = "";
+$onlineUserCt = 0;
+while($onlineUser = Fetch($rOnlineUsers))
+{
+	$onlineUsers .= ($onlineUserCt ? ", " : "").UserLink($onlineUser);
+	$onlineUserCt++;
+}
+if($onlineUserCt > $misc['maxusers'])
+{
+	$qRecords = "maxusers = ".$onlineUserCt.", maxusersdate = ".time().", maxuserstext = '".$onlineUsers."'";
+}
+//Check the amount of posts for the record
+$qNewToday = "select count(*) from posts where date > ".(time() - 86400);
+$newToday = FetchResult($qNewToday);
+$qNewLastHour = "select count(*) from posts where date > ".(time() - 3600);
+$newLastHour = FetchResult($qNewLastHour);
+if($newToday > $misc['maxpostsday'])
+{
+	if($qRecords) $qRecords .= ", ";
+	$qRecords .= "maxpostsday = ".$newToday.", maxpostsdaydate = ".time();
+}
+if($newLastHour > $misc['maxpostshour'])
+{
+	if($qRecords) $qRecords .= ", ";
+	$qRecords .= "maxpostshour = ".$newLastHour.", maxpostshourdate = ".time();
+}
+if($qRecords)
+{
+	$qRecords = "update misc set ".$qRecords;
+	$rRecords = Query($qRecords);
+}
+
 //Delete oldies visitor from the guest list. We may re-add him/her later.
 $qGuests = "delete from guests where ip='".$_SERVER['REMOTE_ADDR']."' or date < ".(time()-300);
+$rGuests = Query($qGuests);
+
+//Delete old reporters too, at a time limit of one hour.
+$qGuests = "delete from reporters where date < ".(time()-3600);
 $rGuests = Query($qGuests);
 
 //Lift dated IP Bans
@@ -28,13 +73,15 @@ $rIPBan = Query($qIPBan);
 if(NumRows($rIPBan))
 {
 	$ipban = Fetch($rIPBan);
-	print "You have been ".($ipban['date'] ? "" : "<strong>permanently</strong> ")."IP-banned from this board".($ipban['date'] ? " until ".date("M jS Y, G:i:s",$ipban['date']).". That's ".TimeUnits($ipban['date']-time())." left" : "").". Attempting to get around this in any way will result in worse things.";
+	print "You have been ".($ipban['date'] ? "" : "<strong>permanently</strong> ")."IP-banned from this board".($ipban['date'] ? " until ".gmdate("M jS Y, G:i:s",$ipban['date']).". That's ".TimeUnits($ipban['date']-time())." left" : "").". Attempting to get around this in any way will result in worse things.";
 	exit();
 }
 
 $logdata = unserialize(base64_decode($_COOKIE['logdata']));
 $loguserid = (int)$logdata['loguserid'];
 $loguserpw = $logdata['loguserpw'];
+
+$guestuser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
 
 if($loguserid) //Are we logged in?
 {
@@ -43,7 +90,7 @@ if($loguserid) //Are we logged in?
 	if(NumRows($rLogUser)) //We have at least one result.
 	{
 		$loguser = Fetch($rLogUser);
-		$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".$thisURL."' where id=".$loguserid;
+		$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."' where id=".$loguserid;
 		$qLastView = Query($rLastView);
 
 		$dateformat = $loguser['dateformat'].", ".$loguser['timeformat'];
@@ -52,7 +99,7 @@ if($loguserid) //Are we logged in?
 		//No result found? Eat the cookies.
 		setcookie("logdata", 0);
 
-		$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".$thisURL."', '".$_SERVER['HTTP_USER_AGENT']."', ".$isBot.")";
+		$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
 		$rGuest = Query($qGuest);
 
 		$loguser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
@@ -60,11 +107,14 @@ if($loguserid) //Are we logged in?
 	}
 } else
 {
-	$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".$thisURL."', '".$_SERVER['HTTP_USER_AGENT']."', ".$isBot.")";
+	$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
 	$rGuest = Query($qGuest);
 
-	$loguser = array("name"=>"Guest", "powerlevel"=>0);
+	$loguser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
 	$loguserid = 0;
 }
+
+if($hacks['forcetheme'] > -1)
+	$loguser['scheme'] = $hacks['forcetheme'];
 
 ?>
