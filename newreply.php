@@ -50,11 +50,12 @@ if($_POST['action']=="Post")
 {
 	if($_POST['text'])
 	{
-		$post = htmlentities2(stripslashes($_POST['text']));
+		//$post = htmlentities2(stripslashes($_POST['text']));
+		$post = htmlentities2($_POST['text']);
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-		$post = mysql_real_escape_string($post);
+		$post = justEscape($post);
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
@@ -78,6 +79,7 @@ if($_POST['action']=="Post")
 		$qFora = "update forums set numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
+		Report("<message><action type=\"newreply\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
@@ -86,7 +88,8 @@ if($_POST['action']=="Post")
 
 if($_POST['text'])
 {
-	$prefill = htmlentities2(stripslashes($_POST['text']));
+	//$prefill = htmlentities2(stripslashes($_POST['text']));
+	$prefill = htmlentities2(deSlashMagic($_POST['text']));
 	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
@@ -105,13 +108,25 @@ if($_POST['action']=="Preview")
 		Alert("Enter a message and try again.","Your post is empty.");
 }
 
+if(!$_POST['text']) $_POST['text'] = $post['text'];
+if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+
 if($_GET['quote'])
 {
-	$qQuote = "select * from posts left join posts_text on id=pid where id=".$_GET['quote'];
-	$rQuote = Query($qQuote);
-	if(NumRows($rQuote))
+	//$qQuote = "select * from posts left join posts_text on id=pid where id=".$_GET['quote'];
+	//$rQuote = Query($qQuote);
+	
+	$qPost = "select * from posts where id=".$_GET['quote'];
+	$rPost = Query($qPost);
+	$post = Fetch($rPost);
+	$qText = "select text,revision from posts_text where pid=".$post['id']." order by revision desc limit 1";
+	$rText = Query($qText);
+	$text = Fetch($rText);
+	$quote = array_merge($post, $text);
+
+//	if(NumRows($rQuote))
 	{
-		$quote = Fetch($rQuote);
+//		$quote = Fetch($rQuote);
 
 		//SPY CHECK!
 		$qThread = "select forum from threads where id=".$quote['thread'];
@@ -134,10 +149,10 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
 DoSmileyBar();
+DoPostHelp();
 
 print "<form action=\"newreply.php\" method=\"post\">";
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"text\">Post</label></td>";
 print "<td>";
@@ -154,7 +169,6 @@ print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
 print "</td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 print "</form>";
 
 //Revisions
@@ -168,8 +182,7 @@ $qPosts = "select * from posts left join posts_text on id=pid where thread=".$ti
 $rPosts = Query($qPosts);
 if(NumRows($rPosts))
 {
-	print "<div class=\"border\">";
-	print "<table>";
+	print "<table class=\"outline margin\">";
 	while($post = Fetch($rPosts))
 	{
 		$cellClass = ($cellClass+1) % 2;
@@ -187,16 +200,24 @@ if(NumRows($rPosts))
 		print "<tr>";
 		print "<td class=\"cell2\">".UserLink($poster)."</td>";
 		print "<td class=\"cell".$cellClass."\">";
+		print "<button style=\"float: right;\" onclick=\"insertQuote(".$post['id'].");\">Quote</button>";
 		print CleanUpPost($post['text']);
 		print "</td>";
 		print "</tr>";
 	}
 	print "</table>";
-	print "</div>";
 }
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
 doFooter();
+
+function htmlval($text)
+{
+	//$text = str_replace("\"", "&quot;", $text);
+	//$text = str_replace("<", "&lt;", $text);
+	//return $text;
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
+}
 
 ?>

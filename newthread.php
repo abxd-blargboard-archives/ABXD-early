@@ -42,17 +42,19 @@ else
 if(isset($_POST['title']))
 	$_POST['title'] = htmlentities2($_POST['title']);
 if(isset($_POST['pollQuestion']))
-	$_POST['pollQuestion'] = htmlentities2(stripslashes($_POST['pollQuestion']))	;
+	$_POST['pollQuestion'] = htmlentities2($_POST['pollQuestion']);
+	//$_POST['pollQuestion'] = htmlentities2(stripslashes($_POST['pollQuestion']));
 
 if($_POST['action']=="Post")
 {
 	if($_POST['text'] && $_POST['title'])
 	{
-		$post = htmlentities2(stripslashes($_POST['text']));
+		//$post = htmlentities2(stripslashes($_POST['text']));
+		$post = htmlentities2($_POST['text']);
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-		$post = mysql_real_escape_string($post);
+		$post = justEscape($post);
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
@@ -62,20 +64,20 @@ if($_POST['action']=="Post")
 			if($_POST['iconid'] < 255)
 				$iconurl = "img/icons/icon".$_POST['iconid'].".gif";
 			else
-				$iconurl = $_POST['iconurl'];
+				$iconurl = justEscape($_POST['iconurl']);
 		}
 
 		//	Guess who forgot to make sure not every thread was a poll? XD -- Arbe
 		if($_POST['poll'])
 		{
-			$qPoll = "insert into poll (question) values ('".$_POST['pollQuestion']."')";
+			$qPoll = "insert into poll (question) values ('".justEscape($_POST['pollQuestion'])."')";
 			$rPoll = Query($qPoll);
 			$pod = mysql_insert_id();
 			for($pops = 0; $pops < $_POST['pollOptions']; $pops++)
 			{
 				if($_POST['pollOption'.$pops])
 				{
-					$qPollOption = "insert into poll_choices (poll, choice, color) values (".$pod.", '".$_POST['pollOption'.$pops]."', '".$_POST['pollColor'.$pops]."')";
+					$qPollOption = "insert into poll_choices (poll, choice, color) values (".$pod.", '".justEscape($_POST['pollOption'.$pops])."', '".filterPollColors($_POST['pollColor'.$pops])."')";
 					$rPollOption = Query($qPollOption);
 				}
 			}
@@ -84,7 +86,7 @@ if($_POST['action']=="Post")
 			$pod = 0;
 		//Yeah, that was me ^^; -- Kawa
 
-		$qThreads = "insert into threads (forum, user, title, icon, lastpostdate, lastposter, poll) values (".$fid.",".$loguserid.",'".$_POST['title']."','".$iconurl."',".time().",".$loguserid.", ".$pod.")";
+		$qThreads = "insert into threads (forum, user, title, icon, lastpostdate, lastposter, poll) values (".$fid.",".$loguserid.",'".justEscape($_POST['title'])."','".$iconurl."',".time().",".$loguserid.", ".$pod.")";
 		$rThreads = Query($qThreads);
 		$tid = mysql_insert_id();
 
@@ -101,21 +103,31 @@ if($_POST['action']=="Post")
 		$qFora = "update forums set numthreads=".($forum['numthreads']+1).", numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
+		Report("<message><action type=\"newthread\" id=\"".$tid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$_POST['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Posted!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
-		Alert("Enter a message and try again.","Your post is empty.");
+	{
+		if($_POST['title'])
+			Alert("Enter a message and try again.","Your post is empty.");
+		else if($_POST['text'])
+			Alert("Enter a thread title and try again.","Your thread is unnamed.");
+		else
+			Alert("Enter a message and a thread title and try again.","Your post is empty.");			
+	}
 }
 
 if($_POST['text'])
 {
-	$prefill = htmlentities2(stripslashes($_POST['text']));
+	//$prefill = htmlentities2(stripslashes($_POST['text']));
+	$prefill = htmlentities2(deSlashMagic($_POST['text']));
 	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 if($_POST['title'])
-	$trefill = htmlentities2(stripslashes($_POST['title']));
+	$trefill = htmlentities2($_POST['title']);
+	//$trefill = htmlentities2(stripslashes($_POST['title']));
 
 if($_POST['action']=="Preview")
 {
@@ -127,8 +139,19 @@ if($_POST['action']=="Preview")
 		if($_POST['nopl']) $previewPost['options'] = 1;
 		MakePost($previewPost, $loguser, 0, $fid);
 	} else
-		Alert("Enter a message and try again.","Your post is empty.");
+	{
+		if($_POST['title'])
+			Alert("Enter a message and try again.","Your post is empty.");
+		else if($_POST['text'])
+			Alert("Enter a thread title and try again.","Your thread is unnamed.");
+		else
+			Alert("Enter a message and a thread title and try again.","Your post is empty.");			
+	}
 }
+
+if(!$_POST['text']) $_POST['text'] = $post['text'];
+if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+if($_POST['title']) $trefill = stripslashes($_POST['title']);
 
 if(!isset($_POST['iconid']))
 	$_POST['iconid'] = 0;
@@ -136,9 +159,11 @@ if(!isset($_POST['iconid']))
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
+DoSmileyBar();
+DoPostHelp();
+
 print "<form action=\"newthread.php\" method=\"post\">";
-print "<div class=\"border width75\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"tit\">Title</label></td>";
 print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$trefill."\"></input></td>";
@@ -169,7 +194,7 @@ if($_POST['poll'])
 {
 	print "<tr class=\"cell0\">";
 	print "<td><label for=\"pq\">Poll question</label></td>";
-	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".$_POST['pollQuestion']."\" style=\"width: 98%;\" maxlength=\"100\"></input></td>";
+	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".stripslashes($_POST['pollQuestion'])."\" style=\"width: 98%;\" maxlength=\"100\"></input></td>";
 	print "</tr>";
 	print "<tr class=\"cell1\">";
 	print "<td><label for=\"pn\">Number of options</label></td>";
@@ -180,11 +205,12 @@ if($_POST['poll'])
 		$cellClass = ($cellClass+1) % 2;
 
 		$fixed = htmlentities2(stripslashes($_POST['pollOption'.$pops]));
+		//$fixed = htmlentities2($_POST['pollOption'.$pops]);
 
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td><label for=\"p".$pops."\">Option ".($pops+1)."</label></td>";
 		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" style=\"width: 50%;\" maxlength=\"40\"></input> <label for=\"c".$pops."\">Color</label> ";
-		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".$_POST['pollColor'.$pops]."\" size=\"10\" maxlength=\"10\"></input></td>";
+		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".filterPollColors($_POST['pollColor'.$pops])."\" size=\"10\" maxlength=\"10\"></input></td>";
 		print "</tr>";
 	}
 }
@@ -192,7 +218,7 @@ if($_POST['poll'])
 print "<tr class=\"cell0\">";
 print "<td><label for=\"post\">Post</label></td>";
 print "<td>";
-print "<textarea id=\"post\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
+print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
@@ -203,11 +229,10 @@ if(!$_POST['poll'] || $_POST['pollOptions'])
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$fid."\"></input>";
-print "<input type=\"hidden\" name=\"poll\" value=\"".$_POST['poll']."\"></input>";
+print "<input type=\"hidden\" name=\"poll\" value=\"".stripslashes($_POST['poll'])."\"></input>";
 print "</td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 print "</form>";
 
 if($_POST['poll'])
@@ -216,5 +241,24 @@ else
 	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Thread"=>""), $links);
 
 doFooter();
+
+
+function htmlval($text)
+{
+	//$text = str_replace("\"", "&quot;", $text);
+	//$text = str_replace("<", "&lt;", $text);
+	//return $text;
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
+}
+
+function filterPollColors($input)
+{
+	$valid = "#0123456789ABCDEFabcdef";
+	$output = "";
+	for($i = 0; $i < strlen($input); $i++)
+		if(strpos($valid, $input[$i]) !== FALSE)
+			$output .= $input[$i];
+	return $output;
+}
 
 ?>

@@ -57,29 +57,7 @@ if(NumRows($rThread))
 
 $fid = $thread['forum'];
 
-/*
-//Deletion behavior B -- post is actually removed from the DB.
-if($_GET['delete'])
-{
-	if(!CanMod($loguserid, $fid))
-		Kill("You're not allowed to delete posts.");
-	$qPosts = "delete from posts where id=".$pid." limit 1";
-	$qPostsText = "delete from posts_text where pid=".$pid." limit 1";
-	$qThreads = "update threads set replies=replies-1 where id=".$tid." limit 1";
-	$qFora = "update forums set numposts=numposts-1 where id=".$fid." limit 1";
-	$qUsers = "update users set posts=posts-1 where id=".$post['user']." limit 1";
-	$rPosts = Query($qPosts);
-	$rPostsText = Query($qPostsText);
-	$rThreads = Query($qThreads);
-	$rFora = Query($qFora);
-	$rUsers = Query($qUsers);
-	Redirect("Deleted!","thread.php?id=".$tid,"the thread");
-	exit();
-}
-//</Deletion method B>
-*/
-//Deletion behavior A -- post is simply made invisible.
-if($_GET['delete']==1)
+if((int)$_GET['delete'] == 1)
 {
 	if(!CanMod($loguserid,$fid))
 		Kill("You're not allowed to delete posts.");
@@ -87,7 +65,7 @@ if($_GET['delete']==1)
 	$rPosts = Query($qPosts);
 	Redirect("Deleted!","thread.php?id=".$tid,"the thread");
 	exit();
-} elseif($_GET['delete']==2)
+} elseif((int)$_GET['delete'] == 2)
 {
 	if(!CanMod($loguserid,$fid))
 		Kill("You're not allowed to undelete posts.");
@@ -96,7 +74,6 @@ if($_GET['delete']==1)
 	Redirect("Restored!","thread.php?id=".$tid,"the thread");
 	exit();
 }
-//</Deletion method A>
 
 if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
 	Kill("You are not allowed to edit posts.");
@@ -108,22 +85,16 @@ if($_POST['action']=="Edit")
 {
 	if($_POST['text'])
 	{
-		$post = htmlentities2(stripslashes($_POST['text']));
+		//$post = htmlentities2(stripslashes($_POST['text']));
+		$post = htmlentities2($_POST['text']);
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-		$post = mysql_real_escape_string($post);
+		$post = justEscape($post);
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
 
-/*
-//No revisions
-		$qPostsText = "update posts_text set text='".$post."' where pid=".$pid." limit 1";
-		$rPostsText = Query($qPostsText);
-//</norevisions>
-*/
-//Revisions
 		$qRev = "select max(revision) from posts_text where pid=".$pid;
 		$rRev = Query($qRev);
 		$rev = Fetch($rRev);
@@ -131,11 +102,11 @@ if($_POST['action']=="Edit")
 		$rev++;
 		$qPostsText = "insert into posts_text (pid,text,revision) values (".$pid.", '".$post."', ".$rev.")";
 		$rPostsText = Query($qPostsText);
-//</revisions>
 
 		$qPosts = "update posts set options='".$options."' where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
 
+		Report("<message><action type=\"postedit\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Edited!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
@@ -144,7 +115,8 @@ if($_POST['action']=="Edit")
 
 if($_POST['text'])
 {
-	$prefill = htmlentities2(stripslashes($_POST['text']));
+	//$prefill = htmlentities2(stripslashes($_POST['text']));
+	$prefill = htmlentities2(deSlashMagic($_POST['text']));
 	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
 	TidyPost($prefill);
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
@@ -170,9 +142,10 @@ if($_POST['action']=="Preview")
 		Alert("Enter a message and try again.","Your post is empty.");
 }
 
-if(!$_POST['text']) $_POST['text'] = stripslashes($post['text']);
-
-if($_POST['text']) $prefill = stripslashes($_POST['text']);
+if(!$_POST['text']) $_POST['text'] = $post['text'];
+if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+//if(!$_POST['text']) $_POST['text'] = $post['text'];
+//if($_POST['text']) $prefill = $_POST['text'];
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
@@ -180,8 +153,7 @@ if($_POST['nopl'])
 DoSmileyBar();
 
 print "<form action=\"editpost.php\" method=\"post\">";
-print "<div class=\"border width50\">";
-print "<table>";
+print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
 print "<td>Post</td>";
 print "<td>";
@@ -198,9 +170,16 @@ print "<input type=\"hidden\" name=\"id\" value=\"".$pid."\"></input>";
 print "</td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 print "</form>";
 
 doFooter();
+
+function htmlval($text)
+{
+	//$text = str_replace("\"", "&quot;", $text);
+	//$text = str_replace("<", "&lt;", $text);
+	//return $text;
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
+}
 
 ?>
