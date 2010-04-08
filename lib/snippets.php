@@ -24,7 +24,7 @@ function DoFooter()
 {
 	global $timeStart, $queries, $overallTidy;
 	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.1.2<br />";
+	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.2<br />";
 	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
 
 	print "<a href=\"http://validator.w3.org/check?uri=referer\"><img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" /></a>";
@@ -34,14 +34,125 @@ function DoFooter()
 	print "<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\"><img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" /></a>";
 
 	print "</div>";
+	print "</div>";
 	print "</body>";
 	print "</html>";
+	
+	if(!$overallTidy)
+		return;
+		
+	$tidyConfig = array
+	(
+		"show-body-only"=>0,
+		"output-xhtml"=>1,
+		"doctype"=>"strict",
+		"logical-emphasis"=>1,
+		"alt-text"=>"",
+		"drop-proprietary-attributes"=>1,
+		"wrap"=>0,
+		"preserve-entities"=>1,
+		"indent"=>"auto",
+		"input-encoding"=>"utf8",
+		"char-encoding"=>"utf8",
+		"output-encoding"=>"utf8",
+	);
+	$raw = ob_get_contents();
+	ob_end_clean();
+	$tidyConfig = 
+	print tidy_repair_string($raw, $tidyConfig);
+	exit();	
+}
+
+function GetRainbowColor()
+{
+	$stime = gettimeofday();
+	$h = (($stime[usec] / 5) % 600);
+	if($h < 100)
+	{
+		$r = 255;
+		$g = 155 + $h;
+		$b = 155;
+	}
+	else if($h < 200)
+	{
+		$r = 255 - $h + 100;
+		$g = 255;
+		$b = 155;
+	}
+	else if($h < 300)
+	{
+		$r = 155;
+		$g = 255;
+		$b = 155 + $h - 200;
+	}
+	else if($h < 400)
+	{
+		$r = 155;
+		$g = 255 - $h + 300;
+		$b = 255;
+	}
+	else if($h < 500)
+	{
+		$r = 155 + $h - 400;
+		$g = 155;
+		$b = 255;
+	}
+	else
+	{
+		$r = 255;
+		$g = 155;
+		$b = 255 - $h + 500;
+	}
+	return substr(dechex($r * 65536 + $g * 256 + $b), -6);
 }
 
 function UserLink($user)
 {
-	$className = "nc" . $user['sex'] . (($user['powerlevel'] == -1) ? "x" : $user['powerlevel']);
-	return "<a href=\"profile.php?id=".$user['id']."\"><span class=\"".$className."\">".$user['name']."</span></a>";
+	global $hacks;
+
+	$fpow = $user['powerlevel'];
+	$fsex = $user['sex'];
+	$fname = $user['name'];
+
+	if($hacks['alwayssamepower'])
+		$fpow = $hacks['alwayssamepower'] - 1;
+	if($hacks['alwayssamesex'])
+		$fsex = $hacks['alwayssamesex'];
+
+	$classing = " class=\"nc" . $fsex . (($fpow == -1) ? "x" : $fpow)."\"";
+
+	if($hacks['themenames'] == 1)
+	{
+		global $lastJokeNameColor;
+		$classing = " style=\"color: ";
+		if($lastJokeNameColor % 2 == 1)
+			$classing .= "#E16D6D; \"";
+		else
+			$classing .= "#44D04B; \"";
+		if($fpow == -1)
+			$classing = " class=\"nc0x\"";
+		$lastJokeNameColor++;
+	} else if($hacks['themenames'] == 2 && $fpow > -1)
+	{
+		$classing = " style =\"color: #".GetRainbowColor()."\"";
+	} else if($hacks['themenames'] == 3)
+	{
+		if($fpow == 3)
+		{
+			$fname = "Administration";
+			$classing = " class=\"nc23\"";
+		} else if($fpow == -1)
+		{
+			$fname = "Idiot";
+			$classing = " class=\"nc2x\"";
+		} else
+		{
+			$fname = "Anonymous";
+			$classing = " class=\"nc22\"";
+		}
+	}
+
+	return "<a href=\"profile.php?id=".$user['id']."\"><span".$classing.">".$fname."</span></a>";
 }
 
 function CanMod($userid, $fid)
@@ -61,8 +172,8 @@ function CanMod($userid, $fid)
 
 function MakeCrumbs($path, $links)
 {
-	print "<table class=\"breadcrumbs\">";
-	print "<tr><td>";
+	//print "\n<table class=\"breadcrumbs\">\n";
+	//print "\t<tr>\n\t\t<td>\n";
 	foreach($path as $text=>$link)
 	{
 		$link = str_replace("&","&amp;",$link);
@@ -71,10 +182,15 @@ function MakeCrumbs($path, $links)
 		else
 			$crumbs .= $text. " - ";
 	}
-	print substr($crumbs, 0, strlen($crumbs)-3);
-	print "</td><td class=\"right\">".$links."</td></tr>";
-	print "</table>";
+	$crumbs = substr($crumbs, 0, strlen($crumbs) - 3);
+	//print "\t\t</td>\n\t\t<td class=\"right\">\n\t\t\t".$links."\n\t\t</td>\n\t</tr>\n";
+	//print "</table>\n";
+	print "<div class=\"margin\">\n";
+	print "<div style=\"float: right;\"><ul class=\"pipemenu smallFonts\">".$links."</ul></div>\n";
+	print $crumbs;
+	print "</div>\n\n";
 }
+
 
 function TimeUnits($sec)
 {
@@ -84,10 +200,9 @@ function TimeUnits($sec)
 	return floor($sec/86400)." day".($sec >= 172800 ? "s" : "");
 }
 
-//You have X new [private messages]. [Last one] from X on X.
 function DoPrivateMessageBar()
 {
-	global $loguserid, $dateformat;
+	global $loguserid, $loguser, $dateformat;
 
 	if($loguserid)
 	{
@@ -96,17 +211,18 @@ function DoPrivateMessageBar()
 
 		if($unread)
 		{
+			$pmNotice = $loguser['usebanners'] ? "id=\"pmNotice\" " : "";
 			$qLast = "select * from pmsgs where userto = ".$loguserid." and msgread=0 order by date desc limit 0,1";
 			$rLast = Query($qLast);
 			$last = Fetch($rLast);
 			$qUser = "select * from users where id = ".$last['userfrom'];
 			$rUser = Query($qUser);
 			$user = Fetch($rUser);
-			print "<div class=\"border\"><table><tr class=\"cell1 smallFonts\"><td>";
+			print "<div ".$pmNotice."class=\"outline margin cell1 smallFonts\">";
 			//print "<img src=\"img/status/new.png\" alt=\"NEW\" /> ";
 			print "You have ".Plural($unread, "new <a href=\"private.php\">private message")."</a>. ";
-			print "<a href=\"showprivate.php?id=".$last['id']."\">Last message</a> from ".UserLink($user)." on ".date($dateformat, $last['id']).".";
-			print "</td></tr></table></div>";
+			print "<a href=\"showprivate.php?id=".$last['id']."\">Last message</a> from ".UserLink($user)." on ".gmdate($dateformat, $last['id']).".";
+			print "</div>";
 		}
 	}
 }
@@ -115,16 +231,51 @@ function DoSmileyBar($taname = "text")
 {
 	global $smilies;
 	LoadSmilies();
-	print "<div class=\"border width25 PoRT\">";
+	print "<div class=\"outline width25 PoRT margin\">";
 	print "<div class=\"errort\"><strong>Smilies</strong></div>";
-	print "<div class=\"errorc\">";
-	//for($i = 0; $i < count($smilies); $i++)
-	foreach($smilies as $s)
+	print "<div class=\"errorc smilies\">";
+	for($i = 0; $i < count($smilies) - 1; $i++)
 	{
-		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".$s['code']."\" title=\"".$s['code']."\" onclick=\"document.getElementById('".$taname."').value+=' ".$s['code']."'\" />";
+		$s = $smilies[$i];
+		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".$s['code']."\" title=\"".$s['code']."\" onclick=\"insertSmiley(' ".$s['code']." ');\" />";
 	}
 	print "</div>";
 	print "</div>";
+}
+
+function DoPostHelp()
+{
+?>
+	<div class="outline width25 PoRT margin">
+		<div class="errort"><strong>Post help</strong></div>
+		<div class="errorc left">
+			<h4>Presentation</h4>
+			[b]&hellip;[/b] &mdash; <strong>bold type</strong> <br />
+			[i]&hellip;[/i] &mdash; <em>italic</em> <br />
+			[u]&hellip;[/u] &mdash; <span class="underline">underlined</span> <br />
+			[s]&hellip;[/s] &mdash; <del>Strikethrough</del><br />
+			[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
+			[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
+			<br />
+			<h4>Links</h4>
+			[img]http://&hellip;[/img] &mdash; insert image <br />
+			[url]http://&hellip;[/url] <br />
+			[url=http://&hellip;]&hellip;[/url] <br />
+			>>&hellip; &mdash; link to post by ID <br />
+			<br />
+			<h4>Quotations</h4>
+			[quote]&hellip;[/quote] &mdash; untitled quote<br />
+			[quote=&hellip;]&hellip;[/quote] &mdash; "Posted by &hellip;"<br />
+			[quote="&hellip;" id="&hellip;"]&hellip;[/quote] &mdash; "Post by &hellip;" with link by post ID<br />
+			<br />
+			<h4>Embeds</h4>
+			[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
+			[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
+			<br />
+			Most plain HTML also allowed
+		</div>
+	</div>
+<?php
 }
 
 ?>
