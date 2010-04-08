@@ -71,6 +71,16 @@ if($loguserid)
 		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=1\">up</a>]</small>";
 	else if($k == 1)
 		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=0\">down</a>]</small>";
+
+	$groups = "";
+	$comma = "";
+	$qGroups = "select name from groups left join groupaffiliations on groups.id = groupaffiliations.gid where uid = ".$id;
+	$rGroups = Query($qGroups);
+	while($group = Fetch($rGroups))
+	{
+		$groups .= $comma . $group['name'];
+		$comma = ", ";
+	}	
 }
 
 $karma = 100;
@@ -98,6 +108,8 @@ $threads = FetchResult($qThreads);
 $averagePosts = sprintf("%1.02f", $user['posts'] / $daysKnown);
 $averageThreads = sprintf("%1.02f", $threads / $daysKnown);
 
+$score = ((int)$daysKnown * 2) + ($posts * 4) + ($threads * 8);
+
 if($user['minipic'])
 	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle; \" />";
 
@@ -124,8 +136,7 @@ if($user['homepageurl'])
 
 print "<table><tr><td style=\"width: 60%;\">";
 
-print "<div class=\"border\">";
-print "<table>";
+print "<table class=\"outline margin\">";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">General information</th>";
@@ -159,8 +170,24 @@ print "<td class=\"cell1\">".$threads." (".$averageThreads." per day)</td>";
 print "</tr>";
 print "<tr>";
 print "<td class=\"cell0\">Registered on</td>";
-print "<td class=\"cell1\">".date($dateformat, $user['regdate'])." (".TimeUnits($daysKnown*86400)." ago)</td>";
+print "<td class=\"cell1\">".gmdate($dateformat, $user['regdate'])." (".TimeUnits($daysKnown*86400)." ago)</td>";
 print "</tr>";
+print "<tr>";
+print "<td class=\"cell0\">Score</td>";
+print "<td class=\"cell1\">".$score." points</td>";
+print "</tr>";
+print "</tr>";
+print "<tr>";
+print "<td class=\"cell0\">Browser</td>";
+print "<td class=\"cell1\">".$user['lastknownbrowser']."</td>";
+print "</tr>";
+print "<tr>";
+if($groups)
+{
+	print "<td class=\"cell0\">Groups</td>";
+	print "<td class=\"cell1\">".$groups."</td>";
+	print "</tr>";
+}
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Contact information</th>";
@@ -199,7 +226,7 @@ print "<td class=\"cell1\">".$user['location']."</td>";
 print "</tr>";
 if($user['birthday'])
 {
-	$bday = date("F j, Y", $user['birthday']);
+	$bday = gmdate("F j, Y", $user['birthday']);
 	$age = " (".floor((time() - $user['birthday']) / 86400 / 365.2425)." years old)";
 	print "<tr>";
 	print "<td class=\"cell0\">Birthday</td>";
@@ -215,13 +242,8 @@ print "</div>";
 
 print "</td><td style=\"vertical-align: top;\">";
 
-if($_POST['action'] == "Post" && $loguserid)
-{
-	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".$_POST['text']."')";
-	$rComment = Query($qComment);
-}
-print "<div class=\"border faq\" style=\"padding: 0px;\">";
-$qComments = "select * from usercomments where uid=".$id." order by id desc limit ".($page * 10).",10";
+print "<div class=\"outline margin faq\" style=\"padding: 0px;\">";
+$qComments = "select * from usercomments where uid=".$id." order by id desc limit 0,10";
 $rComments = Query($qComments);
 print "<table>";
 print "<tr class=\"header1\"><th colspan=\"2\">Comments about ".UserLink($user)."</th></tr>";
@@ -243,9 +265,23 @@ if(NumRows($rComments))
 		if(!isset($lastCommenter))
 			$lastCommenter = $poster;
 	}
-	print $f;
-} else
-	print "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
+}
+else
+	$f = "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
+if($_POST['action'] == "Post" && $loguserid && ($loguserid != $lastCommenter['id']))
+{
+	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
+	$rComment = Query($qComment);
+	$lastCommenter['id'] = $loguserid;
+	$c = "<tr>";
+	$c .= "<td class=\"cell2 width25\">".UserLink($loguser)."</td>";
+	$c .= "<td class=\"cell2\">";
+	$c .= CleanUpPost(deSlashMagic($_POST['text']));
+	$c .= "</td>";
+	$c .= "</tr>";
+	$f = $f . $c;
+}
+print $f;
 if($loguserid)
 {
 	print "<tr><td class=\"cell2 smallFonts\" colspan=\"2\">";
@@ -281,7 +317,7 @@ $previewPost['text'] = $previews[array_rand($previews)];
 //Fixed preview
 $preview =
 	"This is a sample post. It demonstrates various kinds of [i]markup[/i] and quotes and such.
-	This has to be one of the [b]longest[/b] preview messages ever seen in an AcmlmBoard.[quote=Barack Obama]I am Barack Obama and I approve this preview message.[/quote]Well, what more could you [url=http://en.wikipedia.org]want to know[/url]? Perhaps how to do the classic infinite loop?
+	This has to be one of the [b]longest[/b] preview messages ever seen in an AcmlmBoard.[quote=Barack Obama]I am Barack Obama and I approve this preview message.[quote=some guy]This is a nested quote. See what you get.[/quote][/quote]Well, what more could you [url=http://en.wikipedia.org]want to know[/url]? Perhaps how to do the classic infinite loop?
 	[code]10 PRINT \"Hello World!\"
 	GOTO 10[/code]HEEEEY MACARONI! :D";
 $previewPost['text'] = $preview;
@@ -298,7 +334,7 @@ if($loguserid)
 $links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
 $links .= $blockLayoutLink;
 $links = substr($links, 0, strlen($links) - 2);
-print "<div class=\"smallFonts border cell1\">".$links."</div>";
+print "<div class=\"smallFonts outline margin cell1\">".$links."</div>";
 
 doFooter();
 
