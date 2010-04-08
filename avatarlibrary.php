@@ -4,7 +4,7 @@
 
 include("lib/common.php");
 
-if($_GET['rebuild'])
+if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null value we care about.
 {
 	//Prepare file tree...
 	$library = @opendir("img/avatars/library"); //in some PHP setups, you get an ugly "invalid argument" message here on fail.
@@ -42,7 +42,7 @@ if(count($avalib) == 0)
 if(isset($_GET['fid']))
 {
 	$fid = (int)$_GET['fid'];
-	$selected[$fid] = " selected=\"true\"";
+	$selected[$fid] = " selected=\"selected\"";
 	if($avalib[$fid]['name'] == "")
 	{
 		Alert("Unknown category.");
@@ -80,8 +80,7 @@ if($_GET['action'] == "set")
 }
 
 print "<form action=\"avatarlibrary.php\" method=\"get\" id=\"myForm\">";
-print "<div class=\"border\">";
-print "<table>";
+print "<table class=\"outline margin\">";
 print "<tr class=\"header1\">";
 print "<th colspan=\"2\">Avatar library</th>";
 print "</tr>";
@@ -94,11 +93,10 @@ foreach($avalib as $category)
 print "</option><input type=\"submit\" value=\"Change\"></input></td>";
 print "</tr>";
 print "</table>";
-print "</div>";
 
 if(isset($fid))
 {
-	print "<div class=\"border faq\">";
+	print "<div class=\"outline margin faq\">";
 	$i = 0;
 	if($loguserid)
 		foreach($avalib[$fid]['content'] as $image)
@@ -109,6 +107,7 @@ if(isset($fid))
 	print "</div>";
 }
 
+print "<div class=\"outline margin\">";
 if($loguser['picture'] == "img/avatars/".$loguserid)
 {
 	print "<table><tr class=\"cell2\"><td>";
@@ -121,6 +120,7 @@ if($loguser['picture'] == "img/avatars/".$loguserid)
 	print "Because you are not logged in, you cannot select any avatars. Feel free to browse, though.";
 	print "</td></tr></table>";
 }
+print "</div>";
 
 print "</form>";
 
