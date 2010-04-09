@@ -5,6 +5,7 @@
 
 $themes = array(
 	"default"=>"Default",
+	"cycle"=>"Daily Cycle",
 	"grayscale"=>"Grayscale",
 	"monogreen"=>"Mono Green",
 	"dos"=>"DOS-like",
