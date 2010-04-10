@@ -7,7 +7,7 @@
 	<link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="css/common.css" />
 	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" />
-	<link rel="alternate" type="application/rss+xml" title="RSS feed" href="rss2.php">
+	<link rel="alternate" type="application/rss+xml" title="RSS feed" href="rss2.php" />
 	<script type="text/javascript" src="lib/tricks.js"></script>
 </head>
 <body>
@@ -19,7 +19,7 @@
 					<table>
 						<tr>
 							<td style="border: 0px none;">
-								<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" />
+								<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" style="padding: 8px;" />
 							</td>
 							<td style="border: 0px none;">
 								<div class="PoRT">
@@ -69,6 +69,7 @@
 						<li><a href="login.php?action=logout">Log out</a></li>
 						<li><a href="editprofile.php">Edit profile</a></li>
 						<li><a href="private.php">Private messages</a></li>
+						<li><a href="editavatars.php">Mood avatars</a></li>
 						<?php
 								if(!isset($_POST['id']) && isset($_GET['id']))
 									$_POST['id'] = (int)$_GET['id'];
