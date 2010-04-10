@@ -7,7 +7,8 @@ $bots = array(
 	"Yahoo! Slurp",
 	"Googlebot",
 	"Mediapartners-Google",
-	"yetibot@naver.com"
+	"yetibot@naver.com",
+	"Twiceler",
 );
 
 $isBot = 0;
