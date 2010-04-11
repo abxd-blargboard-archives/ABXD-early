@@ -213,3 +213,32 @@ a, a span
 {
 	margin-bottom: 14px;
 }
+
+
+
+
+
+
+.geshi
+{
+	background: maroon;
+	font-family: "Fixedsys", "Courier New", monospace;
+	color: white;
+}
+.geshi .kw0, .geshi .kw1, .geshi .kw2, .geshi .kw3, .geshi .kw4
+{
+	color: yellow;
+}
+.geshi .st0
+{
+	font-style: normal;
+}
+.geshi .br0, .geshi .sy0
+{
+	color: silver;
+}
+.geshi .co1
+{
+	font-style: normal;
+	color: gray;
+}
