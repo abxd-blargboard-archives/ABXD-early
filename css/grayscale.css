@@ -16,6 +16,11 @@ h3
 	border-bottom-color: #6B6B6B;
 }
 
+
+a
+{
+	outline: 0px none !important;
+}
 a:link
 {
 	color: #C4C4C4;
@@ -124,4 +129,25 @@ td.post code.Code
 #pmNotice a:hover span, #pmNotice a:hover
 {
 	color: #FFF !important;
+}
+
+
+
+
+.geshi
+{
+	background: #3B3B3B url(../img/themes/grayscale/back2t1.png);
+	color: #DDD;
+}
+.geshi .kw0, .geshi .kw1, .geshi .kw2, .geshi .kw3, .geshi .kw4
+{
+	color: #AAA;
+}
+.geshi .br0, .geshi .sy0
+{
+	color: #888;
+}
+.geshi .co1
+{
+	color: #888;
 }
