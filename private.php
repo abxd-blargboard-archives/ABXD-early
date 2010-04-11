@@ -37,10 +37,16 @@ $rPM = Query($qPM);
 $numonpage = NumRows($rPM);
 
 for($i = $ppp; $i < $total; $i+=$ppp)
-	$pagelinks .= " <a href=\"private.php?from=".$i."\">".(($i/$ppp)+1)."</a>";
+	if($i == $from)
+		$pagelinks .= " ".(($i/$ppp)+1);
+	else
+		$pagelinks .= " <a href=\"private.php?from=".$i."\">".(($i/$ppp)+1)."</a>";
 if($pagelinks)
 {
-	$pagelinks = "<a href=\"private.php".str_replace("&amp;","?",$showSent)."\">1</a>".$pagelinks;
+	if($from == 0)
+		$pagelinks = " 1".$pagelinks;
+	else
+		$pagelinks = "<a href=\"private.php".str_replace("&amp;","?",$showSent)."\">1</a>".$pagelinks;
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
 }
 
@@ -76,5 +82,7 @@ if($pagelinks)
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php"), $links);
+
+doFooter();
 
 ?>

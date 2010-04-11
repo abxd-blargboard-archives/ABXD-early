@@ -73,4 +73,6 @@ print "</form>";
 
 MakeCrumbs(array("Main"=>"./", "IP ban manager"=>""), "");
 
+doFooter();
+
 ?>
