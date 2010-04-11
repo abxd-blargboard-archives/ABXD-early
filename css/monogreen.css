@@ -166,3 +166,28 @@ input[type="submit"], div.spoiler button
 	background: #040;
 	color: white;
 }
+
+
+
+
+
+.geshi
+{
+	background: #040;
+	color: lime;
+}
+.geshi .kw0, .geshi .kw1, .geshi .kw2, .geshi .kw3, .geshi .kw4
+{
+	color: lime;
+}
+.geshi .st0
+{
+}
+.geshi .br0, .geshi .sy0
+{
+	color: #0B0;
+}
+.geshi .co1
+{
+	color: green;
+}
