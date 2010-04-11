@@ -72,10 +72,16 @@ while($mem = Fetch($rMembers))
 $numonpage = NumRows($rThreads);
 
 for($i = $tpp; $i < $total; $i+=$tpp)
-	$pagelinks .= " <a href=\"forum.php?id=".$fid."&amp;from=".$i."\">".(($i/$tpp)+1)."</a>";
+	if($i == $from)
+		$pagelinks .= " ".(($i/$ppp)+1);
+	else
+		$pagelinks .= " <a href=\"forum.php?id=".$fid."&amp;from=".$i."\">".(($i/$tpp)+1)."</a>";
 if($pagelinks)
 {
-	$pagelinks = "<a href=\"forum.php?id=".$fid."\">1</a>".$pagelinks;
+	if($from == 0)
+		$pagelinks = " 1".$pagelinks;
+	else
+		$pagelinks = "<a href=\"forum.php?id=".$fid."\">1</a>".$pagelinks;
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
 }
 
