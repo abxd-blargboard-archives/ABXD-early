@@ -109,7 +109,13 @@ if($_POST['action']=="Preview")
 	if($_POST['text'])
 	{
 		$_POST['num'] = "---";
-		MakePost($_POST, $loguser, 0, 0);
+		$_POST['posts'] = "---";
+		$_POST['id'] = "???";
+		$_POST['uid'] = $loguserid;
+		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+		foreach($copies as $toCopy)
+			$_POST[$toCopy] = $loguser[$toCopy];
+		MakePost($_POST, 0, 0);
 	}
 }
 
