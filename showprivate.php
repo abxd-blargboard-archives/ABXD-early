@@ -33,9 +33,19 @@ $links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pm['title']=>""), $links);
 
-$pm['num'] = "---";
-MakePost($pm, $user, 0, 0, $id);
+$pmtitle = $pm['title']; //sender's custom title overwrites this below, so save it here
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pm['title']=>""), $links);
+$pm['num'] = "---";
+$pm['posts'] = "---";
+$pm['id'] = "???";
+$pm['uid'] = $user['id'];
+$copies = explode(",","title,title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+foreach($copies as $toCopy)
+	$pm[$toCopy] = $user[$toCopy];
+MakePost($pm, 0, 0, 1);
+
+MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pmtitle=>""), $links);
+
+doFooter();
 
 ?>
