@@ -105,10 +105,27 @@ ins
 
 $renderer = &new Text_Diff_Renderer_inline();
 
-print "<div>Comparing post #".$pid." revisions ".$r1." and ".$r2."...</div>";
-$previewPost['text'] = str_replace("\n","<br>",$renderer->render($diff));;
-$previewPost['num'] = $post['num'];
-MakePost($previewPost, $user, $tid, $fid);
+print "<div class=\"outline faq\">";
+print "Comparing post #".$pid." revisions ".$r1." and ".$r2."&hellip;";
+
+print "<h3>Revision ".$r1."</h3>";
+print CleanUpPost($rev1, $user['name']);
+
+print "<h3>Revision ".$r2."</h3>";
+print CleanUpPost($rev2, $user['name']);
+
+print "<h3>Difference</h3>";
+$difference = $renderer->render($diff);
+if($difference == "")
+	print "Nothing";
+else
+	print CleanUpPost($difference, $user['name']);
+
+print "</div>";
+
+//$previewPost['text'] = str_replace("\n","<br>",$renderer->render($diff));;
+
+//MakePost($previewPost, $tid, $fid);
 
 
 doFooter();
