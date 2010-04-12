@@ -78,7 +78,7 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
+print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
