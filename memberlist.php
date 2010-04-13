@@ -2,6 +2,8 @@
 //  AcmlmBoard XD - Member list page
 //  Access: all
 
+//TODO: pagination
+
 include("lib/common.php");
 
 if($ppp<1) $ppp=50;
@@ -9,7 +11,7 @@ if($page<1) $page=1;
 
 $sort = $_GET['sort'];
 $sex = $_GET['sex'];
-if(isset($_GET['pow']))
+if(isset($_GET['pow']) && $_GET['pow'] != "")
 	$pow = (int)$_GET['pow'];
 $order = "";
 $where = "";
@@ -69,7 +71,7 @@ print mlink($sort,$sex, "0",$ppp)."Normal</a> | ";
 print mlink($sort,$sex, "1",$ppp)."Local moderator</a> | ";
 print mlink($sort,$sex, "2",$ppp)."Full moderator</a> | ";
 print mlink($sort,$sex, "3",$ppp)."Administrator</a> | ";
-print mlink($sort,$sex,  "",$ppp)."All</a>";
+print mlink($sort,$sex, "",$ppp)."All</a>";
 print "</td>";
 print "</tr>";
 
