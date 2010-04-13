@@ -46,6 +46,12 @@ MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['t
 if($thread['lastpostdate'] < time() - (2592000 * $autoLockMonths))
 	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
 
+if($_POST['text'] && CheckTableBreaks($_POST['text']))
+{
+	$_POST['action'] = "";
+	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+}
+
 if($_POST['action']=="Post")
 {
 	if($_POST['text'])
@@ -69,7 +75,7 @@ if($_POST['action']=="Post")
 		$qUsers = "update users set posts=".($loguser['posts']+1).", lastposttime=".time()." where id=".$loguserid." limit 1";
 		$rUsers = Query($qUsers);
 
-		$qPosts = "insert into posts (thread, user, date, ip, num, options) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.")";
+		$qPosts = "insert into posts (thread, user, date, ip, num, options, mood) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.", ".(int)$_POST['mood'].")";
 		$rPosts = Query($qPosts);
 		$pid = mysql_insert_id();
 
@@ -90,9 +96,9 @@ if($_POST['text'])
 {
 	//$prefill = htmlentities2(stripslashes($_POST['text']));
 	$prefill = htmlentities2(deSlashMagic($_POST['text']));
-	$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
-	TidyPost($prefill);
-	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
+	//$prefill = str_replace("\n","##TSURUPETTANYOUJO##", $prefill);
+	//TidyPost($prefill);
+	//$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 
 if($_POST['action']=="Preview")
@@ -100,10 +106,16 @@ if($_POST['action']=="Preview")
 	if($_POST['text'])
 	{
 		$previewPost['text'] = $prefill;
-		$previewPost['num'] = "???";
+		$previewPost['num'] = $loguser['posts']+1;
+		$previewPost['posts'] = $loguser['posts']+1;
 		$previewPost['id'] = "???";
+		$previewPost['uid'] = $loguserid;
+		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+		foreach($copies as $toCopy)
+			$previewPost[$toCopy] = $loguser[$toCopy];
+		$previewPost['mood'] = (int)$_POST['mood'];
 		if($_POST['nopl']) $previewPost['options'] = 1;
-		MakePost($previewPost, $loguser, 0, $fid);
+		MakePost($previewPost, 0, $fid);
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
 }
@@ -151,6 +163,13 @@ if($_POST['nopl'])
 DoSmileyBar();
 DoPostHelp();
 
+if($_POST['mood'])
+	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
+$rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
+while($mood = Fetch($rMoods))
+	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
+
 print "<form action=\"newreply.php\" method=\"post\">";
 print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
@@ -164,6 +183,7 @@ print "<td></td>";
 print "<td>";
 print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
+print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
 print "</td>";
@@ -171,14 +191,7 @@ print "</tr>";
 print "</table>";
 print "</form>";
 
-//Revisions
-$qPosts = "select * from posts where thread=".$tid." order by date desc limit 0,20";
-//</revisions>
-/*
-//No revisions
-$qPosts = "select * from posts left join posts_text on id=pid where thread=".$tid." order by date desc";
-//</norevisions>
-*/
+$qPosts = "select * from posts left join posts_text on pid=id where revision = currentrevision and thread=".$tid." and deleted=0 order by date desc limit 0,20";
 $rPosts = Query($qPosts);
 if(NumRows($rPosts))
 {

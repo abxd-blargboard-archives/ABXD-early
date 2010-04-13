@@ -45,6 +45,12 @@ if(isset($_POST['pollQuestion']))
 	$_POST['pollQuestion'] = htmlentities2($_POST['pollQuestion']);
 	//$_POST['pollQuestion'] = htmlentities2(stripslashes($_POST['pollQuestion']));
 
+if($_POST['text'] && CheckTableBreaks($_POST['text']))
+{
+	$_POST['action'] = "";
+	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+}
+
 if($_POST['action']=="Post")
 {
 	if($_POST['text'] && $_POST['title'])
@@ -93,7 +99,7 @@ if($_POST['action']=="Post")
 		$qUsers = "update users set posts=".($loguser['posts']+1).", lastposttime=".time()." where id=".$loguserid." limit 1";
 		$rUsers = Query($qUsers);
 
-		$qPosts = "insert into posts (thread, user, date, ip, num, options) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.")";
+		$qPosts = "insert into posts (thread, user, date, ip, num, options, mood) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.", ".(int)$_POST['mood'].")";
 		$rPosts = Query($qPosts);
 		$pid = mysql_insert_id();
 
@@ -134,10 +140,16 @@ if($_POST['action']=="Preview")
 	if($_POST['text'] && $_POST['title'])
 	{
 		$previewPost['text'] = $prefill;
-		$previewPost['num'] = "???";
+		$previewPost['num'] = $loguser['posts']+1;
+		$previewPost['posts'] = $loguser['posts']+1;
 		$previewPost['id'] = "???";
 		if($_POST['nopl']) $previewPost['options'] = 1;
-		MakePost($previewPost, $loguser, 0, $fid);
+		$previewPost['mood'] = (int)$_POST['mood'];
+		$previewPost['uid'] = $loguserid;
+		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+		foreach($copies as $toCopy)
+			$previewPost[$toCopy] = $loguser[$toCopy];
+		MakePost($previewPost, 0, $fid);
 	} else
 	{
 		if($_POST['title'])
@@ -215,6 +227,13 @@ if($_POST['poll'])
 	}
 }
 
+if($_POST['mood'])
+	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
+$rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
+while($mood = Fetch($rMoods))
+	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
+
 print "<tr class=\"cell0\">";
 print "<td><label for=\"post\">Post</label></td>";
 print "<td>";
@@ -227,6 +246,7 @@ print "<td>";
 if(!$_POST['poll'] || $_POST['pollOptions'])
 	print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
+print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$fid."\"></input>";
 print "<input type=\"hidden\" name=\"poll\" value=\"".stripslashes($_POST['poll'])."\"></input>";

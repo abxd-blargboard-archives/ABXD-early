@@ -18,9 +18,7 @@ if(!isset($_GET['id']))
 
 $pid = (int)$_GET['id'];
 
-/*
-//No revisions
-$qPost = "select * from posts left join posts_text on pid=id where id=".$pid;
+$qPost = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".$pid;
 $rPost = Query($qPost);
 if(NumRows($rPost))
 {
@@ -28,22 +26,6 @@ if(NumRows($rPost))
 	$tid = $post['thread'];
 } else
 	Kill("Unknown post ID.");
-//</norevisions>
-*/
-//Revisions
-$qPost = "select * from posts where id=".$pid;
-$rPost = Query($qPost);
-if(NumRows($rPost))
-{
-	$post = Fetch($rPost);
-	$tid = $post['thread'];
-	$qText = "select text,revision from posts_text where pid=".$pid." order by revision desc limit 1";
-	$rText = Query($qText);
-	$text = Fetch($rText);
-	$post = array_merge($post, $text);
-} else
-	Kill("Unknown post ID.");
-//</revisions>
 
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
@@ -81,6 +63,12 @@ if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
 if($thread['locked'])
 	Kill("This thread is locked.");
 
+if($_POST['text'] && CheckTableBreaks($_POST['text']))
+{
+	$_POST['action'] = "";
+	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+}
+
 if($_POST['action']=="Edit")
 {
 	if($_POST['text'])
@@ -103,7 +91,7 @@ if($_POST['action']=="Edit")
 		$qPostsText = "insert into posts_text (pid,text,revision) values (".$pid.", '".$post."', ".$rev.")";
 		$rPostsText = Query($qPostsText);
 
-		$qPosts = "update posts set options='".$options."' where id=".$pid." limit 1";
+		$qPosts = "update posts set options='".$options."', mood=".$_POST['mood'].", currentrevision = currentrevision + 1 where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
 
 		Report("<message><action type=\"postedit\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
@@ -136,8 +124,13 @@ if($_POST['action']=="Preview")
 		$previewPost['text'] = $prefill;
 		$previewPost['num'] = $post['num'];
 		$previewPost['id'] = $pid;
+		$previewPost['uid'] = $post['user'];
+		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
+		foreach($copies as $toCopy)
+			$previewPost[$toCopy] = $user[$toCopy];
 		if($_POST['nopl']) $previewPost['options'] = 1;
-		MakePost($previewPost, $user, 0, $fid);
+		$previewPost['mood'] = (int)$_POST['mood'];
+		MakePost($previewPost, 0, $fid);
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
 }
@@ -151,6 +144,16 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 
 DoSmileyBar();
+DoPostHelp();
+
+if(!isset($_POST['mood']))
+	$_POST['mood'] = $post['mood'];
+if($_POST['mood'])
+	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
+$rMoods = Query("select mid, name from moodavatars where uid=".$post['user']." order by mid asc");
+while($mood = Fetch($rMoods))
+	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
 
 print "<form action=\"editpost.php\" method=\"post\">";
 print "<table class=\"outline margin width50\">";
@@ -165,6 +168,7 @@ print "<td></td>";
 print "<td>";
 print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
+print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$pid."\"></input>";
 print "</td>";
