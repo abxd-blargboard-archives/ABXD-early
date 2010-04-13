@@ -46,8 +46,12 @@ if(!isset($_POST['action']))
 	print "<th colspan=\"2\">Installation options</th>";
 	print "</tr>";
 	print "<tr>";
+	print "<td class=\"cell2\"><label for=\"dbs\">Database server</label></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" maxlength=\"25\" value=\"localhost\"></input></td>";
+	print "</tr>";
+	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dbn\">Database name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dn\" name=\"dbname\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dun\">Database user name</label></td>";
@@ -71,15 +75,17 @@ if(!isset($_POST['action']))
 {
 	print "<div class=\"outline faq\">";
 	print "Trying to connect to database&hellip;<br />";
+	$dbserv = $_POST['dbserv'];
 	$dbuser = $_POST['dbuser'];
 	$dbpass = $_POST['dbpass'];
 	$dbname = $_POST['dbname'];
-	mysql_connect("localhost", $dbuser, $dbpass) or Kill("Could not connect to database.");
+	mysql_connect($dbserv, $dbuser, $dbpass) or Kill("Could not connect to database.");
 	mysql_select_db($dbname) or Kill("Could not select database.");
 	print "Writing database configuration file&hellip;<br />";
 	$dbcfg = fopen("lib/database.php", "w+") or Kill("Could not open \"lib/database.php\" for writing.");
 	fwrite($dbcfg, "<?php\n");
 	fwrite($dbcfg, "//  AcmlmBoard XD support - Database settings\n\n");
+	fwrite($dbcfg, "\$dbserv = \"".$dbserv."\";\n");
 	fwrite($dbcfg, "\$dbuser = \"".$dbuser."\";\n");
 	fwrite($dbcfg, "\$dbpass = \"".$dbpass."\";\n");
 	fwrite($dbcfg, "\$dbname = \"".$dbname."\";\n");
