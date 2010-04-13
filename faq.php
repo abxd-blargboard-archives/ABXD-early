@@ -19,7 +19,7 @@ include("lib/common.php");
 
 <h3>Why should I register an account on the board?</h3>
 <p>
-	By registering a user account, you will be able to post on the board as well as use several features only accessible through registering, such as the ability to mark forums as read and private messaging. Unregistered users have guest access to the board, meaning they can view threads but not reply to them.
+	By registering a user account, you will be able to post on the board as well as use several features only accessible through registering, such as the ability to mark forums as read and private messaging. Unregistered users have guest access to the board, meaning they can view threads but not reply to them. They can also only see the board in whatever theme is the default.
 </p>
 
 <h3>What's with the funky colors everyone's names are written in?</h3>
@@ -49,6 +49,9 @@ include("lib/common.php");
 	}
 	print "</table>";
 ?>
+<p>
+	So basically, if a user's name is written in a solid yellow, that user is an administrator of unspecified gender, whereas a bright blue indicates an ordinary male user. Note that some themes may change these colors to better match their general style.
+</p>
 
 <h3>What is the standard of acceptable behaviour on the board?</h3>
 <p>
@@ -61,19 +64,19 @@ include("lib/common.php");
 <ul>
 	<li>Follow the rules the local moderators proclaim in their forums.</li>
 	<li>Listen to the administrators when they warn you.</li>
-	<li>Use proper grammar and avoid '1337speak' and AOL speak (u/ur/y/ in place of words such as you/you're/why). It is a good way to gain respect.</li>
+	<li>Use proper grammar and avoid &lsquo;1337speak&rsquo; and AOL speak (u/ur/y in place of words such as you/you're/why). It is a good way to gain respect.</li>
 	<li><strong>Exercise common sense when posting.</strong></li>
 	<li>Exercise caution when posting threads about controversial topics such as religion.</li>
 </ul>
 <h4>Don't</h4>
 <ul>
 	<li>Spam.</li>
-	<li>Be a bigot. Hateful, discriminating or homophobic remarks are not welcome on this board. (<q>DUDE THATS GAY STFU UR GAY</q>)</li>
+	<li>Be a bigot. Hateful, discriminating or homophobic remarks are not welcome on this board. (&ldquo;DUDE THATS GAY STFU UR GAY&rdquo;)</li>
 	<li>Bump (post in) old or outdated threads.</li>
 	<li>Create multiple accounts unless explicitely authorized to do so by an administrator. Creation of secondary accounts to evade bans will result in a <strong>permanent</strong> banishment from the board.</li>
 	<li>Ask any questions that could be answered using this FAQ or easily and commonly available sources.</li>
 	<li>Stick around if you hate this board. Nobody is forcing you to.</li>
-	<li>Act like the board is a chat room (post messages like <q>HEY ACMLM</q>, <q>I AGREE</q>, <q>What's up?</q>, or any messages directed to individuals). This is what the private message function is for.</li>
+	<li>Act like the board is a chat room (post messages like &ldquo;HEY ACMLM&rdquo;, &ldquo;I AGREE&rdquo;, &ldquo;What's up?&rdquo;, or any messages directed to individuals). This is what the private message function is for.</li>
 	<li>Flame, or purposefully try to be an ass to people.</li>
 	<li>Ask to be a moderator, suck up or act like a moderator. It's one of the best ways <strong>not</strong> to get what you want.</li>
 	<li>Threaten to hack the board. Chances are you can't. Besides, we have a few real hackers on staff who test the board constantly for any security problems.</li>
@@ -86,7 +89,7 @@ include("lib/common.php");
 	Naturally, exceptions to most of those rules could arise out of social context or similar; however, unless you have gained a deeper understanding of the forum community, you are on the safe side assuming that to not be the case. In case of any remaining doubts, <em>common sense prevails</em>.
 </p>
 
-<h3>What is considered "spam" at the board?</h3>
+<h3>What is considered &ldquo;spam&rdquo; at the board?</h3>
 <p>
 	Spam is making:
 </p>
@@ -121,6 +124,7 @@ include("lib/common.php");
 <ul>
 	<li>No flashy backgrounds which make text difficult to read. This doesn't mean you can't have a nice background, but at least make sure that the area where the text is doesn't make a post hard to read.</li>
 	<li>No huge pictures or excessive amounts of them. Huge pictures just make threads longer to load and having too many animated GIFs can slow down some computers.</li>
+	<li>By extension, no pictures in BMP format. BMP is a wasteful format that has no place in a limited-bandwidth environment such as the Internet. Having a super fast connection is no excuse.</li>
 	<li>No broken tables. If you're working with tables and feel that you might be messing up, check your post in your user profile. If the profile seems to be messed up, then the layout is as well. Broken tables can wreak havoc with threads.
 	<li>The board is designed to be fairly dark. Suddenly looking at a relatively bright post layout can make your eyes hurt, so don't do that &mdash; keep the brightness subdued.</li>
 	<li>Bad color contrast in general, for basically the same reason as above.</li>
@@ -129,10 +133,18 @@ include("lib/common.php");
 	If your layout is spotted or reported as breaking any of these rules, it will be deleted and you will be notified of what was wrong by private message, possibly with suggestions. If the problem is not related to images but perhaps just badly chosen color values we may try to fix it for you and inform you later by PM. Anything else is out of our hands, so yeah.
 </p>
 <p>
-	The last few rules and the deletion/editing policy are blatantly taken from Stark. <a href="http://acmlm.no-ip.org/board/thread.php?id=4207">Thanks, dude!</a>
+	The last few rules and the deletion/editing policy are blatantly taken from Stark. <a href="http://acmlm.kafuka.org/board/thread.php?id=4207">Thanks, dude!</a>
 </p>
 <p>
-	On a highly related note, if you link in external CSS files you can use the $layout variable in your post header to link in specific versions: <code>&lt;link rel="stylesheet" type="text/css" href="http://.../MyLayout_<b>$theme</b>.css" /&gt;</code> becomes <code>&lt;link rel="stylesheet" type="text/css" href="http://.../MyLayout_<b><?php print $theme ?></b>.css" /&gt;</code> with the current board settings. The following are possible: <code><?php foreach($themeFiles as $t) print $t." "; ?></code>
+	On a highly related note, if you link in external CSS files you can use the <code>$theme</code> variable in your post header to link in specific versions:
+	
+	<?php
+		$code1 = '<link rel="stylesheet" type="text/css" href="http://.../MyLayout_$theme.css" />';
+		$code2 = '<link rel="stylesheet" type="text/css" href="http://.../MyLayout_'.$theme.'.css" />';
+		print DoGeshi($code1)." becomes ".DoGeshi($code2)." with the current board settings.";
+	?>
+	
+	The following are possible: <code><?php print implode(", ", $themeFiles); ?></code>
 </p>
 
 <h3>How can I become a moderator or administrator?</h3>
@@ -149,5 +161,13 @@ include("lib/common.php");
 
 <?php
 doFooter();
+
+function DoGeshi($code)
+{
+	$geshi = new GeSHi(trim($code), "html4strict", null);
+	$geshi->set_header_type(GESHI_HEADER_NONE);
+	$geshi->enable_classes();
+	return "<span class=\"geshi\">".str_replace("\n", "", $geshi->parse_code())."</span>";
+}
 
 ?>
