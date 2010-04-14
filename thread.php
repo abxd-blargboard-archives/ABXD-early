@@ -163,22 +163,29 @@ else
 	else
 		$from = 0;
 
-//Revisions
-$qPosts = "select * from posts where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
-//</revisions>
-/*
-//No revisions
-$qPosts = "select * from posts left join posts_text on id=pid where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
-//</norevisions>
-*/
+$qPosts = "select ";
+$qPosts .=
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, users.postheader, users.signature, users.globalblock, users.lastposttime, users.lastactivity, users.regdate";
+$qPosts .= 
+	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
+$qPosts .= " where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
+
 $rPosts = Query($qPosts);
 $numonpage = NumRows($rPosts);
 
 for($i = $ppp; $i < $total; $i+=$ppp)
-	$pagelinks .= " <a href=\"thread.php?id=".$tid."&amp;from=".$i."\">".(($i/$ppp)+1)."</a>";
+{
+	if($i == $from)
+		$pagelinks .= " ".(($i/$ppp)+1);
+	else
+		$pagelinks .= " <a href=\"thread.php?id=".$tid."&amp;from=".$i."\">".(($i/$ppp)+1)."</a>";
+}
 if($pagelinks)
 {
-	$pagelinks = "<a href=\"thread.php?id=".$tid."\">1</a>".$pagelinks;
+	if($from == 0)
+		$pagelinks = " 1".$pagelinks;
+	else
+		$pagelinks = "<a href=\"thread.php?id=".$tid."\">1</a>".$pagelinks;
 	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
 }
 
@@ -186,18 +193,9 @@ if(NumRows($rPosts))
 {
 	while($post = Fetch($rPosts))
 	{
-//Revisions
-		$qText = "select text,revision from posts_text where pid=".$post['id']." order by revision desc limit 1";
-		$rText = Query($qText);
-		$text = Fetch($rText);
-		$post = array_merge($post, $text);
-//</revisions>
-
-		$qPoster = "select * from users where id=".$post['user'];
-		$rPoster = Query($qPoster);
-		$poster = Fetch($rPoster);
-
-		MakePost($post, $poster, $tid, $fid);
+		$poster = unserialize(serialize($post));
+		$poster['id'] = $post['uid'];
+		MakePost($post, $tid, $fid);
 	}
 }
 
