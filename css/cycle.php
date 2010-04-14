@@ -70,3 +70,20 @@ h3
 {
 	background: hsl(<?php print $hs; ?>, 48%);
 }
+
+.swf
+{
+	border-color: hsl(<?php print $hs; ?>, 24%);
+	background: hsl(<?php print $hs; ?>, 24%);
+}
+
+.swfmain
+{
+	border-color: hsl(<?php print $hs; ?>, 24%);
+}
+
+.swfbuttonon, .swfbuttonoff
+{
+	border-color: hsl(<?php print $hs; ?>, 48%);
+	background: hsl(<?php print $hs; ?>, 48%);
+}
