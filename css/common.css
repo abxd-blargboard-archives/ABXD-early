@@ -399,7 +399,7 @@ a, a span
 {
 	-o-transition: color 0.2s ease-in-out;
 }
-a:hover span
+a:link span
 {
 	color: white !important;
 }
@@ -443,4 +443,82 @@ a:hover span
 #body
 {
 	margin: 8px;
+}
+
+
+
+
+.geshi
+{
+	background: url(../img/themes/default/back2t2.png);
+	font-family: "Consolas", "Courier New", monospace;
+	color: #FFF;
+}
+.geshi .kw0, .geshi .kw1, .geshi .kw2, .geshi .kw3, .geshi .kw4
+{
+	font-weight: bold;
+	color: #AAF;
+}
+.geshi .st0
+{
+	font-style: italic;
+}
+.geshi .br0, .geshi .sy0
+{
+	color: #488;
+}
+.geshi .co1
+{
+	font-style: italic;
+	color: #884;
+}
+.geshi a
+{
+	border-bottom: 1px dotted #888;
+}
+
+
+
+
+.swf
+{
+	border: 1px outset gray;
+	background: gray;
+	color: black;
+	padding: 2px;
+}
+.swfmain
+{
+	border: 2px inset gray;
+	background: black;
+	color: white;
+}
+.swfurl
+{
+	display: none;
+}
+.swfcontrol
+{
+	margin: 1px;
+}
+.swfbuttonoff, .swfbuttonon
+{
+	display: inline-block;
+	background: silver;
+	width: 16px;
+	height: 16px;
+	text-align: center;
+	cursor: pointer;
+	font-family: "Verdana", sans-serif;
+	font-size: 14px;
+	margin-top: 1px;
+	margin-right: 2px;
+}
+.swfbuttonoff
+{
+	border: 1px outset silver;
+}
+.swfbuttonon
+{
+	border: 1px inset silver;
 }
