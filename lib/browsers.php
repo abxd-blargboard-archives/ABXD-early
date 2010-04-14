@@ -10,6 +10,7 @@ $knownBrowsers = array
 (
 	"MSIE" => "Internet Explorer",
 	"Nintendo Wii" => "Wii Internet Channel", //Opera/9.30 (Nintendo Wii; U; ; 3642; nl)
+	"Nintendo DS" => "Nintendo DS Browser", //Opera/9.50 (Nintendo DSi; Opera/507; U; en-US)
 	"Opera" => "Opera",
 	"MozillaDeveloperPreview" => "Firefox dev",
 	"Firefox" => "Firefox",
@@ -18,6 +19,7 @@ $knownBrowsers = array
 	"Konqueror" => "Konqueror",
 	"Mozilla" => "Mozilla",
 	"Lynx" => "Lynx",
+	"Nokia" => "Nokia mobile",
 );
 
 $knownOSes = array
@@ -31,6 +33,7 @@ $knownOSes = array
 	"Windows NT 5.2" => "Windows XP 64",
 	"Windows NT 6.0" => "Windows Vista",
 	"Windows NT 6.1" => "Windows 7",
+	"Windows Mobile" => "Windows Mobile",
 	"Linux" => "Linux",
 	"Mac OS X" => "Mac OS X %",
 );
@@ -47,7 +50,7 @@ foreach($knownBrowsers as $code => $name)
 		$versionStart = strpos($ua, $code) + strlen($code);
 		$version = GetVersion($ua, $versionStart);
 
-		if (strpos($ua, "Opera/9.80") !== FALSE)
+		if (strpos($ua, "Opera/9.80") !== FALSE || $code == "Safari" && strpos($ua, "Version/") !== FALSE)
 			$version = substr($ua, strpos($ua, "Version/") + 8);
 
 		$isFirefox = ($code == "Firefox");
@@ -88,6 +91,8 @@ function GetVersion($ua, $versionStart)
 		$ch = $ua[$i];
 		if($ch == ';')
 			break;
+		if($ch == '_' && strpos($ua, "Mac OS X"))
+			$ch = '.';
 		if($ch == '.')
 		{
 			$numDots++;
