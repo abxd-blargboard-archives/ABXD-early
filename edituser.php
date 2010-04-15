@@ -117,6 +117,7 @@ if($_POST['action'] == "Edit user")
 					copy($tmpfile,$file);
 				elseif($type <= 3)
 				{
+					$r=imagesx($img1)/imagesy($img1);
 					if($r > 1)
 					{
 						$img2=imagecreatetruecolor($dimx,$dimy/$r);
@@ -338,17 +339,17 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
+print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
 print "<th colspan=\"2\">Post layout</th>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['postheader'])."</textarea></td>";
+print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['postheader'])."</textarea></td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"sig\">Footer</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"5\" style=\"width: 98%;\">".htmlval($user['signature'])."</textarea></td>";
+print "<td><label for=\"sig\">Footer</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['signature'])."</textarea></td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";

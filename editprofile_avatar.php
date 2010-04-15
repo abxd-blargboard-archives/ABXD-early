@@ -23,7 +23,8 @@ if($_POST['action'] == "Edit user")
 		$usepic = "";
 		if(substr($user['picture'],0,12) == "img/avatars/")
 			@unlink($user['picture']);
-	} if($fname = $_FILES['picture']['name'])
+	}
+	if($fname = $_FILES['picture']['name'])
 	{
 		$fext = strtolower(substr($fname,-4));
 		$error = "";
@@ -65,6 +66,7 @@ if($_POST['action'] == "Edit user")
 					copy($tmpfile,$file);
 				elseif($type <= 3)
 				{
+					$r=imagesx($img1)/imagesy($img1);
 					if($r > 1)
 					{
 						$img2=imagecreatetruecolor($dimx,$dimy/$r);
