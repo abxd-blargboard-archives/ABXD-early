@@ -2,10 +2,9 @@
 //  AcmlmBoard XD support - Main hub
 
 //User settings
-$boardname = "ABXD/NikoBoard";
-$logoalt = "Niko's Board";
-$logotitle = "Totally not Kawa's Board";
-//$poratitle = "Points of Required Attention Span&trade;";
+$boardname = "AcmlmBoard XD";
+$logoalt = "board?";
+$logotitle = "Board2? This is KAWAAA!";
 $dateformat = "M jS Y, G:i"; //"Oct 15th 2008, 16:29"
 
 $autoLockMonths = 2; //number of 30-day "months" after which to auto-close threads.
@@ -20,23 +19,7 @@ $overallTidy = 0;
 $publickey  = "6Le8rQUAAAAAABTmoJGH5rC3dqaq_Phjte3J-jwK";
 $privatekey = "6Le8rQUAAAAAAJfo_ESinXA97SO241Foq4CyPAKr";
 
-$cynthiaUA = "Cynthetiq 0.24 on Windows 7 <!-- Cynthetiq/0.24 (Windows NT 6.1; U; en; .NET CLR 3.5.30729) -->";
 
-//hack settings:
-//	forcetheme -> theme ID, -1 to disable
-//	themenames -> 0 - disabled
-//				  1 - christmas
-//				  2 - rainbow
-//				  3 - anonymous
-//	postfilter -> 0 - disabled
-//				  1 - pirate
-//				  2 - swedish
-//				  3 - kraut
-//				  4 - jive
-//				  5 - fudd
-//$hacks['forcetheme'] = 1;
-//$hacks['themenames'] = 2;
-//$hacks['postfilter'] = 3;
 include("hacks.php");
 
 if($overallTidy)
@@ -94,6 +77,15 @@ function deSlashMagic($text)
 		return stripslashes($text);
 	else
 		return $text;
+}
+
+//Simple version -- may expand later.
+function CheckTableBreaks($text)
+{
+	$text = strtolower($text);
+	$openers = substr_count($text, "<table>") + substr_count($text, "<div>");
+	$closers = substr_count($text, "</table>") + substr_count($text, "</div>");
+	return ($openers != $closers);
 }
 
 function Report($message)
