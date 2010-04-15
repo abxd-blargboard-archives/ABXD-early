@@ -108,7 +108,7 @@ $threads = FetchResult($qThreads);
 $averagePosts = sprintf("%1.02f", $user['posts'] / $daysKnown);
 $averageThreads = sprintf("%1.02f", $threads / $daysKnown);
 
-$score = ((int)$daysKnown * 2) + ($posts * 4) + ($threads * 8);
+$score = ((int)$daysKnown * 2) + ($posts * 4) + ($threads * 8) + (($karma - 100) * 3);
 
 if($user['minipic'])
 	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle; \" />";
@@ -318,14 +318,19 @@ $previewPost['text'] = $previews[array_rand($previews)];
 $preview =
 	"This is a sample post. It demonstrates various kinds of [i]markup[/i] and quotes and such.
 	This has to be one of the [b]longest[/b] preview messages ever seen in an AcmlmBoard.[quote=Barack Obama]I am Barack Obama and I approve this preview message.[quote=some guy]This is a nested quote. See what you get.[/quote][/quote]Well, what more could you [url=http://en.wikipedia.org]want to know[/url]? Perhaps how to do the classic infinite loop?
-	[code]10 PRINT \"Hello World!\"
-	GOTO 10[/code]HEEEEY MACARONI! :D";
+	[source=qbasic]10 PRINT \"Hello World!\"
+20 GOTO 10[/source]HEEEEY MACARONI! :D";
 $previewPost['text'] = $preview;
 //</fixedpreview>
 
 $previewPost['num'] = "???";
 $previewPost['id'] = "???";
-MakePost($previewPost, $user, 0, 0);
+$previewPost['uid'] = $id;
+$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
+foreach($copies as $toCopy)
+	$previewPost[$toCopy] = $user[$toCopy];
+
+MakePost($previewPost, 0, 0);
 
 if($loguser['powerlevel'] == 3)
 	$links .= "<a href=\"edituser.php?id=".$id."\">Edit user</a> | ";
