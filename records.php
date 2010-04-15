@@ -64,6 +64,6 @@ doFooter();
 
 function sp($sz)
 {
-	return number_format($sz,0,'.',' ');
+	return number_format($sz,0,'.',',');
 }
 ?>
