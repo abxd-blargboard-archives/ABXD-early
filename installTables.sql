@@ -98,6 +98,15 @@ CREATE TABLE `misc` (
 
 INSERT INTO `misc` (`views`, `hotcount`, `porabox`, `poratitle`) VALUES (0, 30, '&hellipSEMICOLON', 'Points of Required Attention');
 
+DROP TABLE IF EXISTS `moodavatars`;
+CREATE TABLE IF NOT EXISTS `moodavatars` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) NOT NULL DEFAULT '0',
+  `mid` int(11) NOT NULL DEFAULT '0',
+  `name` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+
 DROP TABLE IF EXISTS `pmsgs`;
 CREATE TABLE `pmsgs` (
   `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
@@ -157,6 +166,8 @@ CREATE TABLE `posts` (
   `num` mediumint(8) NOT NULL DEFAULT '0',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `options` tinyint(4) NOT NULL DEFAULT '0',
+  `mood` int(11) NOT NULL DEFAULT '0',
+  `currentrevision` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `thread` (`thread`),
   KEY `date` (`date`),
@@ -167,9 +178,7 @@ CREATE TABLE `posts` (
 DROP TABLE IF EXISTS `posts_text`;
 CREATE TABLE `posts_text` (
   `pid` mediumint(8) unsigned NOT NULL DEFAULT '0',
-  `headtext` text,
   `text` mediumtext,
-  `signtext` text,
   `revision` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -279,7 +288,6 @@ CREATE TABLE `users` (
   `password` varchar(32) NOT NULL DEFAULT '',
   `minipic` varchar(100) NOT NULL DEFAULT '',
   `picture` varchar(100) NOT NULL DEFAULT '',
-  `postbg` varchar(250) NOT NULL DEFAULT '',
   `postheader` text,
   `signature` text,
   `bio` text,
