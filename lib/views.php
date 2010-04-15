@@ -17,7 +17,7 @@ if(!$isBot)
 		else
 			$who = "a guest at ".$_SERVER['REMOTE_ADDR'];
 
-		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (1, 8, ".time().", '127.0.0.1', 0)";
+		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (1, 1, ".time().", '127.0.0.1', 0)";
 		$rPM = Query($qPM);
 		$pid = mysql_insert_id();
 		$qPM = "insert into pmsgs_text (pid, title, text) values (".$pid.", 'View ".$misc['views']." reached by ".justEscape($who)."', 'Take a note.')";
