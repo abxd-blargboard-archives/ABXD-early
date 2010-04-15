@@ -24,7 +24,7 @@ function DoFooter()
 {
 	global $timeStart, $queries, $overallTidy;
 	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.2<br />";
+	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.2.1<br />";
 	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
 
 	print "<a href=\"http://validator.w3.org/check?uri=referer\"><img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" /></a>";
@@ -32,6 +32,8 @@ function DoFooter()
 
 	print "<a href=\"rss2.php\"><img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" /></a>";
 	print "<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\"><img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" /></a>";
+	print "<a href=\"http://opera.com\"><img src=\"img/opera.png\" alt=\"Opera!\" /></a>";
+	print "<a href=\"get\"><img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" /></a>";
 
 	print "</div>";
 	print "</div>";
@@ -106,7 +108,7 @@ function GetRainbowColor()
 	return substr(dechex($r * 65536 + $g * 256 + $b), -6);
 }
 
-function UserLink($user)
+function UserLink($user, $field = "id")
 {
 	global $hacks;
 
@@ -152,7 +154,7 @@ function UserLink($user)
 		}
 	}
 
-	return "<a href=\"profile.php?id=".$user['id']."\"><span".$classing.">".$fname."</span></a>";
+	return "<a href=\"profile.php?id=".$user[$field]."\"><span".$classing.">".$fname."</span></a>";
 }
 
 function CanMod($userid, $fid)
@@ -221,7 +223,7 @@ function DoPrivateMessageBar()
 			print "<div ".$pmNotice."class=\"outline margin cell1 smallFonts\">";
 			//print "<img src=\"img/status/new.png\" alt=\"NEW\" /> ";
 			print "You have ".Plural($unread, "new <a href=\"private.php\">private message")."</a>. ";
-			print "<a href=\"showprivate.php?id=".$last['id']."\">Last message</a> from ".UserLink($user)." on ".gmdate($dateformat, $last['id']).".";
+			print "<a href=\"showprivate.php?id=".$last['id']."\">Last message</a> from ".UserLink($user)." on ".gmdate($dateformat, $last['date']).".";
 			print "</div>";
 		}
 	}
@@ -256,6 +258,8 @@ function DoPostHelp()
 			[s]&hellip;[/s] &mdash; <del>Strikethrough</del><br />
 			[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
 			[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
+			[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
+			[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
 			<br />
 			<h4>Links</h4>
 			[img]http://&hellip;[/img] &mdash; insert image <br />
@@ -271,6 +275,8 @@ function DoPostHelp()
 			<h4>Embeds</h4>
 			[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
 			[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
+			[swf ## ##]&hellip;[/svg] &mdash; insert SWF clip<br />
+			[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
 			<br />
 			Most plain HTML also allowed
 		</div>
