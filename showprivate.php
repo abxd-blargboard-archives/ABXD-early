@@ -12,7 +12,16 @@ if(!isset($_GET['id']))
 
 $id = (int)$_GET['id'];
 
-$qPM = "select * from pmsgs left join pmsgs_text on pid = pmsgs.id where (userto = ".$loguserid." or userfrom = ".$loguserid.") and pmsgs.id = ".$id;
+if(isset($_GET['snooping']))
+{
+	if($loguser['powerlevel'] > 2)
+		$qPM = "select * from pmsgs left join pmsgs_text on pid = pmsgs.id where pmsgs.id = ".$id;
+	else
+		Kill("No snooping for you.");
+}
+else
+	$qPM = "select * from pmsgs left join pmsgs_text on pid = pmsgs.id where (userto = ".$loguserid." or userfrom = ".$loguserid.") and pmsgs.id = ".$id;
+
 $rPM = Query($qPM);
 if(NumRows($rPM))
 	$pm = Fetch($rPM);
@@ -26,8 +35,12 @@ if(NumRows($rUser))
 else
 	Kill("Unknown user.");
 
-$qPM = "update pmsgs set msgread=1 where userto=".$loguserid." and id=".$id;
-$rPM = Query($qPM);
+if(!isset($_GET['snooping']))
+{
+	$qPM = "update pmsgs set msgread=1 where id=".$pm['id'];
+	$rPM = Query($qPM);
+} else
+	Alert("You are snooping.");
 
 $links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
 
