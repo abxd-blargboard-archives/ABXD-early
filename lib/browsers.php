@@ -6,9 +6,12 @@ $isIE6 = FALSE;
 //$lastKnownBrowser = $_SERVER['HTTP_USER_AGENT'];
 $lastKnownBrowser = "Something";
 
+//Opera/9.80 (iPhone; Opera Mini/5.0.0176/764; U; en) Presto/2.4.15
+
 $knownBrowsers = array
 (
 	"MSIE" => "Internet Explorer",
+	"Opera Mini" => "Opera Mini", //Opera/9.80 (J2ME/MIDP; Opera Mini/4.2.18887/764; U; nl) Presto/2.4.15
 	"Nintendo Wii" => "Wii Internet Channel", //Opera/9.30 (Nintendo Wii; U; ; 3642; nl)
 	"Nintendo DS" => "Nintendo DS Browser", //Opera/9.50 (Nintendo DSi; Opera/507; U; en-US)
 	"Opera" => "Opera",
@@ -36,6 +39,7 @@ $knownOSes = array
 	"Windows Mobile" => "Windows Mobile",
 	"Linux" => "Linux",
 	"Mac OS X" => "Mac OS X %",
+	"iPhone" => "iPhone",
 );
 
 $ua = $_SERVER['HTTP_USER_AGENT'];
@@ -50,7 +54,8 @@ foreach($knownBrowsers as $code => $name)
 		$versionStart = strpos($ua, $code) + strlen($code);
 		$version = GetVersion($ua, $versionStart);
 
-		if (strpos($ua, "Opera/9.80") !== FALSE || $code == "Safari" && strpos($ua, "Version/") !== FALSE)
+		//Opera Mini wasn't detected properly because of the Opera 10 hack.
+		if (strpos($ua, "Opera/9.80") !== FALSE && $code != "Opera Mini" || $code == "Safari" && strpos($ua, "Version/") !== FALSE)
 			$version = substr($ua, strpos($ua, "Version/") + 8);
 
 		$isFirefox = ($code == "Firefox");
