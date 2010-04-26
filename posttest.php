@@ -1,10 +1,15 @@
 <?php
 include("lib/common.php");
 
-//$user = Fetch(Query("select * from users where id=1"));
 //$user['postheader'] = "";
 //$user['signature'] = "";
-$user = $loguser;
+if($loguserid)
+	$user = $loguser;
+else
+{
+	$user = Fetch(Query("select * from users where id=1"));
+	Alert("You are not logged in. The test page will be displayed using ".$user['name']."'s layout and statistics.");
+}
 
 $preview =
 "Regular text.
@@ -97,6 +102,46 @@ Video tag:
 
 Flash tag:
 [swf 300 200]../houseloop.swf[/swf]
+
+SVG tag:
+[svg 256 256]
+".'
+<defs id="definitions">
+	<linearGradient id="whiteToGrayPage">
+		<stop id="whiteStop" style="stop-color: #ffffff; stop-opacity: 1" offset="0" />
+		<stop id="grayStop" style="stop-color: #d1d1d1; stop-opacity: 1" offset="1" />
+	</linearGradient>
+
+	<linearGradient x1="310.13199" y1="463.93274" x2="339.66388" y2="470.00906" id="foldGradient" xlink:href="#whiteToGrayPage" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.0209107,-0.1038824,0.1180689,1.1291473,-216.13394,-446.10298)" />
+
+	<linearGradient x1="249.01784" y1="484.65646" x2="282.82748" y2="617.49152" id="pageGradient" xlink:href="#whiteToGrayPage" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.0209107,-0.1038824,0.1180689,1.1291473,-216.13394,-446.10298)" />
+
+	<filter height="1.2003479" y="-0.10017395" width="1.0631233" x="-0.031561639" id="foldFilter">
+		<feGaussianBlur id="foldBlur" stdDeviation="0.4848732" />
+	</filter>
+	<filter id="shadowFilter">
+		<feGaussianBlur id="pageBlur" stdDeviation="2.8426648" />
+	</filter>
+</defs>
+
+<g id="page">
+	<path d="M 44.428599,35.937565 L 153.22815,24.86671 L 196.19462,61.993562 L 212.7728,220.53848 L 65.300428,235.54448 L 44.428599,35.937565 z" id="pageShadow" style="fill: #000000; fill-opacity: 0.41489366; stroke: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1; filter: url(#shadowFilter)" />
+
+	<path d="M 45.428599,31.937565 L 154.22815,20.86671 L 197.19462,57.993562 L 213.7728,216.53848 L 66.300428,231.54448 L 45.428599,31.937565 z" id="pageSheet" style="fill: url(#pageGradient); fill-opacity: 1; stroke: #000000; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1" />
+	
+	<text x="60.40575" y="91.327873" transform="matrix(0.9458458,-9.6244218e-2,0.1093876,1.0461241,0,0)" id="writing" xml:space="preserve" style="font-size: 21.09502411px; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; text-align: start; line-height: 125%; writing-mode: lr-tb; text-anchor: start; fill: #008800; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Calibri">
+		<tspan x="60.40575" y="91.327873" id="line1">/* This is a</tspan>
+		<tspan x="60.40575" y="117.69666" id="line2">document! */</tspan>
+		<!-- line missing :) -->
+		<tspan x="60.40575" y="170.43422" id="line4" style="fill: #000000">Yes it is, sirs!</tspan>
+	</text>
+
+	<path d="M 312.62856,486.03622 L 310.06421,441.06293 L 347.99755,478.59554 L 312.62856,486.03622 z" transform="matrix(1.0209107,-0.1038824,0.1127021,1.0778224,-212.68155,-422.15791)" id="foldShadow" style="fill: #000000; fill-opacity: 0.20212767; fill-rule: evenodd; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; filter: url(#foldFilter)" />
+
+	<path d="M 154.2281,20.866714 L 197.19479,57.993145 L 158.52168,61.928311 L 154.2281,20.866714 z" id="pageFold" style="fill: url(#foldGradient); fill-opacity: 1; stroke: #000000; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1" />
+</g>
+'."
+[/svg]
 ";
 
 $previewPost['text'] = $preview;
