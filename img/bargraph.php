@@ -23,13 +23,16 @@ $dots = imagecolorallocatealpha($im, 255, 255, 255, 64);
 imagefilledrectangle($im,0,0,690,20,$trans);
 
 imagefilledrectangle($im, 0, 5, 600, 15, $background);
-imagefilledrectangle($im, 0, 5, 600 * ($z/$n), 15, $bar);
-imagerectangle($im, 0, 5, 600 * ($z/$n), 15, $outline);
+if($n > 0)
+{
+	imagefilledrectangle($im, 0, 5, 600 * ($z / $n), 15, $bar);
+	imagerectangle($im, 0, 5, 600 * ($z/$n), 15, $outline);
+}
 
 for($i=0; $i <= 600; $i+=100)
 	imageline($im, $i, 13, $i, 17, $dots);
 
-$text = $z." vote".($z == 1 ? "" : "s").", ".(int)(100 * $z / $n)."%";
+$text = $z." vote".($z == 1 ? "" : "s").", ".($n > 0 ? (int)(100 * $z / $n) : 0)."%";
 
 imagestring($im, 2, 607, 4, $text, $black);
 imagestring($im, 2, 606, 3, $text, $white);
