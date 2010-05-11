@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+$title = "Avatar library";
+
 if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null value we care about.
 {
 	//Prepare file tree...
@@ -90,7 +92,7 @@ print "<td><select name=\"fid\" size=\"1\" onchange=\"myForm.submit();\">";
 $i = 0;
 foreach($avalib as $category)
 	print "<option value=\"".$i."\" ".$selected[$i++].">".$category['name']."</option>";
-print "</option><input type=\"submit\" value=\"Change\"></input></td>";
+print "</select><input type=\"submit\" value=\"Change\"></input></td>";
 print "</tr>";
 print "</table>";
 
