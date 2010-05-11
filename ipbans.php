@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+$title = "IP bans";
+
 if($loguser['powerlevel'] < 3)
 	Kill("Only administrators get to manage IP bans.");
 
