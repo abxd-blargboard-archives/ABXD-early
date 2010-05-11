@@ -5,6 +5,8 @@
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
+$title = "Manage localmod assignments";
+
 if($loguser['powerlevel'] < 3)
 	Kill("You're not an admin.");
 
