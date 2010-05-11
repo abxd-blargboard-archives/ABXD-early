@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+$title = "Online users";
+
 $time = (int)$_GET['time'];
 if(!$time) $time = 300;
 
