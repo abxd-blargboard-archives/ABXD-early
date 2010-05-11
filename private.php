@@ -7,11 +7,20 @@ include("lib/common.php");
 if(!$loguserid)
 	Kill("You must be logged in to view your private messages.");
 
-$whereFrom = "where userfrom = ".$loguserid;
+$user = $loguserid;
+if(isset($_GET['user']) && $loguser['powerlevel'] > 2)
+{
+	$user = (int)$_GET['user'];
+	$snoop = "&amp;snooping=1";
+}
+
+$title = "Private messages";
+
+$whereFrom = "where userfrom = ".$user;
 if(isset($_GET['showsent']))
 	$showSent = "&amp;showsent=1";
 else
-	$whereFrom = "where userto = ".$loguserid;
+	$whereFrom = "where userto = ".$user;
 
 $qTotal = "select count(*) from pmsgs ".$whereFrom;
 $total = FetchResult($qTotal);
@@ -24,9 +33,9 @@ else
 	$from = 0;
 
 if($from)
-	$links = "<a href=\"private.php?from=".$from.(isset($_GET['showsent']) ? "\">Show recieved" : "&amp;showsent=1\">Show sent")."</a> | ";
+	$links = "<a href=\"private.php?from=".$from.(isset($_GET['showsent']) ? "\">Show received" : "&amp;showsent=1".(isset($_GET['user']) ? "&amp;user=".$user : "")."\">Show sent")."</a> | ";
 else
-	$links = "<a href=\"private.php".(isset($_GET['showsent']) ? "\">Show recieved" : "?showsent=1\">Show sent")."</a> | ";
+	$links = "<a href=\"private.php".(isset($_GET['showsent']) ? "\">Show received" : "?showsent=1".(isset($_GET['user']) ? "&amp;user=".$user : "")."\">Show sent")."</a> | ";
 
 $links .= "<a href=\"sendprivate.php\">Send PM</a>";
 
@@ -54,13 +63,13 @@ print "<table class=\"outline margin\">";
 print "<tr class=\"header0\">";
 print "<th>&nbsp;</th>";
 print "<th style=\"width: 75%;\">Title</th>";
-print "<th>From</th>";
+print "<th>".(isset($_GET['showsent']) ? "To" : "From")."</th>";
 print "<th>Date</th>";
 print "</tr>";
 
 while($pm = Fetch($rPM))
 {
-	$qUser = "select * from users where id = ".$pm['userfrom'];
+	$qUser = "select * from users where id = ".(isset($_GET['showsent']) ? $pm['userto'] : $pm['userfrom']);
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
 		$user = Fetch($rUser);
@@ -71,7 +80,7 @@ while($pm = Fetch($rPM))
 	if(!$pm['msgread'])
 		print "<img src=\"img/status/new.png\" alt=\"NEW\" />";
 	print "</td>";
-	print "<td><a href=\"showprivate.php?id=".$pm['id']."\">".$pm['title']."</a></td>";
+	print "<td><a href=\"showprivate.php?id=".$pm['id'].$snoop."\">".$pm['title']."</a></td>";
 	print "<td>".(NumRows($rUser) ? UserLink($user) : "???")."</td>";
 	print "<td>".gmdate($dateformat,$pm['date'])."</td>";
 	print "</tr>";
