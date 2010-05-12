@@ -5,14 +5,14 @@ body
 	background: #040420 url(../img/themes/default/back2c.png);
 	color: white;
 	font-family: "Verdana", "Arial", sans-serif;
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	margin: 0px;
 }
 
 h3
 {
 	font-family: "Verdana", "Arial", sans-serif;
-	font-size: 12pt;
+	font-size: 1.2em; /* 12pt; */
 	font-weight: bold;
 	border-top: 1px solid #669;
 	border-bottom: 1px solid #669;
@@ -22,7 +22,7 @@ h3
 h4
 {
 	font-family: "Verdana", "Arial", sans-serif;
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	margin: 0px;
 }
 
@@ -89,14 +89,14 @@ table
 
 td
 {
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	border: 1px solid #000;
 }
 
 th
 {
 	background: #336;
-	font-size: 12px;
+	font-size: 1em; /* 12px; */
 	border: 1px solid #000;
 	text-align: left;
 }
@@ -130,7 +130,7 @@ table.post td.post td
 
 table.post td.meta
 {
-	font-size: 8pt;
+	font-size: 0.85em; /* 8pt; */
 	height: 14px;
 	margin: 0px;
 	border: 0px none;
@@ -138,7 +138,7 @@ table.post td.meta
 
 table.post td.links
 {
-	font-size: 8pt;
+	font-size: 0.85em; /* 8pt; */
 	height: 14px;
 	margin: 0px;
 	border: 0px none;
@@ -152,7 +152,7 @@ table.post td.links
 
 .PoRT td, .PoRT th, .smallFonts td, .smallFonts
 {
-	font-size: 8pt;
+	font-size: 0.85em; /* 8pt; */
 }
 
 .left
@@ -179,7 +179,7 @@ table.post td.links
 {
 	text-align: center;
 	width: 100%;
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	clear: both;
 }
 
@@ -190,7 +190,7 @@ table.post td.links
 
 .links
 {
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	text-align: right;
 }
 
@@ -214,7 +214,7 @@ table.post td.links
 	background: #373E89 url(../img/themes/default/backc2.png) repeat-x;
 	text-align: center;
 	color: #EEE;
-	font-size: 8pt;
+	font-size: 0.85em; /* 8pt; */
 	border-top: 0px none;
 	border-bottom: 0px none;
 }
@@ -223,7 +223,7 @@ table.post td.links
 {
 	background:  #4E5174 url(../img/themes/default/backh.png) repeat-x;
 	text-align: center;
-	font-size: 8pt;
+	font-size: 0.85em; /* 8pt; */
 	color: #DDD;
 	border: 0px none #000;
 }
@@ -239,7 +239,7 @@ table.post td.links
 
 table.breadcrumbs, table.breadcrumbs td
 {
-	font-size: 10pt;
+	font-size: 1em; /* 10pt; */
 	border: 0px none;
 }
 
@@ -304,16 +304,9 @@ form
 	display: block;
 }
 
-button
-{
-	border: 1px solid #669;
-	background: #335;
-	color: #FFF;
-}
-
 div.spoiler button
 {
-	font-size: 10px;
+	font-size: 0.8em; /* 10px; */
 }
 div.spoiler div.spoiled
 {
@@ -347,7 +340,7 @@ ul.pipemenu li:first-child
 
 .PoRT
 {
-	font-size: 11px;
+	font-size: 0.8em; /* 11px; */
 }
 
 /* In Opera, I noticed that the PoRA Box's outline overlaps this message.
@@ -370,8 +363,11 @@ ul.pipemenu li:first-child
 .footer a img
 {
 	opacity: 0.50;
-	-o-transition: opacity 0.2s ease-in-out;
-	-moz-transition: opacity 0.2s ease-in-out;
+
+	        transition: opacity 0.2s ease-in-out;
+	     -o-transition: opacity 0.2s ease-in-out;
+	   -moz-transition: opacity 0.2s ease-in-out;
+	-webkit-transition: opacity 0.2s ease-in-out;
 }
 .footer a:hover img
 {
@@ -384,8 +380,10 @@ ul.pipemenu li:first-child
 	opacity: 0.50;
 	border: 1px solid rgba(255,255,255, 0);
 
-	-o-transition: opacity 0.2s ease-in-out;
-	-moz-transition: opacity 0.2s ease-in-out;
+	        transition: opacity 0.2s ease-in-out;
+	     -o-transition: opacity 0.2s ease-in-out;
+	   -moz-transition: opacity 0.2s ease-in-out;
+	-webkit-transition: opacity 0.2s ease-in-out;
 }
 .smilies img:hover
 {
@@ -397,14 +395,20 @@ ul.pipemenu li:first-child
 
 a, a span
 {
-	-o-transition: color 0.2s ease-in-out;
+	        transition: color 0.2s ease-in-out;
+	     -o-transition: color 0.2s ease-in-out;
+	   -moz-transition: color 0.2s ease-in-out;
+	-webkit-transition: color 0.2s ease-in-out;
 }
-a:link span
+a:hover span
 {
 	color: white !important;
 }
 
-
+input[type="text"], input[type="password"], input[type="file"], select, textarea
+{
+/*	font-size: 1em; */
+}
 
 
 #pmNotice
@@ -416,12 +420,16 @@ a:link span
 	top: 0;
 	left: 0;
 	padding: 4px 8px;
-	font-size: 12px;
+	font-size: 1em; /* 12px; */
 	border: 1px none;
 	border-bottom: 2px solid black;
 	outline: 0px none;
 	opacity: 0.5;
-	-o-transition: all 0.2s ease-in-out;
+
+	        transition: all 0.2s ease-in-out;
+	     -o-transition: all 0.2s ease-in-out;
+	   -moz-transition: all 0.2s ease-in-out;
+	-webkit-transition: all 0.2s ease-in-out;
 }
 #pmNotice:hover
 {
@@ -521,4 +529,31 @@ a:link span
 .swfbuttonon
 {
 	border: 1px inset silver;
+}
+
+
+
+.badge
+{
+	border: 2px solid #666;
+	background: #444;
+	font-size: 10px;
+	color: white;
+	margin: 0px;
+	padding: 0px 3px;	
+}
+.bronze
+{
+	border-color: rgb(74, 49, 25);
+	background: rgb(148, 98, 49);
+}
+.silver
+{
+	border-color: rgb(74, 74, 74);
+	background: rgb(148, 148, 148);
+}
+.gold
+{
+	border-color: rgb(123, 90, 0);
+	background: rgb(248, 180, 0);
 }
