@@ -7,42 +7,46 @@ $min = $curtime['hours'] * 60 + $curtime['minutes'];
 $hue = ($min / 2) % 360;
 $sat = 50;
 $hs = $hue.", ".$sat."%";
-?>
-/* AcmlmBoard XD - Daily Cycle */
+
+$css = "/* AcmlmBoard XD - Daily Cycle */
 
 body
 {
-	background: hsl(<?php print $hs; ?>, 5%);
+	background: hsl([huesat], 15%) url(../img/themes/cycle/background.png);
 }
 
 .outline
 {
-	outline-color: hsl(<?php print $hs; ?>, 20%);
+	outline-color: hsl([huesat], 20%);
 }
 
 .cell0, table.post td.post
 {
-	background: hsl(<?php print $hs; ?>, 16%);
+	background: hsl([huesat], 16%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
 }
 
 .cell1, table.post, .faq, .errorc
 {
-	background: hsl(<?php print $hs; ?>, 20%);
+	background: hsl([huesat], 20%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
 }
 
 .cell2
 {
-	background: hsl(<?php print $hs; ?>, 28%);
+	background: hsl([huesat], 28%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
 }
 
 .header0 th
 {
-	background: hsl(<?php print $hs; ?>, 32%);
+	background: hsl([huesat], 32%) url(../img/themes/cycle/headergradient.png) repeat-x bottom;
+	color: #fff;
+	text-shadow: 1px 1px 0px #000;
 }
 
 .header1 th, .errort
 {
-	background: hsl(<?php print $hs; ?>, 40%);
+	background: hsl([huesat], 40%) url(../img/themes/cycle/headergradient.png) repeat-x bottom;
+	color: #fff;
+	text-shadow: 1px 1px 0px #000;
 }
 
 .errort, .errorc
@@ -58,32 +62,75 @@ body
 h3
 {
 	border-top: 0px none;
-	border-bottom-color: hsl(<?php print $hs; ?>, 48%);
+	border-bottom-color: hsl([huesat], 48%);
 }
 
 #pmNotice
 {
-	background: hsla(<?php print $hs; ?>, 48%, 0.75);
+	background: hsla([huesat], 48%, 0.75);
 }
 
 #pmNotice:hover
 {
-	background: hsl(<?php print $hs; ?>, 48%);
+	background: hsl([huesat], 48%);
 }
 
 .swf
 {
-	border-color: hsl(<?php print $hs; ?>, 24%);
-	background: hsl(<?php print $hs; ?>, 24%);
+	border-color: hsl([huesat], 24%);
+	background: hsl([huesat], 24%);
 }
 
 .swfmain
 {
-	border-color: hsl(<?php print $hs; ?>, 24%);
+	border-color: hsl([huesat], 24%);
 }
 
 .swfbuttonon, .swfbuttonoff
 {
-	border-color: hsl(<?php print $hs; ?>, 48%);
-	background: hsl(<?php print $hs; ?>, 48%);
+	border-color: hsl([huesat], 48%);
+	background: hsl([huesat], 48%);
 }
+
+
+button, input[type=submit]
+{
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 30%);
+	border-radius: 4px;
+	box-shadow:
+		inset -1px -10px 5px hsl([huesat], 20%),
+		inset 1px 6px 12px hsl([huesat], 50%),
+		1px 1px 1px hsl([huesat], 10%);
+	color: white;
+	text-shadow: 1px 1px 1px black;
+}
+
+input[type=text], input[type=password], textarea, select
+{
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 10%);
+	border-radius: 4px;
+	box-shadow: inset 1px 6px 12px black;
+	color: white;
+	padding-left: 0.5em;
+}
+
+input[type=checkbox], input[type=radio]
+{
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 10%);
+	box-shadow: 1px 1px 2px black;
+	color: white;
+}
+
+input[type=radio]
+{
+	border-radius: 8px;
+}
+
+";
+
+print str_replace("[huesat]", $hs, $css);
+
+?>
