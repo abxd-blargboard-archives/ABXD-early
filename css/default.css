@@ -3,6 +3,13 @@
 /* Normally, this would contain a truckload of CSS data, but most of it is in common.php.
 So instead we just add some little bits like form colors. */
 
+button, input[type="submit"]
+{
+	border: 1px solid #669;
+	background: #24285C;
+	color: #FFF;
+}
+
 input[type="text"], input[type="password"], input[type="file"], select, textarea
 {
 	background: #24285C;
@@ -12,14 +19,9 @@ input[type="text"], input[type="password"], input[type="file"], select, textarea
 
 input[type="checkbox"], input[type="radio"]
 {
-	/* Don't set a color for checkboxes. It'll be all wrong. */	
-}
-
-input[type="submit"], div.spoiler button
-{
-	border: 2px solid #669;
 	background: #24285C;
-	color: #FFF;
+	border: 2px ridge #669;
+	color: white;
 }
 
 

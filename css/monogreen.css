@@ -153,16 +153,16 @@ td.post code.Code
 	color: white !important;
 }
 
-input[type="text"], input[type="password"], input[type="file"], select, textarea
+input, select, textarea
 {
 	background: #040;
 	border: 1px solid green;
 	color: white;
 }
 
-input[type="submit"], div.spoiler button
+input[type="submit"], button
 {
-	border: 2px solid green;
+	border: 1px solid green;
 	background: #040;
 	color: white;
 }
