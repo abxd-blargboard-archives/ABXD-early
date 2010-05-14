@@ -86,13 +86,14 @@ $guestuser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "post
 
 if($loguserid) //Are we logged in?
 {
-	$qLogUser = "select * from users where id=".$loguserid." and password='".$loguserpw."'";
+	$qLogUser = "select * from users where id=".(int)$loguserid." and password='".justEscape($loguserpw)."'";
 	$rLogUser = Query($qLogUser);
 	if(NumRows($rLogUser)) //We have at least one result.
 	{
 		$loguser = Fetch($rLogUser);
 		$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."' where id=".$loguserid;
-		$qLastView = Query($rLastView);
+		if(!$noOnlineUsers)
+			$qLastView = Query($rLastView);
 
 		$dateformat = $loguser['dateformat'].", ".$loguser['timeformat'];
 	} else
@@ -101,17 +102,19 @@ if($loguserid) //Are we logged in?
 		setcookie("logdata", 0);
 
 		$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
-		$rGuest = Query($qGuest);
+	 	if(!$noOnlineUsers)
+			$rGuest = Query($qGuest);
 
-		$loguser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
+		$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80);
 		$loguserid = 0;
 	}
 } else
 {
 	$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
-	$rGuest = Query($qGuest);
-
-	$loguser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
+ 	if(!$noOnlineUsers)
+ 		$rGuest = Query($qGuest);
+	
+	$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80);
 	$loguserid = 0;
 }
 
