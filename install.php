@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="css/common.css" />
     <link rel="stylesheet" type="text/css" href="css/default.css" />
   </head>
-  <body>
+  <body style="font-size: 80%;">
     <div class="outline margin width100">
       <table>
         <tr>
@@ -47,23 +47,23 @@ if(!isset($_POST['action']))
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dbs\">Database server</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" maxlength=\"25\" value=\"localhost\"></input></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" value=\"localhost\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dbn\">Database name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
+	print "<td class=\"cell0\"><input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dun\">Database user name</label></td>";
-	print "<td class=\"cell1\"><input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\" maxlength=\"13\"></input></td>";
+	print "<td class=\"cell1\"><input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\"><label for=\"dpw\">Database user password</label></td>";
-	print "<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\" maxlength=\"13\"></input></td>";
+	print "<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\"></input></td>";
 	print "</tr>";
 	print "<tr>";
 	print "<td class=\"cell2\">Options</td>";
-	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"b\" name=\"addbase\"></input><label for=\"b\">Add starting fora</label></td>";
+	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"b\" name=\"addbase\"></input><label for=\"b\">Add starting forums and the usual Super Mario rankset</label></td>";
 	print "</tr>";
 	print "<tr class=\"cell2\">";
 	print "<td></td>";
