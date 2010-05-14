@@ -5,12 +5,13 @@
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
-if($_GET['action'] == "logout")
+if($_POST['action'] == "logout")
 {
 	//This protection measure exploits the fact that $loguser contains the -previous- lastip value, which is updated -after- $loguser is fetched.
-	if($_SERVER['REMOTE_ADDR'] != $loguser['lastip'])
-		if($loguserid)
-			Kill("Haaaah, no.");
+	//Deprecated by Cellar Dweller
+	//if($_SERVER['REMOTE_ADDR'] != $loguser['lastip'])
+	//	if($loguserid)
+	//		Kill("Haaaah, no.");
 
 	setcookie("logdata", 0);
 
