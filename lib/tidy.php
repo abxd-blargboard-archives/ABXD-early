@@ -67,4 +67,44 @@ else
 	}
 }
 
+
+function OptimizeLayouts($text)
+{
+	$bucket = array();
+	while(strpos($text, "<style") !== FALSE)
+	{
+		$startPos = strpos($text, "<style", $i);
+		$endPos = strpos($text, "/style>", $startPos);
+		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("</style>") - 1);
+		$text = str_replace($thisStyle, "", $text);
+		$bucket[] = $thisStyle;
+	}
+	while(strpos($text, "<link") !== FALSE)
+	{
+		$startPos = strpos($text, "<link", $i);
+		$endPos = strpos($text, "/>", $startPos);
+		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("/>"));
+		$text = str_replace($thisStyle, "", $text);
+		$bucket[] = $thisStyle;
+	}
+	while(strpos($text, "<script") !== FALSE)
+	{
+		$startPos = strpos($text, "<script", $i);
+		$endPos = strpos($text, "/script>", $startPos);
+		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("/script>"));
+		if(strpos($thisStyle, "api.recaptcha.net") !== FALSE)
+		{
+			$text = str_replace($thisStyle, str_replace("<script", "<recaptcha", $thisStyle), $text);
+			continue;
+		}
+		$text = str_replace($thisStyle, "", $text);
+		$bucket[] = $thisStyle;
+	}
+	$bucket = array_unique($bucket);
+	$newStyles = "<!-- styles -->".implode("", $bucket)."<!-- /styles -->";
+	$text = str_replace("</head>", $newStyles."</head>", $text);
+	$text = str_replace("<recaptcha", "<script", $text);
+	return $text;
+}
+
 ?>

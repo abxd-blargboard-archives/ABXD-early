@@ -49,6 +49,14 @@ if(!isset($_POST['action']))
 	print "<td class=\"cell2\">Sex</td>";
 	print "<td class=\"cell1\">".MakeOptions("sex",2,$sexes)."</td>";
 	print "</tr>";
+	print "<tr>";
+	print "<td class=\"cell2\"></td>";
+	print "<td class=\"cell0\"><input type=\"checkbox\" id=\"rf\" name=\"readFaq\"></input><label for=\"rf\">I have read the <a href=\"faq.php\">FAQ</a></label></td>";
+	print "</tr>";
+	print "<tr>";
+	print "<td class=\"cell2\"><label for=\"tw\">The word</label></td>";
+	print "<td class=\"cell1\"><input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\"></input></td>";
+	print "</tr>";
 	if($publickey)
 	{
 		print "<tr>";
@@ -56,13 +64,9 @@ if(!isset($_POST['action']))
 		print "<td class=\"cell1\">".recaptcha_get_html($publickey)."</td>";
 		print "</tr>";
 	}
-	print "<tr>";
-	print "<td class=\"cell2\"></td>";
-	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
-	print "</tr>";
 	print "<tr class=\"cell2\">";
 	print "<td></td>";
-	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input></td>";
+	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input> <input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
 	print "</tr>";
 	print "</table>";
 	print "</form>";
@@ -92,11 +96,15 @@ if(!isset($_POST['action']))
 
 	if($uname == $cname)
 		$err = "This user name is already taken. Please choose another.".$backtomain;
-	elseif($name == "" || $cname == "")
+	else if($name == "" || $cname == "")
 		$err = "The user name must not be empty. Please choose one.".$backtomain;
 	elseif($ipKnown)
 		$err = "Another user is already using this IP address.".$backtomain;
-	elseif(strlen($_POST['pass']) < 4)
+	else if(!$_POST['readFaq'])
+		$err = "You really should <a href=\"faq.php\">read the FAQ</a>...";
+	else if(strcasecmp($_POST['theWord'], $theWord))
+		$err = "That's not the right word. Are you sure you really <a href=\"faq.php\">read the FAQ</a>?";
+	else if(strlen($_POST['pass']) < 4)
 		$err = "Your password must be at least four characters long.".$backtomain;
 	elseif($publickey)
 	{
@@ -122,7 +130,7 @@ if(!isset($_POST['action']))
 
 	if($_POST['autologin'])
 	{
-		$qUser = "select * from users where name='".$_POST['name']."' and password='".md5($_POST['pass'])."'";
+		$qUser = "select * from users where name='".justEscape($_POST['name'])."' and password='".md5($_POST['pass'])."'";
 		$rUser = Query($qUser);
 		$user = Fetch($rUser);
 		$logdata['loguserid'] = $user['id'];
