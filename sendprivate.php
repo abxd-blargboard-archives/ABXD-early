@@ -7,7 +7,7 @@ include("lib/common.php");
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
 
 if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to post.");
+	Kill("You must be logged in to send private messages.");
 
 $pid = (int)$_GET['pid'];
 if($pid)
@@ -17,7 +17,7 @@ if($pid)
 	if(NumRows($rPM))
 	{
 		$sauce = Fetch($rPM);
-		$qUser = "select * from users where id = ".$sauce['userfrom'];
+		$qUser = "select * from users where id = ".(int)$sauce['userfrom'];
 		$rUser = Query($qUser);
 		if(NumRows($rUser))
 			$user = Fetch($rUser);
@@ -44,9 +44,13 @@ if($uid)
 		Kill("Unknown user.");
 }
 
-
+/*
+// "Banned users can't send PMs. Bad bad bad, quite often PMs are a good way for them to try and get unbanned." -- Mega-Mario
 if($loguser['powerlevel'] == -1)
 	Kill("You're banned.");
+*/
+
+$title = "Private messages";
 
 if($_POST['to'])
 {
@@ -76,7 +80,7 @@ if($_POST['action']=="Send")
 
 		if($_POST['text'])
 		{
-			$post = htmlentities2(stripslashes($_POST['text']));
+			$post = htmlentities2(deSlashMagic($_POST['text']));
 			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 			TidyPost($post);
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
@@ -101,13 +105,14 @@ if($_POST['action']=="Send")
 	}
 }
 
-$_POST['title'] = htmlentities2(stripslashes($_POST['title']));
-$_POST['text'] = htmlentities2(stripslashes($_POST['text']));
+$_POST['title'] = htmlentities2(deSlashMagic($_POST['title']));
+$_POST['text'] = htmlentities2(deSlashMagic($_POST['text']));
 
 if($_POST['action']=="Preview")
 {
 	if($_POST['text'])
 	{
+		$_POST['realtitle'] = $_POST['title']; //store the real PM title in another field...
 		$_POST['num'] = "---";
 		$_POST['posts'] = "---";
 		$_POST['id'] = "???";
@@ -116,13 +121,12 @@ if($_POST['action']=="Preview")
 		foreach($copies as $toCopy)
 			$_POST[$toCopy] = $loguser[$toCopy];
 		MakePost($_POST, 0, 0);
+		$_POST['title'] = $_POST['realtitle']; //and put it back for the form.
 	}
 }
 
-if($_POST['text'])
-	$prefill = $_POST['text'];
-if($_POST['title'])
-	$trefill = $_POST['title'];
+if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
+if($_POST['title']) $trefill = htmlval(deSlashMagic($_POST['title']));
 
 if(!isset($_POST['iconid']))
 	$_POST['iconid'] = 0;
@@ -138,7 +142,7 @@ print "<td><input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60
 print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td style=\"width: 25%;\">Title</td>";
-print "<td><input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".stripslashes($trefill)."\"></input></td>";
+print "<td><input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".deSlashMagic($trefill)."\"></input></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td>Post</td>";
