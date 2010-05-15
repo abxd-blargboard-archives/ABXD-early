@@ -1,6 +1,8 @@
 <?php
 include("lib/common.php");
 
+$title = "User groups";
+
 $groups = array();
 $rGroups = Query("select * from groups order by id asc");
 while($group = Fetch($rGroups))
@@ -18,56 +20,101 @@ while($affil = Fetch($rAffils))
 if($_GET['action'] == "pass")
 {
 	$gid = (int)$_GET['gid'];
-	$uid = (int)$_GET['uid'];
-	$group = $groups[$gid];
-	if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
 	{
-		Query("update groups set leader=".$uid." where id=".$gid);
-		$groups[$gid]['leader'] = $uid;
+		$uid = (int)$_GET['uid'];
+		if($uid == 0)
+			Alert("Invalid user.");
+		else
+		{
+			$group = $groups[$gid];
+			if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+			{
+				Query("update groups set leader=".$uid." where id=".$gid);
+				$groups[$gid]['leader'] = $uid;
+			}
+		}
 	}
 }
 else if($_GET['action'] == "kick" || $_GET['action'] == "deny")
 {
 	$gid = (int)$_GET['gid'];
-	$uid = (int)$_GET['uid'];
-	$group = $groups[$gid];
-	if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
 	{
-		Query("delete from groupaffiliations where uid=".$uid." and gid=".$gid);
-		$groups[$gid]['members'][$uid]['status'] = 3;
+		$uid = (int)$_GET['uid'];
+		//if($uid == 0)
+		//	Alert("Invalid user.");
+		//else
+		{
+			$group = $groups[$gid];
+			if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+			{
+				Query("delete from groupaffiliations where uid=".$uid." and gid=".$gid);
+				$groups[$gid]['members'][$uid]['status'] = 3;
+			}
+		}
 	}
 }
 else if($_GET['action'] == "ban")
 {
 	$gid = (int)$_GET['gid'];
-	$uid = (int)$_GET['uid'];
-	$group = $groups[$gid];
-	if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
 	{
-		Query("update groupaffiliations set status=3 where uid=".$uid." and gid=".$gid);
-		$groups[$gid]['members'][$uid]['status'] = 3;
+		$uid = (int)$_GET['uid'];
+		if($uid == 0)
+			Alert("Invalid user.");
+		else
+		{
+			$group = $groups[$gid];
+			if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+			{
+				Query("update groupaffiliations set status=3 where uid=".$uid." and gid=".$gid);
+				$groups[$gid]['members'][$uid]['status'] = 3;
+			}
+		}
 	}
 }
 else if($_GET['action'] == "join")
 {
 	$gid = (int)$_GET['gid'];
-	$uid = (int)$_GET['uid'];
-	$group = $groups[$gid];
-	if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
 	{
-		Query("update groupaffiliations set status=0 where uid=".$uid." and gid=".$gid);
-		$groups[$gid]['members'][$uid]['status'] = 0;
+		$uid = (int)$_GET['uid'];
+		if($uid == 0)
+			Alert("Invalid user.");
+		else
+		{
+			$group = $groups[$gid];
+			if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+			{
+				Query("update groupaffiliations set status=0 where uid=".$uid." and gid=".$gid);
+				$groups[$gid]['members'][$uid]['status'] = 0;
+			}
+		}
 	}
 }
-else if($_GET['action'] == "request")
+else if($_GET['action'] == "request" && $loguserid)
 {
 	$gid = (int)$_GET['gid'];
-	$group = $groups[$gid];
-	if(!array_key_exists($loguserid, $group['members']))
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
 	{
-		Query("insert into groupaffiliations (gid,uid,status) values (".$gid.",".$loguserid.",1)");
-		$groups[$gid]['members'][$loguserid] = $loguser;
-		$groups[$gid]['members'][$loguserid]['status'] = 1;
+		$group = $groups[$gid];
+		if(!array_key_exists($loguserid, $group['members']))
+		{
+			Query("insert into groupaffiliations (gid,uid,status) values (".$gid.",".$loguserid.",1)");
+			$groups[$gid]['members'][$loguserid] = $loguser;
+			$groups[$gid]['members'][$loguserid]['status'] = 1;
+		}
 	}
 }
 else if($_POST['action'] == "Create" && $loguser['powerlevel'] > 2)
@@ -79,9 +126,14 @@ else if($_POST['action'] == "Create" && $loguser['powerlevel'] > 2)
 else if($_GET['action'] == "delete" && $loguser['powerlevel'] > 2)
 {
 	$gid = (int)$_GET['gid'];
-	Query("delete from groups where id=".$gid);
-	Query("delete from groupaffiliations where gid=".$gid);
-	$groups[$gid] = 0;
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Notice("Invalid group.");
+	else
+	{
+		Query("delete from groups where id=".$gid);
+		Query("delete from groupaffiliations where gid=".$gid);
+		$groups[$gid] = 0;
+	}
 }
 
 print "<table class=\"outline margin width100\">";
@@ -127,7 +179,8 @@ foreach($groups as $group)
 	if($waiters)
 		$waiters = "<br />Waiting: ".$waiters;
 	
-	if(!array_key_exists($loguserid, $group['members']))
+	$join = "";
+	if(!array_key_exists($loguserid, $group['members']) && $loguserid)
 		$join = "<br /><small><a href=\"groups.php?action=request&amp;gid=".$group['id']."\">Request join</a></small>";
 	
 	if($loguser['powerlevel'] > 2)
