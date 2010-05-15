@@ -38,10 +38,8 @@ elseif($_POST['action'] == "Add")
 
 $levels = array(-1 => "-1 - Banned", 0 => "0 - Normal user", 1 => "1 - Local Mod", 2 => "2 - Full Mod", 3 => "3 - Admin");
 
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"header1\">";
-print "<th>Category name</th><th>Minimal power</th><th>&nbsp;</th>";
-print "</tr>";
+print "<div class=\"outline margin\">";
+print "<div class=\"errort\"><strong>Category list</strong></div>";
 
 $qCategories = "select * from categories";
 $rCategories = Query($qCategories);
@@ -49,28 +47,29 @@ if(NumRows($rCategories))
 {
 	while($category = Fetch($rCategories))
 	{
+		print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
 		print "<form action=\"editcats.php\" method=\"post\">";
-		print "<tr class=\"cell1\">";
-		print "<td><input type=\"text\" name=\"name\" style=\"width: 98%;\" value=\"".htmlentities2($category['name'])."\"></input></td>";
-		print "<td>".MakeSelect("minpower",$category['minpower'],$levels)."</td>";
-		print "<td><input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
+		print "<input type=\"text\" name=\"name\" size=\"70\" value=\"".htmlval($category['name'])."\"></input> ";
+		print MakeSelect("minpower",$category['minpower'],$levels)." ";
+		print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 		print "<input type=\"submit\" name=\"action\" value=\"Remove\"></input>";
-		print "<input type=\"hidden\" name=\"cid\" value=\"".$category['id']."\"></input></td>";
-		print "</tr>";
+		print "<input type=\"hidden\" name=\"cid\" value=\"".$category['id']."\"></input>";
 		print "</form>";
+		print "</div>";
 	}
 }
+print "</div>";
+
 print "<form action=\"editcats.php\" method=\"post\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"4\">Add a Forum</th>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><input type=\"text\" name=\"name\" style=\"width: 98%;\"></input></td>";
-print "<td>".MakeSelect("minpower",0,$levels)."</td>";
-print "<td><input type=\"submit\" name=\"action\" value=\"Add\"></input></td>";
-print "</tr>";
+print "<div class=\"outline margin\">";
+print "<div class=\"errort\"><strong>Add a Category</strong></div>";
+print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
+print "<input type=\"text\" name=\"name\" size=\"70\"></input></td>";
+print MakeSelect("minpower",0,$levels)." ";
+print "<input type=\"submit\" name=\"action\" value=\"Add\"></input>";
+print "</div>";
+print "</div>";
 print "</form>";
-print "</table>";
 print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
 
 doFooter();

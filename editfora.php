@@ -45,17 +45,10 @@ $qCategories = "select * from categories";
 $rCategories = Query($qCategories);
 if(NumRows($rCategories))
 {
-	print "<table class=\"outline margin\">";
-	print "<tr class=\"header1\">";
-	print "<th>Forum title</th>";
-	print "<th>Stats</th>";
-	print "<th>Order</th>";
-	print "</tr>";
+	print "<div class=\"outline margin\">";
+	print "<div class=\"errort\"><strong>Forum list</strong></div>";
 	while($category = Fetch($rCategories))
 	{
-		print "<tr class=\"header0\">";
-		print "<th colspan=\"4\">".$category['name']."</th>";
-		print "</tr>";
 		$qFora = "select * from forums where catid=".(int)$category['id']." order by forder";
 		$rFora = Query($qFora);
 		if(NumRows($rFora))
@@ -77,51 +70,48 @@ if(NumRows($rCategories))
 					$localMods = "<small>Moderated by: ".substr($localMods,0,strlen($localMods)-2);
 				}
 
-				print "<tr class=\"cell1\">";
-				print "<td>";
+				print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
+
+				print "<div style=\"float: left; width: 70%;\">";
 				print "<form action=\"editfora.php\" method=\"post\">";
-				print "<input type=\"text\" name=\"title\" size=\"40\" value=\"".htmlentities2($forum['title'])."\"></input><br />";
-				print "<input type=\"text\" name=\"description\" size=\"80\" value=\"".htmlentities2($forum['description'])."\"></input>";
+				print "<input type=\"text\" name=\"title\" size=\"40\" value=\"".htmlval($forum['title'])."\"></input><br />";
+				print "<input type=\"text\" name=\"description\" size=\"100\" value=\"".htmlval($forum['description'])."\"></input>";
 				print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
 				print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
+				print "<br/>".$localMods. "<small> (<a href=\"managemods.php\">Edit</a>)</small>";
+				print " &bull; ".$forum['numthreads']." thread(s), ".$forum['numposts']." post(s).";
 				print "</form>";
-				print $localMods. "<small> (<a href=\"managemods.php\">Edit</a>)</small>";
-				print "</td>";
-				print "<td>";
-				print "".$forum['numthreads']." thread(s), ".$forum['numposts']." post(s).";
-				print "</td>";
-				print "<td>";
-				print "";
+				print "</div>";
+
 				print "<form action=\"editfora.php\" method=\"post\">";
 				print MakeOptions($forum['catid']);
-				print " <input type=\"text\" name=\"order\" value=\"".$forum['forder']."\" size=\"2\" maxlength=\"2\"></input> ";
+				print " <input type=\"text\" name=\"order\" value=\"".$forum['forder']."\" size=\"2\" maxlength=\"2\"></input><br />";
 				print "<input type=\"submit\" name=\"action\" value=\"Move\"></input> ";
 				print "<input type=\"submit\" name=\"action\" value=\"Remove\"></input>";
 				print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
 				print "</form>";
-				print "</td>";
-				print "</tr>";
+
+				print "</div>";
 			}
 		}
 	}
-	print "<form action=\"editfora.php\" method=\"post\">";
-	print "<tr class=\"header0\">";
-	print "<th colspan=\"4\">Add a Forum</th>";
-	print "</tr>";
-	print "<tr class=\"cell1\">";
-	print "<td colspan=\"2\"><input type=\"text\" name=\"title\" size=\"40\"></input><br/>";
-	print "<input type=\"text\" name=\"description\" size=\"80\"></input></td>";
-	print "<td>";
-	print MakeOptions(-1);
-	print " <input type=\"text\" name=\"order\" value=\"0\" size=\"2\" maxlength=\"2\"></input> ";
-	print $levels;
-	print "<input type=\"submit\" name=\"action\" value=\"Add\"></input> ";
-	print "</td>";
-	print "</tr>";
-	print "</form>";
-
-	print "</table>";
+	print "</div>";
 }
+
+print "<form action=\"editfora.php\" method=\"post\">";
+print "<div class=\"outline margin\">";
+print "<div class=\"errort\"><strong>Add a Forum</strong></div>";
+print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
+print "<div style=\"float: left; width: 70%;\">";
+print "<input type=\"text\" name=\"title\" size=\"40\"></input><br/>";
+print "<input type=\"text\" name=\"description\" size=\"100\"></input>";
+print "</div>";
+print MakeOptions(-1);
+print " <input type=\"text\" name=\"order\" value=\"0\" size=\"2\" maxlength=\"2\"></input> ";
+print $levels;
+print "<input type=\"submit\" name=\"action\" value=\"Add\"></input> ";
+print "</div>";
+print "</div>";
 
 print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
 
