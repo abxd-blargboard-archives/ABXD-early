@@ -57,9 +57,18 @@ if(NumRows($rPosts))
 		$rThread = Query($qThread);
 		$thread = Fetch($rThread);
 
-		print "<div><a name=\"".$post['id']."\" />\n";
-		MakePost($post, $thread, -1);
-		print "</div>";
+		$qForum = "select * from forums where id=".$thread['forum'];
+		$rForum = Query($qForum);
+		$forum = Fetch($rForum);
+		
+		if($forum['minpower'] > 0)
+			continue;
+			
+		$post['threadname'] = $thread['title'];
+
+		//print "<div><a name=\"".$post['id']."\" />\n";
+		MakePost($post, $thread, -2);
+		//print "</div>";
 	}
 }
 
