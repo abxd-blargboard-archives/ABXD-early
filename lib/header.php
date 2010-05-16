@@ -1,16 +1,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-	<title><?php print $boardname . ($title ? " - ".$title : "") ?></title>
+	<title>[[BOARD TITLE HERE]]</title>
 	<meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=8" />
 	<link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="css/common.css" />
-	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" />
+	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" id="theme_css" />
 	<link rel="alternate" type="application/rss+xml" title="RSS feed" href="rss2.php" />
 	<script type="text/javascript" src="lib/tricks.js"></script>
 </head>
-<body>
+<body style="font-size: <?php print $loguser['fontsize']; ?>%;">
 	<div class="outline margin width100" id="header">
 		<table>
 			<tr>
@@ -19,7 +19,7 @@
 					<table>
 						<tr>
 							<td style="border: 0px none;">
-								<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" style="padding: 8px;" />
+								<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" id="theme_banner" style="padding: 8px;" />
 							</td>
 							<td style="border: 0px none;">
 								<div class="PoRT">
@@ -35,11 +35,11 @@
 					</table>
 				</td>
 			</tr>
-			<tr class="smallFonts cell1">
-				<td rowspan="2" style="text-align: center; width: 10%;">
+			<tr class="cell1">
+				<td rowspan="2" class="smallFonts" style="text-align: center; width: 10%;">
 					Views: <?php print number_format($misc['views'])."\n"; ?>
 				</td>
-				<td style="text-align: center; width: 80%;">
+				<td class="smallFonts" style="text-align: center; width: 80%;">
 					<ul class="pipemenu">
 						<?php
 							if($loguser['powerlevel'] == 3)
@@ -47,6 +47,7 @@
 						?>
 						<li><a href="index.php">Main</a></li>
 						<li><a href="faq.php">FAQ</a></li>
+						<li><a href="posttest.php">Post function demo</a>
 						<li><a href="memberlist.php">Member list</a></li>
 						<li><a href="groups.php">Groups</a></li>
 						<li><a href="ranks.php">Ranks</a></li>
@@ -54,19 +55,20 @@
 						<li><a href="online.php">Online users</a></li>
 					</ul>
 				</td>
-				<td rowspan="2" style="text-align: center; width: 10%;">
+				<td rowspan="2" class="smallFonts" style="text-align: center; width: 10%;">
 					<?php print gmdate($dateformat)."\n"; ?>
 				</td>
 			</tr>
-			<tr class="smallFonts cell2">
-				<td style="text-align: center">
+			<tr class="cell2">
+				<td class="smallFonts" style="text-align: center">
 					<?php
 						if($loguserid)
 						{
 							print UserLink($loguser).": \n";
 					?>
 					<ul class="pipemenu">
-						<li><a href="login.php?action=logout">Log out</a></li>
+						<!-- <li><a href="login.php?action=logout">Log out</a></li> -->
+						<a href="#" onclick="document.logout.submit();">Log out</a></li>
 						<li><a href="editprofile.php">Edit profile</a></li>
 						<li><a href="private.php">Private messages</a></li>
 						<li><a href="editavatars.php">Mood avatars</a></li>
@@ -92,11 +94,13 @@
 			</tr>
 		</table>
 	</div>
+	<form action="login.php" method="post" name="logout">
+		<input type="hidden" name="action" value="logout" />
+	</form>
 	<div id="body">
 <?php
 	$timeStart = usectime();
 
-	//if(strpos($_SERVER['HTTP_USER_AGENT'], "MSIE 6.") !== FALSE)
 	if($isIE6)
 	{
 		print "<div id=\"getabetterbrowseryoulazyfuck\">";
