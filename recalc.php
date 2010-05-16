@@ -74,6 +74,29 @@ while($forum = Fetch($rFora))
 print "<tr class=\"header0\"><th colspan=\"4\">All counters reset.</th></tr>";
 print "</table>";
 
+
+
+
+$rForum = Query("select * from forums");
+while($forum = Fetch($rForum))
+{
+	print $forum['title']."<br/>";
+	$rThread = Query("select * from threads where forum = ".$forum['id']." order by lastpostdate desc");
+	$first = 1;
+	while($thread = Fetch($rThread))
+	{
+		print "&raquo; ".$thread['title']."<br/>";
+		$lastPost = Fetch(Query("select * from posts where thread = ".$thread['id']." order by date desc limit 0,1"));
+		print "&raquo; &raquo; Last post ID is ".$lastPost['id']." by user #".$lastPost['user']."<br/>";
+		Query("update threads set lastpostid = ".$lastPost['id'].", lastposter = ".$lastPost['user'].", lastpostdate = ".$lastPost['date']." where id = ".$thread['id']);
+		if($first)
+			Query("update forums set lastpostid = ".$lastPost['id'].", lastpostuser = ".$lastPost['user'].", lastpostdate = ".$lastPost['date']." where id = ".$forum['id']);
+		$first = 0;
+	}
+}
+
+
+
 doFooter();
 
 ?>
