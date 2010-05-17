@@ -4,8 +4,10 @@
 
 include("lib/common.php");
 
-if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to post.");
+print "<script type=\"text/javascript\">window.onload = function() { hookUpControls(); };</script>";
+
+//if(!$loguserid) //Not logged in?
+//	Kill("You must be logged in to post.");
 
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
@@ -35,15 +37,15 @@ else
 	Kill("Unknown forum ID.");
 $fid = $forum['id'];
 
-if($forum['minpower'] > $loguser['powerlevel'])
-	Kill("Your power is not enough.");
+if($forum['minpowerreply'] > $loguser['powerlevel'])
+	Kill("Your power is not enough.");	
 
 if($thread['closed'] && $loguser['powerlevel'] < 3)
 	Kill("This thread is locked.");
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
-if($thread['lastpostdate'] < time() - (2592000 * $autoLockMonths))
+if($warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
 	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
@@ -52,8 +54,62 @@ if($_POST['text'] && CheckTableBreaks($_POST['text']))
 	Alert("This post would break the board layout.", "I'm sorry, Dave.");
 }
 
+if($_POST['text'])
+{
+	$words = explode(" ", $_POST['text']);
+	$wordCount = count($words);
+	if($wordCount < 2)
+	{
+		$_POST['action'] = "";
+		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+	}
+}
+
+$ninja = FetchResult("select id from posts where thread=".$tid." order by date desc limit 0, 1",0,0);
+if($_POST['action'] && isset($_POST['ninja']) && $_POST['ninja'] != $ninja)
+{
+	$_POST['action'] == "Preview";
+	Alert("You got ninja'd. You might want to review the post made while you were typing before you submit yours.");
+}
+
+/*
+if($_POST['text'] && $_POST['action'] == "Post")
+{
+	$lastPost = time() - $loguser['lastposttime'];
+	if($lastPost < 10)
+	{
+		$_POST['action'] = "";
+		Alert("You're going too damn fast! Slow down a little.", "I'm sorry, Lion.");
+	}
+}
+*/
+
+$postingAs = $loguserid;
+$postingAsUser = $loguser;
+if($_POST['username'] != "" && $_POST['password'] != "")
+{
+	//Entered another user's name and password. Look it up now.
+	$qUser = "select * from users where name='".justEscape($_POST['username'])."' and password='".md5($_POST['password'])."'";
+	$rUser = Query($qUser);
+	if(NumRows($rUser))
+	{
+		$postingAsUser = Fetch($rUser);
+		$postingAs = $postingAsUser['id'];
+		$postingAsUser['uid'] = $postingAs;
+	}
+	else
+	{
+		Alert("Invalid user name or password.");
+		$_POST['action'] = "";
+		$_POST['password'] = "";
+	}
+}
+
 if($_POST['action']=="Post")
 {
+	if($postingAs == 0)
+		Kill("You must be logged in to post.");
+
 	if($_POST['text'])
 	{
 		//$post = htmlentities2(stripslashes($_POST['text']));
@@ -66,26 +122,26 @@ if($_POST['action']=="Post")
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
 
-		if($thread['lastposter']==$loguserid && $thread['lastpostdate']>=time()-86400 && $loguser['powerlevel']<3)
+		if($thread['lastposter']==$postingAs && $thread['lastpostdate']>=time()-86400 && $postingAsUser['powerlevel']<3)
 			Kill("You can't double post until it's been at least one day.");
 
-		$qThreads = "update threads set lastposter=".$loguserid.", lastpostdate=".time().", replies=".($thread['replies']+1)." where id=".$tid." limit 1";
+		$qThreads = "update threads set lastposter=".$postingAs.", lastpostdate=".time().", replies=".($thread['replies']+1)." where id=".$tid." limit 1";
 		$rThreads = Query($qThreads);
 
-		$qUsers = "update users set posts=".($loguser['posts']+1).", lastposttime=".time()." where id=".$loguserid." limit 1";
+		$qUsers = "update users set posts=".($postingAsUser['posts']+1).", lastposttime=".time()." where id=".$postingAs." limit 1";
 		$rUsers = Query($qUsers);
 
-		$qPosts = "insert into posts (thread, user, date, ip, num, options, mood) values (".$tid.",".$loguserid.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($loguser['posts']+1).", ".$options.", ".(int)$_POST['mood'].")";
+		$qPosts = "insert into posts (thread, user, date, ip, num, options, mood) values (".$tid.",".$postingAs.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($postingAsUser['posts']+1).", ".$options.", ".(int)$_POST['mood'].")";
 		$rPosts = Query($qPosts);
 		$pid = mysql_insert_id();
 
 		$qPostsText = "insert into posts_text (pid,text) values (".$pid.",'".$post."')";
 		$rPostsText = Query($qPostsText);
 
-		$qFora = "update forums set numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid." where id=".$fid." limit 1";
+		$qFora = "update forums set numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$postingAs.", lastpostid=".$pid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
-		Report("<message><action type=\"newreply\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
+		Report("<message><action type=\"newreply\" id=\"".$pid."\" /><user id=\"".$postingAs."\">".$postingAsUser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
@@ -106,13 +162,13 @@ if($_POST['action']=="Preview")
 	if($_POST['text'])
 	{
 		$previewPost['text'] = $prefill;
-		$previewPost['num'] = $loguser['posts']+1;
-		$previewPost['posts'] = $loguser['posts']+1;
+		$previewPost['num'] = $postingAsUser['posts']+1;
+		$previewPost['posts'] = $postingAsUser['posts']+1;
 		$previewPost['id'] = "???";
-		$previewPost['uid'] = $loguserid;
+		$previewPost['uid'] = $postingAs;
 		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
-			$previewPost[$toCopy] = $loguser[$toCopy];
+			$previewPost[$toCopy] = $postingAsUser[$toCopy];
 		$previewPost['mood'] = (int)$_POST['mood'];
 		if($_POST['nopl']) $previewPost['options'] = 1;
 		MakePost($previewPost, 0, $fid);
@@ -121,24 +177,28 @@ if($_POST['action']=="Preview")
 }
 
 if(!$_POST['text']) $_POST['text'] = $post['text'];
-if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 
-if($_GET['quote'])
+if($_GET['link'])
 {
-	//$qQuote = "select * from posts left join posts_text on id=pid where id=".$_GET['quote'];
-	//$rQuote = Query($qQuote);
+	$prefill = ">>".(int)$_GET['link']."\r\n\r\n";
+}
+else if($_GET['quote'])
+{
+	$qQuote = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".$_GET['quote'];
+	$rQuote = Query($qQuote);
 	
-	$qPost = "select * from posts where id=".$_GET['quote'];
-	$rPost = Query($qPost);
-	$post = Fetch($rPost);
-	$qText = "select text,revision from posts_text where pid=".$post['id']." order by revision desc limit 1";
-	$rText = Query($qText);
-	$text = Fetch($rText);
-	$quote = array_merge($post, $text);
+//	$qPost = "select * from posts where id=".(int)$_GET['quote'];
+//	$rPost = Query($qPost);
+//	$post = Fetch($rPost);
+//	$qText = "select text,revision from posts_text where pid=".$post['id']." order by revision desc limit 1";
+//	$rText = Query($qText);
+//	$text = Fetch($rText);
+//	$quote = array_merge($post, $text);
 
-//	if(NumRows($rQuote))
+	if(NumRows($rQuote))
 	{
-//		$quote = Fetch($rQuote);
+		$quote = Fetch($rQuote);
 
 		//SPY CHECK!
 		$qThread = "select forum from threads where id=".$quote['thread'];
@@ -147,13 +207,14 @@ if($_GET['quote'])
 		$qForum = "select minpower from forums where id=".$thread['forum'];
 		$rForum = Query($qForum);
 		$forum = Fetch($rForum);
-		if($forum['minpower'] > $loguser['powerlevel'])
+		if($forum['minpower'] > $postingAsUser['powerlevel'])
 			$quote['text'] = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
 
 		$qPoster = "select * from users where id=".$quote['user'];
 		$rPoster = Query($qPoster);
 		$poster = Fetch($rPoster);
-		$prefill = "[quote=\"".$poster['name']."\" id=\"".$quote['id']."\"]".$quote['text']."[/quote]";
+		$prefill = "[quote=\"".$poster['name']."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
+		$prefill = str_replace("/me", "[b]* ".$poster['name']."[/b]", $prefill);
 	}
 }
 
@@ -165,13 +226,24 @@ DoPostHelp();
 
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
-$rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
+$rMoods = Query("select mid, name from moodavatars where uid=".$postingAs." order by mid asc");
 while($mood = Fetch($rMoods))
 	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
 
+$ninja = FetchResult("select id from posts where thread=".$tid." order by date desc limit 0, 1",0,0);
+
 print "<form action=\"newreply.php\" method=\"post\">";
+print "<input type=\"hidden\" name=\"ninja\" value=\"".$ninja."\">";
 print "<table class=\"outline margin width50\">";
+print "<tr class=\"cell0\">";
+print "<td><label for=\"uname\">User name</label></td>";
+print "<td><input type=\"text\" id=\"uname\" name=\"username\" value=\"".htmlval($postingAsUser['name'])."\" style=\"width: 98%;\" maxlength=\"25\" /></td>";
+print "</tr>";
+print "<tr class=\"cell1\">";
+print "<td><label for=\"upass\">Password</label></td>";
+print "<td><input type=\"password\" id=\"upass\" name=\"password\" value=\"".$_POST['password']."\" size=\"13\" maxlength=\"13\" /></td>";
+print "</tr>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"text\">Post</label></td>";
 print "<td>";
@@ -181,7 +253,7 @@ print "</tr>";
 print "<tr class=\"cell2\">";
 print "<td></td>";
 print "<td>";
-print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
+print "<input type=\"submit\" name=\"action\" value=\"Post\"></input> ";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
@@ -191,7 +263,14 @@ print "</tr>";
 print "</table>";
 print "</form>";
 
-$qPosts = "select * from posts left join posts_text on pid=id where revision = currentrevision and thread=".$tid." and deleted=0 order by date desc limit 0,20";
+//$qPosts = "select * from posts left join posts_text on pid=id where revision = currentrevision and thread=".$tid." and deleted=0 order by date desc limit 0,20";
+$qPosts = "select ";
+$qPosts .=
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.sex, users.posts";
+$qPosts .= 
+	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
+$qPosts .= " where thread=".$tid." and deleted=0 order by date desc limit 0, 20";
+
 $rPosts = Query($qPosts);
 if(NumRows($rPosts))
 {
@@ -200,21 +279,15 @@ if(NumRows($rPosts))
 	{
 		$cellClass = ($cellClass+1) % 2;
 
-//Revisions
-		$qText = "select text,revision from posts_text where pid=".$post['id']." order by revision desc limit 1";
-		$rText = Query($qText);
-		$text = Fetch($rText);
-		$post = array_merge($post, $text);
-//</revisions>
+		$poster = $post;
+		$poster['id'] = $post['uid'];
 
-		$qPoster = "select * from users where id=".$post['user'];
-		$rPoster = Query($qPoster);
-		$poster = Fetch($rPoster);
 		print "<tr>";
 		print "<td class=\"cell2\">".UserLink($poster)."</td>";
 		print "<td class=\"cell".$cellClass."\">";
 		print "<button style=\"float: right;\" onclick=\"insertQuote(".$post['id'].");\">Quote</button>";
-		print CleanUpPost($post['text']);
+		print "<button style=\"float: right;\" onclick=\"insertChanLink(".$post['id'].");\">Link</button>";
+		print CleanUpPost($post['text'], $poster['name']);
 		print "</td>";
 		print "</tr>";
 	}
@@ -224,13 +297,5 @@ if(NumRows($rPosts))
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
 doFooter();
-
-function htmlval($text)
-{
-	//$text = str_replace("\"", "&quot;", $text);
-	//$text = str_replace("<", "&lt;", $text);
-	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
-}
 
 ?>

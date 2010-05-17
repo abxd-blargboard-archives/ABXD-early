@@ -51,6 +51,29 @@ if($_POST['text'] && CheckTableBreaks($_POST['text']))
 	Alert("This post would break the board layout.", "I'm sorry, Dave.");
 }
 
+if($_POST['text'] && $_POST['action'] != "")
+{
+	$words = explode(" ", $_POST['text']);
+	$wordCount = count($words);
+	if($wordCount < 2)
+	{
+		$_POST['action'] = "";
+		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+	}
+}
+
+/*
+if($_POST['text'] && $_POST['action'] == "Post")
+{
+	$lastPost = time() - $loguser['lastposttime'];
+	if($lastPost < 30)
+	{
+		$_POST['action'] = "";
+		Alert("You're going too damn fast! Slow down a little.", "I'm sorry, Lion.");
+	}
+}
+*/
+
 if($_POST['action']=="Post")
 {
 	if($_POST['text'] && $_POST['title'])
@@ -67,8 +90,9 @@ if($_POST['action']=="Post")
 
 		if($_POST['iconid'])
 		{
+			$_POST['iconid'] = (int)$_POST['iconid'];
 			if($_POST['iconid'] < 255)
-				$iconurl = "img/icons/icon".$_POST['iconid'].".gif";
+				$iconurl = "img/icons/icon".$_POST['iconid'].".png";
 			else
 				$iconurl = justEscape($_POST['iconurl']);
 		}
@@ -83,7 +107,8 @@ if($_POST['action']=="Post")
 			{
 				if($_POST['pollOption'.$pops])
 				{
-					$qPollOption = "insert into poll_choices (poll, choice, color) values (".$pod.", '".justEscape($_POST['pollOption'.$pops])."', '".filterPollColors($_POST['pollColor'.$pops])."')";
+					$pollColor = filterPollColors($_POST['pollColor'.$pops]);
+					$qPollOption = "insert into poll_choices (poll, choice, color) values (".$pod.", '".justEscape($_POST['pollOption'.$pops])."', '".$pollColor."')";
 					$rPollOption = Query($qPollOption);
 				}
 			}
@@ -106,7 +131,7 @@ if($_POST['action']=="Post")
 		$qPostsText = "insert into posts_text (pid,text) values (".$pid.",'".$post."')";
 		$rPostsText = Query($qPostsText);
 
-		$qFora = "update forums set numthreads=".($forum['numthreads']+1).", numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid." where id=".$fid." limit 1";
+		$qFora = "update forums set numthreads=".($forum['numthreads']+1).", numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid.", lastpostid=".$pid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
 		Report("<message><action type=\"newthread\" id=\"".$tid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$_POST['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
@@ -139,6 +164,47 @@ if($_POST['action']=="Preview")
 {
 	if($_POST['text'] && $_POST['title'])
 	{
+		//print_r($_POST);
+		if($_POST['poll'])
+		{
+			print "<table class=\"outline margin\">";
+			print "<tr class=\"header0\">";
+			print "<th colspan=\"2\">Preview</th>";
+			print "</tr>";
+			print "<tr class=\"cell0\">";
+			print "<td colspan=\"2\">".$_POST['pollQuestion']."</td>";
+			print "</tr>";
+			$options = array();
+			$noColors = 0;
+			$defaultColors = array(
+				"#000000","#0000B6","#00B600","#00B6B6","#B60000","#B600B6","#B66700","#B6B6B6",
+				"#676767","#6767FF","#67FF67","#67FFFF","#FF6767","#FF67FF","#FFFF67","#FFFFFF",);
+			for($i = 0; $i < $_POST['pollOptions']; $i++)
+			{
+				$options[] = array("choice"=>$_POST['pollOption'.$i], "color"=>$_POST['pollColor'.$i]);
+			}
+			$totalVotes = count($options);
+			foreach($options as $option)
+			{
+				if($option['color'] == "")
+					$option['color'] = $defaultColors[($pops + 9) % 16];
+				
+				$votes = 1;
+
+				$cellClass = ($cellClass+1) % 2;
+				print "<tr class=\"cell".$cellClass."\">";
+				if($loguserid && !$thread['closed'])
+					print "<td>".$option['choice']."</td>";
+				else
+					print "<td>".$pc[$pops].$option['choice']."</td>";
+				print "<td><img src=\"img/bargraph.php?z=".$votes."&amp;n=".$totalVotes."&amp;c=".str_replace("#","",$option['color'])."\" title=\"".$votes." of ".$totalVotes."\" alt=\"\" /></td>";
+				print "</tr>";
+				$pops++;
+			}
+
+			print "</table>";
+		}
+	
 		$previewPost['text'] = $prefill;
 		$previewPost['num'] = $loguser['posts']+1;
 		$previewPost['posts'] = $loguser['posts']+1;
@@ -162,7 +228,7 @@ if($_POST['action']=="Preview")
 }
 
 if(!$_POST['text']) $_POST['text'] = $post['text'];
-if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 if($_POST['title']) $trefill = stripslashes($_POST['title']);
 
 if(!isset($_POST['iconid']))
@@ -174,6 +240,7 @@ if($_POST['nopl'])
 DoSmileyBar();
 DoPostHelp();
 
+print "<script type=\"text/javascript\" src=\"lib/jscolor/jscolor.js\"></script>";
 print "<form action=\"newthread.php\" method=\"post\">";
 print "<table class=\"outline margin width50\">";
 print "<tr class=\"cell0\">";
@@ -184,12 +251,12 @@ print "<tr class=\"cell1\">";
 print "<td>Icon</td>";
 print "<td>";
 $i = 1;
-while(is_file("img/icons/icon".$i.".gif"))
+while(is_file("img/icons/icon".$i.".png"))
 {
 	$check = "";
 	if($_POST['iconid'] == $i) $check = "checked=\"checked\" ";
-	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input> <label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".gif\" alt=\"Icon ".$i."\" /></label> ";
-	if($i % 10 == 9) print "<br />";
+	print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input> <label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".png\" alt=\"Icon ".$i."\" /></label> ";
+	//if($i % 12 == 13) print "<br />";
 	$i++;
 }
 $check = "";
@@ -212,6 +279,7 @@ if($_POST['poll'])
 	print "<td><label for=\"pn\">Number of options</label></td>";
 	print "<td><input type=\"text\" id=\"pn\" name=\"pollOptions\" value=\"".$_POST['pollOptions']."\" size=\"2\" maxlength=\"2\"></input></td>";
 	print "</tr>";
+	$first = true;
 	for($pops = 0; $pops < $_POST['pollOptions']; $pops++)
 	{
 		$cellClass = ($cellClass+1) % 2;
@@ -222,14 +290,15 @@ if($_POST['poll'])
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td><label for=\"p".$pops."\">Option ".($pops+1)."</label></td>";
 		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" style=\"width: 50%;\" maxlength=\"40\"></input> <label for=\"c".$pops."\">Color</label> ";
-		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".filterPollColors($_POST['pollColor'.$pops])."\" size=\"10\" maxlength=\"10\"></input></td>";
+		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".filterPollColors($_POST['pollColor'.$pops])."\" size=\"10\" maxlength=\"10\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left'}\"></input>".($first ? " (#rrggbb)" : "")."</td>";
 		print "</tr>";
+		$first = false;
 	}
 }
 
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
 $rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
 while($mood = Fetch($rMoods))
 	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
@@ -244,7 +313,7 @@ print "<tr class=\"cell2\">";
 print "<td></td>";
 print "<td>";
 if(!$_POST['poll'] || $_POST['pollOptions'])
-	print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
+	print "<input type=\"submit\" name=\"action\" value=\"Post\"></input> ";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
@@ -261,24 +330,5 @@ else
 	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Thread"=>""), $links);
 
 doFooter();
-
-
-function htmlval($text)
-{
-	//$text = str_replace("\"", "&quot;", $text);
-	//$text = str_replace("<", "&lt;", $text);
-	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
-}
-
-function filterPollColors($input)
-{
-	$valid = "#0123456789ABCDEFabcdef";
-	$output = "";
-	for($i = 0; $i < strlen($input); $i++)
-		if(strpos($valid, $input[$i]) !== FALSE)
-			$output .= $input[$i];
-	return $output;
-}
 
 ?>
