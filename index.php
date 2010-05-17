@@ -62,28 +62,60 @@ if($loguserid && ($_GET['action'] == "markallread" || $_GET['action'] == "markas
 	header('Location: index.php');
 }
 
+$rBirthdays = Query("select birthday, id, name, powerlevel, sex from users where birthday > 0 order by name");
+$birthdays = array();
+while($user = Fetch($rBirthdays))
+{
+	$b = $user['birthday'];
+	if(gmdate("m-d", $b) == gmdate("m-d"))
+	{
+		$y = gmdate("Y") - gmdate("Y", $b);
+		$birthdays[] = UserLink($user)." (".$y.")";
+	}
+}
+if(count($birthdays))
+	$birthdaysToday = implode(", ", $birthdays);
+
 include("lib/header.php");
 
 ?>
+
+<script type="text/javascript" src="lib/Tween.js"></script>
+<script type="text/javascript" src="lib/OpacityTween.js"></script>
+<script type="text/javascript">
+	window.onload = function() { startOnlineUsers(); };
+</script>
+
 <div class="outline margin width100 smallFonts" style="overflow: auto;">
 <div class="header0 cell2 center" style="overflow: auto;">
 <div class="center" style="float: left; width: 75%; border-right: 1px solid black;"><?php print $stats; ?></div>
 <?php print $last; ?>
 </div>
-<div class="header0 cell0 center" style="overflow: auto; border-top: 0px">
+<?php
+if($birthdaysToday)
+{
+	print "<div class=\"header1 cell2\" style=\"border-top: 0px; text-align: center\">";
+	print "Birthdays today: ".$birthdaysToday;
+	print "</div>"; 
+}	
+?>
+<div class="header0 cell1 center" style="overflow: auto; border-top: 0px">
+<span id="onlineUsers">
 <?php print $onlineUsers; ?>
+</span>
 </div>
 </div>
 <?php
+
 if($loguserid)
 	DoPrivateMessageBar();
-else
-	print "<div id=\"pmNotice\" style=\"opacity: 1;\">Please <a href=\"login.php\">log in</a> or <a href=\"register.php\">create an account</a> to post.</div>";
+//else
+//	print "<div id=\"pmNotice\" style=\"opacity: 1;\">Please <a href=\"login.php\">log in</a> or <a href=\"register.php\">create an account</a> to post.</div>";
 ?>
 
 <table class="outline margin">
 	<tr class="header1">
-		<th></th>
+		<th style="width: 20px"></th>
 		<th style="width: 75%">Forum title</th>
 		<th>Threads</th>
 		<th>Posts</th>
@@ -169,7 +201,12 @@ while($forum = Fetch($rFora))
 			<td class="smallFonts center">
 			<?php
 				if($forum['lastpostdate'])
-					print gmdate($dateformat, $forum['lastpostdate'])."<br />by ".UserLink($members[$forum['lastpostuser']]);
+				{
+					$lastLink = "";
+					if($forum['lastpostid'])
+						$lastLink = " <a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
+					print gmdate($dateformat, $forum['lastpostdate'])."<br />by ".UserLink($members[$forum['lastpostuser']]).$lastLink;
+				}
 				else
 					print "----";
 			?>
