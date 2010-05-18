@@ -2,17 +2,26 @@
 //  AcmlmBoard XD - Member list page
 //  Access: all
 
-//TODO: pagination
-
 include("lib/common.php");
 
+$title = "Member list";
+
 if($ppp<1) $ppp=50;
-if($page<1) $page=1;
+
+$tpp = $loguser['threadsperpage'];
+if(isset($_GET['from']))
+	$from = (int)$_GET['from'];
+else
+	$from = 0;
 
 $sort = $_GET['sort'];
 $sex = $_GET['sex'];
 if(isset($_GET['pow']) && $_GET['pow'] != "")
 	$pow = (int)$_GET['pow'];
+if(isset($_GET['letter']))
+	$letter = $_GET['letter'][0];
+else
+	$letter = "";
 $order = "";
 $where = "";
 
@@ -34,13 +43,34 @@ switch($sex)
 
 if(isset($pow))
 	$where.= " and powerlevel=".$pow;
+if($letter != "")
+	$where.= " and name like '".$letter."%'";
 
-$qUsers = "select * from users where ".$where." order by ".$order;
+$numUsers = FetchResult("select count(*) from users where ".$where, 0, 0);
+
+$qUsers = "select * from users where ".$where." order by ".$order.", name asc limit ".$from.", ".$ppp;
 $rUsers = Query($qUsers);
-$numUsers = NumRows($rUsers);
+
+$numonpage = NumRows($rUsers);
+for($i = $ppp; $i < $numUsers; $i+=$ppp)
+{
+	if($i == $from)
+		$pagelinks .= " ".(($i/$ppp)+1);
+	else
+		$pagelinks .= " ".mlink("",$sex,$pow,$ppp,$letter,$i).(($i/$ppp)+1)."</a>";
+}
+if($pagelinks)
+{
+	if($from == 0)
+		$pagelinks = "1".$pagelinks;
+	else
+		$pagelinks = mlink("",$sex,$pow,$ppp,$letter,0)."1</a>".$pagelinks;
+}
+
+//$numUsers = NumRows($rUsers);
 print "<table class=\"outline margin\">";
 print "<tr class=\"header0\">";
-print "<th colspan=\"5\">Options</th>";
+print "<th colspan=\"6\">Options</th>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"6\">".$numUsers." user".(($numUsers>1 || $numUsers==0) ? "s" : "")." found.</td>";
@@ -48,32 +78,49 @@ print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Sort by</td>";
 print "<td colspan=\"4\">";
-print mlink(""    ,$sex,$pow,$ppp)."Posts</a> | ";
-print mlink("id"  ,$sex,$pow,$ppp)."ID</a> | ";
-print mlink("name",$sex,$pow,$ppp)."Username</a> | ";
-print mlink("reg" ,$sex,$pow,$ppp)."Registration date</a>";
+print mlink(""    ,$sex,$pow,$ppp,$letter)."Posts</a> | ";
+print mlink("id"  ,$sex,$pow,$ppp,$letter)."ID</a> | ";
+print mlink("name",$sex,$pow,$ppp,$letter)."Username</a> | ";
+print mlink("reg" ,$sex,$pow,$ppp,$letter)."Registration date</a>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Sex</td>";
 print "<td colspan=\"4\">";
-print mlink($sort,"m",$pow,$ppp)."Male</a> | ";
-print mlink($sort,"f",$pow,$ppp)."Female</a> | ";
-print mlink($sort,"n",$pow,$ppp)."N/A</a> | ";
-print mlink($sort,"", $pow,$ppp)."All</a>";
+print mlink($sort,"m",$pow,$ppp,$letter)."Male</a> | ";
+print mlink($sort,"f",$pow,$ppp,$letter)."Female</a> | ";
+print mlink($sort,"n",$pow,$ppp,$letter)."N/A</a> | ";
+print mlink($sort,"", $pow,$ppp,$letter)."All</a>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Power</td>";
 print "<td colspan=\"4\">";
-print mlink($sort,$sex,"-1",$ppp)."Banned</a> | ";
-print mlink($sort,$sex, "0",$ppp)."Normal</a> | ";
-print mlink($sort,$sex, "1",$ppp)."Local moderator</a> | ";
-print mlink($sort,$sex, "2",$ppp)."Full moderator</a> | ";
-print mlink($sort,$sex, "3",$ppp)."Administrator</a> | ";
-print mlink($sort,$sex, "",$ppp)."All</a>";
+print mlink($sort,$sex,"-1",$ppp,$letter)."Banned</a> | ";
+print mlink($sort,$sex, "0",$ppp,$letter)."Normal</a> | ";
+print mlink($sort,$sex, "1",$ppp,$letter)."Local moderator</a> | ";
+print mlink($sort,$sex, "2",$ppp,$letter)."Full moderator</a> | ";
+print mlink($sort,$sex, "3",$ppp,$letter)."Administrator</a> | ";
+print mlink($sort,$sex, "", $ppp,$letter)."All</a>";
 print "</td>";
 print "</tr>";
+print "<tr class=\"cell2 smallFonts\">";
+print "<td colspan=\"2\">Name</td>";
+print "<td colspan=\"4\">";
+for($l = 0; $l < 26; $l++)
+{
+	$let = chr(65+$l);
+	print mlink($sort,$sex,$pow,$ppp,$let).$let."</a>".($l < 25 ? " | " :"");
+}
+print "</td>";
+if($pagelinks)
+{
+	print "</tr>";
+	print "<tr class=\"cell2 smallFonts\">";
+	print "<td colspan=\"2\">Page</td>";
+	print "<td colspan=\"4\">".$pagelinks."</td>";
+	print "</tr>";
+}
 
 print "<tr class=\"header0\">";
 print "<th style=\"width: 30px; \">#</th>";
@@ -81,6 +128,7 @@ print "<th style=\"width: 62px; \">Picture</th>";
 print "<th>Name</th>";
 //print "<th style=\"width: 130px; \">Rank</th>";
 print "<th style=\"width: 50px; \">Posts</th>";
+print "<th style=\"width: 80px; \">Birthday</th>";
 print "<th style=\"width: 130px; \">Registered on</th>";
 print "</tr>";
 if($numUsers)
@@ -98,27 +146,38 @@ if($numUsers)
 		print "<td>".UserLink($user)."</td>";
 //		print "<td>".GetRank($user)."</td>";
 		print "<td>".$user['posts']."</td>";
+		print "<td>".($user['birthday'] ? gmdate("M jS",$user['birthday']) : "&nbsp;")."</td>";
 		print "<td>".gmdate("M jS Y",$user['regdate'])."</td>";
 		print "</tr>";
 	}
 } else
 {
 		print "<tr class=\"cell0\">";
-		print "<td colspan=\"5\">Nothing here.</td>";
+		print "<td colspan=\"6\">Nothing here.</td>";
 		print "</tr>";
+}
+
+if($pagelinks)
+{
+	print "</tr>";
+	print "<tr class=\"cell2 smallFonts\">";
+	print "<td colspan=\"2\">Page</td>";
+	print "<td colspan=\"4\">".$pagelinks."</td>";
+	print "</tr>";
 }
 print "</table>";
 
 doFooter();
 
-function mlink($sort,$sex,$pow,$ppp,$page=1)
+function mlink($sort,$sex,$pow,$ppp,$letter="",$from=1)
 {
 	return "<a href=\"memberlist.php?"
 			.($sort   ?"sort=$sort":"")
 			.($sex    ?"&amp;sex=$sex":"")
 			.(isset($pow)?"&amp;pow=$pow":"")
-			.($ppp!=50?"&amp;ppp=$ppp":"")
-			.($page!=1?"&amp;page=$page":"")
+			.($letter!=""?"&amp;letter=$letter":"")
+			//.($ppp!=50?"&amp;ppp=$ppp":"")
+			.($from!=1?"&amp;from=$from":"")
 			."\">";
 }
 
