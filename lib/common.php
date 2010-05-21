@@ -2,9 +2,10 @@
 //  AcmlmBoard XD support - Main hub
 
 //User settings
-$boardname = "AcmlmBoard XD";
-$logoalt = "board?";
-$logotitle = "Board2? This is KAWAAA!";
+$boardname = "ABXD/NikoBoard";
+$logoalt = "Niko's Board";
+$logotitle = "Totally not Kawa's Board";
+//$poratitle = "Points of Required Attention Span&trade;";
 $dateformat = "M jS Y, G:i"; //"Oct 15th 2008, 16:29"
 
 $autoLockMonths = 2; //number of 30-day "months" after which to auto-close threads.
@@ -13,16 +14,28 @@ $autoLockMonths = 2; //number of 30-day "months" after which to auto-close threa
 //Version 1.1.1 update: this has been replaced with a friendly warning in newreply.php.
 $viewcountInterval = 10000; //how many views until user 1 gets noticed in PM
 
-$overallTidy = 0;
+$overallTidy = 1;
 
-//reCAPTCHA keys
-$publickey  = "6Le8rQUAAAAAABTmoJGH5rC3dqaq_Phjte3J-jwK";
-$privatekey = "6Le8rQUAAAAAAJfo_ESinXA97SO241Foq4CyPAKr";
+$cynthiaUA = "Cynthetiq 0.24 on Windows 7 <!-- Cynthetiq/0.24 (Windows NT 6.1; U; en; .NET CLR 3.5.30729) -->";
 
+//hack settings:
+//	forcetheme -> theme ID, -1 to disable
+//	themenames -> 0 - disabled
+//				  1 - christmas
+//				  2 - rainbow
+//				  3 - anonymous
+//	postfilter -> 0 - disabled
+//				  1 - pirate
+//				  2 - swedish
+//				  3 - kraut
+//				  4 - jive
+//				  5 - fudd
+//$hacks['forcetheme'] = 1;
+//$hacks['themenames'] = 2;
+//$hacks['postfilter'] = 3;
+include("settings.php");
 
-include("hacks.php");
-
-if($overallTidy)
+//if($overallTidy)
 	ob_start();
 
 if(!isset($title))
@@ -40,9 +53,13 @@ if($q = $_SERVER['QUERY_STRING'])
 
 include("snippets.php");
 include("loguser.php");
-include("views.php");
+
+if(!isset($noViewCount))
+	include("views.php");
+
 include("tidy.php");
 include("post.php");
+include("badges.php");
 
 include("css/themelist.php");
 $themeFiles = array_keys($themes);
@@ -83,7 +100,7 @@ function deSlashMagic($text)
 function CheckTableBreaks($text)
 {
 	$text = strtolower($text);
-	$openers = substr_count($text, "<table>") + substr_count($text, "<div>");
+	$openers = substr_count($text, "<table") + substr_count($text, "<div");
 	$closers = substr_count($text, "</table>") + substr_count($text, "</div>");
 	return ($openers != $closers);
 }
@@ -101,6 +118,27 @@ function Report($message)
 		}
 	}
 */
+}
+
+function htmlval($text)
+{
+	//$text = str_replace("\"", "&quot;", $text);
+	//$text = str_replace("<", "&lt;", $text);
+	//return $text;
+	return htmlentities($text, ENT_COMPAT, "UTF-8");
+}
+
+function filterPollColors($input)
+{
+/*
+	$valid = "#0123456789ABCDEFabcdef";
+	$output = "";
+	for($i = 0; $i < strlen($input); $i++)
+		if(strpos($valid, $input[$i]) !== FALSE)
+			$output .= $input[$i];
+	return $output;
+*/
+	return preg_replace("@[^#0123456789abcdef]@si", "", $input);
 }
 
 ?>
