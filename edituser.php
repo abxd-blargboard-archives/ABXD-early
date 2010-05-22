@@ -120,11 +120,11 @@ if($_POST['action'] == "Edit user")
 					$r=imagesx($img1)/imagesy($img1);
 					if($r > 1)
 					{
-						$img2=imagecreatetruecolor($dimx,$dimy/$r);
+						$img2=imagecreatetruecolor($dimx,floor($dimy / $r));
 						imagecopyresampled($img2,$img1,0,0,0,0,$dimx,$dimy/$r,imagesx($img1),imagesy($img1));
 					} else
 					{
-						$img2=imagecreatetruecolor($dimx*$r,$dimy);
+						$img2=imagecreatetruecolor(floor($dimx * $r), $dimy);
 						imagecopyresampled($img2,$img1,0,0,0,0,$dimx*$r,$dimy,imagesx($img1),imagesy($img1));
 					}
 					imagepng($img2,$file);
@@ -137,6 +137,12 @@ if($_POST['action'] == "Edit user")
 	}
 
 	//DNE - consider the minipic support an optional feature for later. -- Kawa
+	if($_POST['removempic'])
+	{
+		$usempic = "";
+		if(substr($user['minipic'],0,12) == "img/avatars/")
+			@unlink($user['minipic']);
+	}
 	if($fname = $_FILES['minipic']['name'])
 	{
 		$fext = strtolower(substr($fname,-4));
@@ -144,7 +150,7 @@ if($_POST['action'] == "Edit user")
 
 		$dimx = 12;
 		$dimy = 12;
-		$size = 30720;
+		$size = 100000;
 
 		$validext = false;
 		if($fext == ".png")
@@ -178,23 +184,30 @@ if($_POST['action'] == "Edit user")
 	}
 
 	$newscheme = array_search($_POST['theme'],$themeFiles);
+	$tpp = (int)$_POST['tpp'];
+	$ppp = (int)$_POST['ppp'];
+	$fontsize = (int)$_POST['fontsize'];
 
 	if($tpp > 99)
-		$tpp = 0;
+		$tpp = 99;
 	if($tpp < 1)
-		$tpp = 0;
+		$tpp = 1;
 	if($ppp > 99)
-		$ppp = 0;
+		$ppp = 99;
 	if($ppp < 1)
-		$ppp = 0;
+		$ppp = 1;
+	if($fontsize > 200)
+		$fontsize = 200;
+	if($fontsize < 20)
+		$fontsize = 20;
 
 	$globalblock = (int)($_POST['globalblock'] == "on");
 	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
 	$usebanners = (int)($_POST['usebanners'] == "on");
 
-	if($_POST['presetdate'])
+	if($_POST['presetdate'] != "dummy")
 		$_POST['dateformat'] = $_POST['presetdate'];
-	if($_POST['presettime'])
+	if($_POST['presettime'] != "dummy")
 		$_POST['timeformat'] = $_POST['presettime'];
 
 	if($_POST['birthday'])
@@ -208,7 +221,7 @@ if($_POST['action'] == "Edit user")
 	if($_POST['newPW']) $qUser.= "password='".md5($_POST['newPW'])."', ";
 	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
 	if(TitleCheck())
-		$qUser.= "title = '".justEscape($_POST['title'])."', ";
+		$qUser.= "title = '".justEscape(CleanUpPost($_POST['title']))."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	if($adminmode)
@@ -217,8 +230,8 @@ if($_POST['action'] == "Edit user")
 		$qUser.= "globalblock = ".$globalblock.", ";
 	}
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
-	$qUser.= "realname = '".justEscape($_POST['realname'])."', ";
-	$qUser.= "location = '".justEscape($_POST['location'])."', ";
+	$qUser.= "realname = '".justEscape(CleanUpPost($_POST['realname']))."', ";
+	$qUser.= "location = '".justEscape(CleanUpPost($_POST['location']))."', ";
 	$qUser.= "birthday = ".(int)$bday.", ";
 	$qUser.= "bio = '".justEscape($_POST['bio'])."', ";
 	$qUser.= "postheader = '".justEscape($_POST['postheader'])."', ";
@@ -227,10 +240,11 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "homepageurl = '".justEscape($_POST['hpurl'])."', ";
 	$qUser.= "homepagename = '".justEscape($_POST['hpname'])."', ";
 	$qUser.= "scheme = '".justEscape($newscheme)."', ";
-	$qUser.= "threadsperpage = ".(int)$_POST['tpp'].", ";
-	$qUser.= "postsperpage = ".(int)$_POST['ppp'].", ";
+	$qUser.= "threadsperpage = ".$tpp.", ";
+	$qUser.= "postsperpage = ".$ppp.", ";
 	$qUser.= "dateformat = '".justEscape($_POST['dateformat'])."', ";
 	$qUser.= "timeformat = '".justEscape($_POST['timeformat'])."', ";
+	$qUser.= "fontsize = ".$fontsize.", ";
 	$qUser.= "blocklayouts = '".$blocklayouts."', ";
 	$qUser.= "usebanners = '".$usebanners."' ";
 	$qUser.= "where id=".$id." limit 1";
@@ -255,6 +269,9 @@ for($i = 0; $i < count($themes); $i++)
 	$c = FetchResult($qCount);
 	$themes[$themeFiles[$i]] .= " (".$c.")";
 }
+
+$datelist['dummy'] = "[select]";
+$timelist['dummy'] = "[select]";
 
 $dateformats=array('','m-d-y','d-m-y','y-m-d','Y-m-d','m/d/Y','d.m.y','M j Y','D jS M Y');
 $timeformats=array('','h:i A','h:i:s A','H:i','H:i:s');
@@ -384,6 +401,9 @@ print "<tr class=\"cell0\">";
 print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
 print "</tr>";
 print "<tr class=\"cell1\">";
+print "<td><label for=\"fontsize\">Font scale</label></td><td><input type=\"text\" id=\"fontsize\" name=\"fontsize\" value=\"".$user['fontsize']."\"></input></td>";
+print "</tr>";
+print "<tr class=\"cell0\">";
 print "<td>Extras</td><td>";
 print "<input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block all layouts</label><br />";
 print "<input type=\"checkbox\" id=\"ub\" name=\"usebanners\" ".($user['usebanners'] ? "checked=\"checked\"" : "")."></input> <label for=\"ub\">Use nice notification banners</label>";
@@ -424,16 +444,8 @@ function MakeSelect($fieldName, $checkedIndex, $choicesList)
 function TitleCheck()
 {
 	global $user, $adminmode;
-	if($adminmode || $user['title'] || $user['posts'] >= 200 || $user['powerlevel'] > 0) return 1;
+	if($adminmode || $user['title'] || $user['posts'] >= $customTitleThreshold || $user['powerlevel'] > 0) return 1;
 	return 0;
-}
-
-function htmlval($text)
-{
-	//$text = str_replace("\"", "&quot;", $text);
-	//$text = str_replace("<", "&lt;", $text);
-	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
 }
 
 ?>
