@@ -60,13 +60,24 @@ if((int)$_GET['delete'] == 1)
 if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
 	Kill("You are not allowed to edit posts.");
 
-if($thread['locked'])
-	Kill("This thread is locked.");
+if($thread['closed'])
+	Kill("This thread is closed.");
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
 {
 	$_POST['action'] = "";
 	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+}
+
+if($_POST['text'])
+{
+	$words = explode(" ", $_POST['text']);
+	$wordCount = count($words);
+	if($wordCount < 2)
+	{
+		$_POST['action'] = "";
+		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+	}
 }
 
 if($_POST['action']=="Edit")
@@ -95,7 +106,7 @@ if($_POST['action']=="Edit")
 		$rPosts = Query($qPosts);
 
 		Report("<message><action type=\"postedit\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
-		Redirect("Edited!","thread.php?id=".$tid,"the thread");
+		Redirect("Edited!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
@@ -136,7 +147,7 @@ if($_POST['action']=="Preview")
 }
 
 if(!$_POST['text']) $_POST['text'] = $post['text'];
-if($_POST['text']) $prefill = htmlval(stripslashes($_POST['text']));
+if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 //if(!$_POST['text']) $_POST['text'] = $post['text'];
 //if($_POST['text']) $prefill = $_POST['text'];
 
@@ -166,7 +177,7 @@ print "</tr>";
 print "<tr class=\"cell2\">";
 print "<td></td>";
 print "<td>";
-print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
+print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input> ";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
@@ -177,13 +188,5 @@ print "</table>";
 print "</form>";
 
 doFooter();
-
-function htmlval($text)
-{
-	//$text = str_replace("\"", "&quot;", $text);
-	//$text = str_replace("<", "&lt;", $text);
-	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
-}
 
 ?>

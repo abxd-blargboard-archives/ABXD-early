@@ -41,6 +41,8 @@ if(NumRows($rFora))
 } else
 	Kill("Unknown forum ID.");
 
+$title = $thread['title'];
+
 $qViewCounter = "update threads set views=".($thread['views']+1)." where id=".$tid." limit 1";
 $rViewCounter = Query($qViewCounter);
 
@@ -59,7 +61,7 @@ if(isset($_GET['vote']))
 			$qCheck = "delete from pollvotes where  poll=".$thread['poll']." and user=".$loguserid;
 			$rCheck = Query($qCheck);
 		}
-		$qPoll = "insert into pollvotes (poll, choice, user) values (".$thread['poll'].", ".$_GET['vote'].", ".$loguserid.")";
+		$qPoll = "insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")";
 		$rPoll = Query($qPoll);
 	} else
 		Kill("This is not a poll.");
@@ -85,6 +87,10 @@ if(CanMod($loguserid,$forum['id']))
 	$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=delete\" onclick=\"if(!confirm('Are you sure you want to just up and delete this whole thread?') || !confirm('Seriously?')) return false;\">Delete</a> | ";
 	if(strpos($forum['description'],"[trash]") === FALSE)
 		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=trash\">Trash</a> | ";
+}
+else if($thread['user'] == $loguserid)
+{
+	$links .= "<a href=\"editthread.php?id=".$tid."\">Edit</a> | ";
 }
 
 $links = substr($links, 0, strlen($links) - 2);
@@ -113,7 +119,9 @@ if($thread['poll'])
 		if(NumRows($rCheck))
 		{
 			$check = Fetch($rCheck);
-			$pc[$check['choice']] = "<img src=\"img/pollchoice.png\" alt=\"*\" /> ";
+			$pc[$check['choice']] = "&#x2714; ";
+			//use &#x2605; for a star
+			//"<img src=\"img/pollchoice.png\" alt=\"*\" /> ";
 		}
 
 		$qVotes = "select count(*) from pollvotes where poll=".$thread['poll'];
@@ -122,8 +130,20 @@ if($thread['poll'])
 		$qOptions = "select * from poll_choices where poll=".$thread['poll'];
 		$rOptions = Query($qOptions);
 		$pops = 0;
+		$options = array();
+		$noColors = 0;
+		$defaultColors = array(
+			"#000000","#0000B6","#00B600","#00B6B6","#B60000","#B600B6","#B66700","#B6B6B6",
+			"#676767","#6767FF","#67FF67","#67FFFF","#FF6767","#FF67FF","#FFFF67","#FFFFFF",);
 		while($option = Fetch($rOptions))
 		{
+			$options[] = $option;
+		}
+		foreach($options as $option)
+		{
+			if($option['color'] == "")
+				$option['color'] = $defaultColors[($pops + 9) % 16];
+
 			$qVotes = "select * from pollvotes where poll=".$thread['poll']." and choice=".$pops;
 			$rVotes = Query($qVotes);
 			$votes = NumRows($rVotes);
@@ -151,6 +171,11 @@ $qRead = "delete from threadsread where id=".$loguserid." and thread=".$tid;
 $rRead = Query($qRead);
 $qRead = "insert into threadsread (id,thread,date) values (".$loguserid.", ".$tid.", ".time().")";
 $rRead = Query($qRead);
+
+$activity = array();
+$rActivity = Query("select user, count(*) num from posts where date > ".(time() - 86400)." group by user");
+while($act = Fetch($rActivity))
+	$activity[$act['user']] = $act['num'];
 
 $total = $thread['replies'] + 1; //+1 for the OP
 $ppp = $loguser['postsperpage'];
@@ -193,8 +218,10 @@ if(NumRows($rPosts))
 {
 	while($post = Fetch($rPosts))
 	{
-		$poster = unserialize(serialize($post));
-		$poster['id'] = $post['uid'];
+		//$poster = $post;
+		//$poster['id'] = $post['uid'];
+		$post['activity'] = $activity[$post['uid']];
+		$post['closed'] = $thread['closed'];
 		MakePost($post, $tid, $fid);
 	}
 }
