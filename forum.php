@@ -22,6 +22,8 @@ if(NumRows($rFora))
 } else
 	Kill("Unknown forum ID.");
 
+$title = $forum['title'];
+
 $qCat = "select * from categories where id=".$forum['catid'];
 $rCat = Query($qCat);
 if(NumRows($rCat))
@@ -94,7 +96,7 @@ if(NumRows($rThreads))
 {
 	print "<table class=\"outline margin width100\">";
 	print "<tr class=\"header1\">";
-	print "<th style=\"width: 16px;\">&nbsp;</th>";
+	print "<th style=\"width: 20px;\">&nbsp;</th>";
 	print "<th style=\"width: 16px;\">&nbsp;</th>";
 	print "<th style=\"width: 60%;\">Title</th>";
 	print "<th>Started by</th>";
@@ -102,7 +104,7 @@ if(NumRows($rThreads))
 	print "<th>Views</th>";
 	print "<th>Last post</th>";
 	print "</tr>";
-
+	
 	while($thread = Fetch($rThreads))
 	{
 		$last = $members[$thread['lastposter']];
@@ -132,7 +134,7 @@ if(NumRows($rThreads))
 		if($thread['sticky'] == 0 && $haveStickies == 1)
 		{
 			$haveStickies = 2;
-			print "<tr class=\"header0\"><th colspan=\"7\"></th></tr>";
+			print "<tr class=\"header0\"><th colspan=\"7\" style=\"height: 8px;\"></th></tr>";
 		}
 		if($thread['sticky'] && $haveStickies == 0) $haveStickies = 1;
 
@@ -145,14 +147,18 @@ if(NumRows($rThreads))
 		if($pl)
 			$pl = " <span class=\"smallFonts\">[<a href=\"thread.php?id=".$thread['id']."\">1</a>".$pl."]</span>";
 
+		$lastLink = "";
+		if($thread['lastpostid'])
+			$lastLink = " <a href=\"thread.php?pid=".$thread['lastpostid']."#".$thread['lastpostid']."\">&raquo;</a>";
+
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td class=\"cell2\" style=\"width: 17px;\">".$NewIcon."</td>";
-		print "<td style=\"width: 17px;\">".$ThreadIcon."</td>";
+		print "<td style=\"width: 17px; text-align: center;\">".$ThreadIcon."</td>";
 		print "<td>".$poll."<a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>".$pl."</td>";
 		print "<td>".UserLink($starter)."</td>";
 		print "<td class=\"center\">".$thread['replies']."</td>";
 		print "<td class=\"center\">".$thread['views']."</td>";
-		print "<td class=\"smallFonts\">".gmdate($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last)."</td>";
+		print "<td class=\"smallFonts\">".gmdate($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last).$lastLink."</td>";
 		print "</tr>";
 	}
 	print "</table>";
