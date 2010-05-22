@@ -4,10 +4,7 @@
 
 include("lib/common.php");
 
-function htmlval($text)
-{
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
-}
+$title = "Points of Required Attention";
 
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the Points of Required Attention.");
@@ -20,6 +17,13 @@ if($_POST['action'] == "Edit")
 	Redirect("Edited!","./","the main page");
 }
 
+print "<div class=\"PoRT\"><div class=\"errort\"><strong id=\"previewtitle\">";
+print htmlval($misc['poratitle']);
+print "</strong></div><div class=\"errorc cell2 left\" id=\"previewtext\">";
+print $misc['porabox'];
+print "</div></div>";
+
+/*
 print "<table class=\"PoRT outline margin\" style=\"width: 48%; float: right;\" id=\"preview\">";
 print "<tr class=\"header1\">";
 print "<th id=\"previewtitle\">".htmlval($misc['poratitle'])."</th>";
@@ -29,6 +33,7 @@ print "<td class=\"cell0\" id=\"previewtext\">";
 print "</td>";
 print "</tr>";
 print "</table>";
+*/
 
 print "<form action=\"editpora.php\" method=\"post\">";
 print "<table id=\"t\" class=\"outline margin width50\">";
@@ -41,7 +46,7 @@ print "</tr>";
 print "<tr class=\"cell1\">";
 print "<td>Content (HTML)</td>";
 print "<td style=\"width: 80%;\">";
-print "<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"box\">".htmlval($misc['porabox'])."</textarea>";
+print "<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\">".htmlval($misc['porabox'])."</textarea>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2\">";
@@ -53,25 +58,17 @@ print "</tr>";
 print "</table>";
 print "</form>";
 
+?>
+
+<script type="text/javascript">
+	window.onload = function()
+	{
+		startPoraUpdate();
+	}
+</script>
+
+<?php
 doFooter();
 
 ?>
 
-<script type="text/javascript">
-	var ta = document.getElementById("box");
-	var tt = document.getElementById("title");
-	var pr = document.getElementById("preview");
-	var prt = document.getElementById("previewtext");
-	var pri = document.getElementById("previewtitle");
-	var tbl = document.getElementById("t");
-
-	function update()
-	{
-		prt.innerHTML = ta.value;
-		pri.innerText = tt.value;
-		setTimeout("update();", 100);
-	}
-
-	pr.style.display = "";
-	update();
-</script>
