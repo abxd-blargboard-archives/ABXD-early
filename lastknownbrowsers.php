@@ -1,12 +1,20 @@
 <?php
 include("lib/common.php");
+$title = "Last known browsers";
+$isMod = $loguser['powerlevel'] > 0;
 $peeps = Query("SELECT `id`, `name`, `lastip`, `lastknownbrowser`, `sex`, `powerlevel` FROM `users` ORDER BY `id` ASC LIMIT 0, 30");
 print "<table class=\"outline margin\">\n";
-print "<tr><th>ID</th><th>Name</th><th>&nbsp;</th><th>IP</th><th>Last known browser</th></tr>\n";
+print "<tr class=\"header1\"><th>ID</th><th>Name</th><th>&nbsp;</th>";
+if($isMod)
+	print "<th>IP</th>";
+print "<th>Last known browser</th></tr>\n";
 while($peep = Fetch($peeps))
 {
 	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\"><td>".$peep['id']."</td><td>".UserLink($peep)."</td><td>".IP2C($peep['lastip'])."</td><td>".$peep['lastip']."</td><td>".str_replace("-->", "", str_replace("<!--", " --", $peep['lastknownbrowser']))."</td></tr>\n";
+	print "<tr class=\"cell".$cellClass."\"><td>".$peep['id']."</td><td>".UserLink($peep)."</td><td>".IP2C($peep['lastip'])."</td>";
+	if($isMod)
+		print "<td>".$peep['lastip']."</td>";
+	print "<td>".str_replace("-->", "", str_replace("<!--", " --", $peep['lastknownbrowser']))."</td></tr>\n";
 }
 print "</table>";
 doFooter();
