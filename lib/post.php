@@ -69,6 +69,74 @@ function GeshiCallbackL($matches)
 	return "<div class=\"geshi\">".str_replace("\n", "", $geshi->parse_code())."</div>";
 }
 
+function MakeWikipedia($matches)
+{
+	$wikiTitle = $matches[2];
+	$escaped = str_replace(" ", "_", $matches[1]);
+	return "[url=http://en.wikipedia.org/wiki/".$escaped."]".$wikiTitle."[/url]";
+}
+
+function MakeShortWikipedia($matches)
+{
+	$wikiTitle = $matches[1];
+	$escaped = str_replace(" ", "_", $wikiTitle);
+	return "[url=http://en.wikipedia.org/wiki/".$escaped."]".$wikiTitle."[/url]";
+}
+
+function MakeTrope($matches)
+{
+	$tropeTitle = $matches[1];
+	$tropeText = $matches[2];
+	return "[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/".$tropeTitle."]".$tropeText."[/url]";
+}
+
+function MakeShortTrope($matches)
+{
+	$tropeTitle = $matches[1];
+	$tropeText = "";
+	for($i = 0; $i < strlen($tropeTitle); $i++)
+	{
+		if(ctype_upper($tropeTitle[$i]))
+			$tropeText .= " ";
+		$tropeText .= $tropeTitle[$i];
+	}
+	$tropeText = trim($tropeText);
+	return "[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/".$tropeTitle."]".$tropeText."[/url]";
+}
+
+function MakeUserLink($matches)
+{
+	global $members;
+	$id = (int)$matches[1];
+	if(!isset($members[$id]))
+	{
+		$rUser = Query("select id, name, powerlevel, sex from users where id=".$id);
+		if(NumRows($rUser))
+			$members[$id] = Fetch($rUser);
+		else
+			return UserLink(array('id' => 0, 'name' => "Unknown User", 'sex' => 0, 'powerlevel' => -1));
+	}
+	return UserLink($members[$id]);
+}
+
+function FilterJS($match)
+{
+	$url = html_entity_decode($match[2]);
+	if (stristr($url, "javascript:"))
+		return "";
+	return $match[0];
+}
+
+function GetSyndrome($activity)
+{
+	include("syndromes.php");
+	$soFar = "";
+	foreach($syndromes as $minAct => $syndrome)
+		if($activity >= $minAct)
+			$soFar = "<em style=\"color: ".$syndrome[1].";\">".$syndrome[0]."</em><br />";
+	return $soFar;
+}
+
 function CleanUpPost($postText, $poster = "", $noSmilies = false)
 {
 	global $smilies;
@@ -80,24 +148,15 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace_callback("'\[source=(.*?)\](.*?)\[/source\]'si", "GeshiCallbackL", $s);
 	$s = preg_replace_callback("'\[source\](.*?)\[/source\]'si", "GeshiCallback", $s);
 
+	$s = preg_replace_callback("'\[trope=(.*?)\](.*?)\[/trope\]'si", "MakeTrope", $s);
+	$s = preg_replace_callback("'\[trope\](.*?)\[/trope\]'si", "MakeShortTrope", $s);
+	$s = preg_replace_callback("'\[wiki=(.*?)\](.*?)\[/wiki\]'si", "MakeWikipedia", $s);
+	$s = preg_replace_callback("'\[wiki\](.*?)\[/wiki\]'si", "MakeShortWikipedia", $s);
+
+	$s = preg_replace_callback("'\[user=([0-9]+)\]'si", "MakeUserLink", $s);
+
 	//$s = str_replace("Xkeeper","XKitten", $s); //I couldn't help myself -- Kawa
 	//$s = preg_replace("'([c|C])lassic'si","\\1lbuttic", $s); //Same here -- Kawa
-
-	$s = str_replace("[b]","<strong>", $s);
-	$s = str_replace("[/b]","</strong>", $s);
-	$s = str_replace("[i]","<em>", $s);
-	$s = str_replace("[/i]","</em>", $s);
-	$s = str_replace("[u]","<u>", $s);
-	$s = str_replace("[/u]","</u>", $s);
-	$s = str_replace("[s]","<del>", $s);
-	$s = str_replace("[/s]","</del>", $s);
-
-	$s = str_replace("<b>","<strong>", $s);
-	$s = str_replace("</b>","</strong>", $s);
-	$s = str_replace("<i>","<em>", $s);
-	$s = str_replace("</i>","</em>", $s);
-	$s = str_replace("<u>","<span class=\"underline\">", $s);
-	$s = str_replace("</u>","</span>", $s);
 
 	//De-tabled [code] tag, based on BH's...
     $list  = array("<"   ,"\\\"" ,"\\\\" ,"\\'","\r"  ,"["    ,":"    ,")"    ,"_"    );
@@ -120,20 +179,23 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
       .'\''.".base64_encode($svgin.".'str_replace($svglist1,$svglist2,\'\\3\')'.".$svgout).".'"'
       ."\\\" type=\\\"image/svg+xml\\\" width=".'\'\\1\' height=\'\\2\''." />\"",$s);
 
+	$s = preg_replace("'\[b\](.*?)\[/b\]'si","<strong>\\1</strong>", $s);
+	$s = preg_replace("'\[i\](.*?)\[/i\]'si","<em>\\1</em>", $s);
+	$s = preg_replace("'\[u\](.*?)\[/u\]'si","<u>\\1</u>", $s);
+	$s = preg_replace("'\[s\](.*?)\[/s\]'si","<del>\\1</del>", $s);
 
-	//Smilies
-	if(!$noSmilies)
-	{
-		for($i = 0; $i < count($smilies); $i++)
-			$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
-		for($i = 0; $i < count($smilies); $i++)
-			$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".$smilies[$i]['code']."\" />", $s);
-	}
+	$s = preg_replace("'<b>(.*?)\</b>'si","<strong>\\1</strong>", $s);
+	$s = preg_replace("'<i>(.*?)\</i>'si","<em>\\1</em>", $s);
+	$s = preg_replace("'<u>(.*?)\</u>'si","<span class=\"underline\">\\1</span>", $s);
+	$s = preg_replace("'<s>(.*?)\</s>'si","<del>\\1</del>", $s);
+
+	//Do we need this?
+	//$s = preg_replace("'\[c=([0123456789ABCDEFabcdef]+)\](.*?)\[/c\]'si","<span style=\"color: #\\1\">\\2</span>", $s);
 
 	$s = str_replace("\n","<br />", $s);
 
 	//Blacklisted tags
-	$badTags = array('script','iframe','textarea','noscript','meta','xmp','plaintext');
+	$badTags = array('script','iframe','frame','blink','textarea','noscript','meta','xmp','plaintext');
 	foreach($badTags as $tag)
 	{
 		$s = preg_replace("'<$tag(.*?)>'si", "&lt;$tag\\1>" ,$s);
@@ -153,6 +215,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 
 	$s = preg_replace("@(ba|Ban)?(n)?( )?Acmlmboard (1.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
 
+
 	//Various other stuff
 	$s = preg_replace("'display:'si", "display<em></em>:", $s);
 
@@ -171,8 +234,8 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace("'javascript:'si","javascript<em></em>:>", $s);
 
 	$s = str_replace("[spoiler]","<div class=\"spoiler\"><button onclick=\"toggleSpoiler(this.parentNode);\">Show spoiler</button><div class=\"spoiled hidden\">", $s);
-	//$s = preg_replace_callback("'\[spoiler\]'si", "MakeSpoiler", $s);
 	$s = str_replace("[/spoiler]","</div></div>", $s);
+
 	$s = preg_replace("'\[url\](.*?)\[/url\]'si","<a href=\"\\1\">\\1</a>", $s);
 	$s = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si","<a href=\"\\1\">\\2</a>", $s);
 	$s = preg_replace("'\[img\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\">", $s);
@@ -181,9 +244,11 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace_callback("'\[swf ([0-9]+) ([0-9]+)\](.*?)\[/swf\]'si", "MakeFlash", $s);
 
 	//--with both object AND embed
-	$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&hl=en&fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param><embed src=\"http://www.youtube.com/v/\\1&hl=en&fs=1\" type=\"application/x-shockwave-flash\" allowscriptaccess=\"never\" allowfullscreen=\"false\" width=\"425\" height=\"344\"></embed></object>", $s);
+	$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param><embed src=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\" type=\"application/x-shockwave-flash\" allowscriptaccess=\"never\" allowfullscreen=\"false\" width=\"425\" height=\"344\"></embed></object>", $s);
 	//--with only object (XHTML1/HTML401 Strict)
-	//$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&hl=en&fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param></object>", $s);
+	//$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param></object>", $s);
+
+	$s = preg_replace("'\[youtube/loop\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1&amp;loop=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param><embed src=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1&amp;loop=1\" type=\"application/x-shockwave-flash\" allowscriptaccess=\"never\" allowfullscreen=\"false\" width=\"425\" height=\"344\"></embed></object>", $s);
 
 	$s = preg_replace("'\[video\](.*?)\[/video\]'si","<video src=\"\\1\" width=\"425\" height=\"344\"  controls=\"controls\">Video not supported &mdash; <a href=\"\\1\">download</a></video>", $s);
 
@@ -194,12 +259,38 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace("'\[reply=\"(.*?)\"\]'si","<blockquote><div><small><i>Sent by \\1</i></small><hr />", $s);
 	//$s = preg_replace("'\[reply=\"(.*?)\" id=\"(.*?)\"\]'si","<blockquote><div><small><i>Sent by \\1</i></small><hr />", $s);
 
-
-
+	$s = preg_replace_callback("@(href|src)\s*=\s*\"([^\"]+)\"@si", "FilterJS", $s);
+	$s = preg_replace_callback("@(href|src)\s*=\s*'([^']+)'@si", "FilterJS", $s);
+	$s = preg_replace_callback("@(href|src)\s*=\s*([^\s>]+)@si", "FilterJS", $s);
 
 	$s = preg_replace("'>>([0-9]+)'si",">><a href=\"thread.php?pid=\\1#\\1\">\\1</a>", $s);
 	if($poster)
 		$s = preg_replace("'/me '","<b>* ".$poster."</b> ", $s);
+
+	//Smilies
+	if(!$noSmilies)
+	{
+	/*
+		for($i = 0; $i < count($smilies); $i++)
+			$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
+		for($i = 0; $i < count($smilies); $i++)
+			$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".$smilies[$i]['code']."\" />", $s);
+	*/
+		for($i = 0; $i < count($smilies); $i++)
+		{
+			$preg_special = array("\\","^","$",".","*","+","?","|","(",")","[","]","{","}","@");
+			$preg_special_escape = array("\\\\","\\^","\\$","\\.","\\*","\\+","\\?","\\|","\\(","\\)","\\[","\\]","\\{","\\}","\\@");
+
+			$s = preg_replace("@<([^>]+)(".str_replace($preg_special, $preg_special_escape, $smilies[$i]['code']).")+([^>]+)>@si", "<$1##LOLDONTREPLACESMILIESINHTMLTAGZLOL##$3>", $s);
+			$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
+			$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".str_replace(">", "&gt;", $smilies[$i]['code'])."\" />", $s);
+			$s = str_replace("##LOLDONTREPLACESMILIESINHTMLTAGZLOL##", $smilies[$i]['code'], $s);
+		}
+	}
+	
+	include("macros.php");
+	foreach($macros as $macro => $img)
+		$s = str_replace(":".$macro.":", "<img src=\"img/macros/".$img."\" alt=\":".$macro.":\" />", $s);
 
 	return $s;
 }
@@ -224,7 +315,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		print "<a name=\"".$post['id']."\"></a>";
 		print "<table class=\"post\">";
 		print "<tr>";
-		print "<td class=\"side\">";
+		print "<td class=\"side userlink\">";
 		print UserLink($post, "uid");
 		print "</td>";
 		print "<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">";
@@ -249,18 +340,24 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		if(!$ispm)
 		{
 			$links .= "<a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a> | ";
-			if($thread && $loguser['powerlevel'] > -1)
+			if($thread && $loguser['powerlevel'] > -1 && $forum != -2)
 				$links .= "<a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a> | ";
-			if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1)
+			if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'])
 				$links .= "<a href=\"editpost.php?id=".$post['id']."\">Edit</a> | ";
 			if(CanMod($loguserid, $forum))
 				$links .= "<a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a> | ";
-			$links .= "ID: ".$post['id'];
+			if($forum != -2)
+				$links .= "ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a>";
+			else
+				$links .= "ID: ".$post['id'];
 			if($loguser['powerlevel'] > 0)
-			$links .= " | ".$post['ip'];
+				$links .= " | ".$post['ip'];
 		}
 
 		$meta = (!$ispm ? "Posted on " : 'Sent on ').gmdate($dateformat,$post['date']);
+		//Threadlinks for listpost.php
+		if($forum == -2)
+			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".$post['threadname']."</a>";
 		//Revisions
 		if($post['revision'])
 			$meta .= " (revision ".($post['revision']+1).")";
@@ -284,6 +381,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$levelRanks = array(-1=>"Banned", 0=>"", 1=>"Local mod", 2=>"Full mod", 3=>"Administrator");
 		$sideBarStuff .= $levelRanks[$post['powerlevel']]."<br />";
 	}
+	$sideBarStuff .= GetSyndrome($post['activity']);
 	if($post['picture'])
 	{
 		if($post['mood'] > 0 && file_exists("img/avatars/".$post['uid']."_".$post['mood']))
@@ -320,13 +418,14 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	//Neritic uses a split sidebar.
 	//print "<td class=\"side\" rowspan=\"2\">";
 	//print UserLink($poster);
-	print "<td class=\"side topbar".$post['uid']."_1\">";
+	print "<td class=\"side userlink topbar".$post['uid']."_1\">";
 	print UserLink($post, "uid");
 	print "</td>";
-	print "<td class=\"meta topbar".$post['uid']."_2\">";
-	print $meta;
-	print "</td>";
-	print "<td class=\"links topbar".$post['uid']."_2\">";
+	print "<td class=\"meta right topbar".$post['uid']."_2\">";
+	print "<div style=\"float: left;\">".$meta."</div>";
+	//print $meta;
+	//print "</td>";
+	//print "<td class=\"links topbar".$post['uid']."_2\">";
 	print $links;
 	print "</td>";
 	print "</tr>";
