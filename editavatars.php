@@ -4,6 +4,8 @@ include("lib/common.php");
 if(!$loguserid) //Not logged in?
 	Kill("You must be logged in to edit your avatars.");
 
+$title = "Mood avatars";
+
 if(isset($_POST['action']))
 {
 	$mid = (int)$_POST['mid'];
@@ -75,13 +77,14 @@ if(isset($_POST['action']))
 						copy($tmpfile,$file);
 					elseif($type <= 3)
 					{
+						$r = imagesx($img1) / imagesy($img1);
 						if($r > 1)
 						{
-							$img2=imagecreatetruecolor($dimx,$dimy/$r);
+							$img2=imagecreatetruecolor($dimx,floor($dimy / $r));
 							imagecopyresampled($img2,$img1,0,0,0,0,$dimx,$dimy/$r,imagesx($img1),imagesy($img1));
 						} else
 						{
-							$img2=imagecreatetruecolor($dimx*$r,$dimy);
+							$img2=imagecreatetruecolor(floor($dimx * $r), $dimy);
 							imagecopyresampled($img2,$img1,0,0,0,0,$dimx*$r,$dimy,imagesx($img1),imagesy($img1));
 						}
 						imagepng($img2,$file);
@@ -105,7 +108,7 @@ while($mood = Fetch($rMoods))
 	print "<td>";
 	print "<form method=\"post\" action=\"editavatars.php\">";
 	print "<input type=\"hidden\" name=\"mid\" value=\"".$mood['mid']."\" />";
-	print "<input type=\"text\" name=\"name\" style=\"width: 60%;\" value=\"".htmlval($mood['name'])."\" />";
+	print "<label for=\"name".$mood['mid']."\"></label> <input type=\"text\" id=\"name".$mood['mid']."\" name=\"name\" style=\"width: 60%;\" value=\"".htmlval($mood['name'])."\" />";
 	print "<input type=\"submit\" name=\"action\" value=\"Rename\" />";
 	print "<input type=\"submit\" name=\"action\" value=\"Delete\" />";
 	print "</form>";
@@ -116,21 +119,13 @@ print "<tr class=\"cell2\">";
 print "<td>New</td>";
 print "<td>";
 print "<form method=\"post\" action=\"editavatars.php\" enctype=\"multipart/form-data\">";
-print "<input type=\"text\" name=\"name\" style=\"width: 60%;\" />";
-print "<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 75%;\"></input>";
+print "<label for=\"newName\">Name:</label> <input type=\"text\" id=\"newName\" name=\"name\" style=\"width: 60%;\" /><br />";
+print "<label for=\"pic\">Image:</label> <input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 75%;\"></input>";
 print "<input type=\"submit\" name=\"action\" value=\"Add\"></input>";
 print "</form>";
 print "</td>";
 print "</table>";
 
 DoFooter();
-
-function htmlval($text)
-{
-	//$text = str_replace("\"", "&quot;", $text);
-	//$text = str_replace("<", "&lt;", $text);
-	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
-}
 
 ?>
