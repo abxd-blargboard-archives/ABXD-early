@@ -22,9 +22,10 @@ function Plural($i, $s)
 
 function DoFooter()
 {
-	global $timeStart, $queries, $overallTidy;
+	global $timeStart, $queries, $overallTidy, $boardname, $title;
 	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe &mdash; version 1.2.1<br />";
+	print "AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 1.3<br />";
+	print "AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>";
 	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
 
 	print "<a href=\"http://validator.w3.org/check?uri=referer\"><img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" /></a>";
@@ -33,6 +34,7 @@ function DoFooter()
 	print "<a href=\"rss2.php\"><img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" /></a>";
 	print "<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\"><img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" /></a>";
 	print "<a href=\"http://opera.com\"><img src=\"img/opera.png\" alt=\"Opera!\" /></a>";
+	print "<a href=\"http://acmlm.kafuka.org/board/\"><img src=\"img/board2.png\" alt=\"We're a spin-off from here!\" /></a>";
 	print "<a href=\"get\"><img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" /></a>";
 
 	print "</div>";
@@ -40,8 +42,19 @@ function DoFooter()
 	print "</body>";
 	print "</html>";
 	
+	$boardTitle = $boardname;
+	if($title != "")
+		$boardTitle .= " &raquo; ".$title;
+	
+	$raw = ob_get_contents();
+	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
+	ob_end_clean();
+
 	if(!$overallTidy)
+	{
+	print $raw;
 		return;
+	}
 		
 	$tidyConfig = array
 	(
@@ -53,15 +66,21 @@ function DoFooter()
 		"drop-proprietary-attributes"=>1,
 		"wrap"=>0,
 		"preserve-entities"=>1,
-		"indent"=>"auto",
+		"indent"=>1,
 		"input-encoding"=>"utf8",
 		"char-encoding"=>"utf8",
 		"output-encoding"=>"utf8",
+		"new-blocklevel-tags"=>"video",
 	);
-	$raw = ob_get_contents();
-	ob_end_clean();
-	$tidyConfig = 
-	print tidy_repair_string($raw, $tidyConfig);
+
+	$raw = OptimizeLayouts($raw);
+	$clean = tidy_repair_string($raw, $tidyConfig);
+		
+	$textareaFixed = str_replace("\r", "", $clean);
+	$textareaFixed = str_replace(" </text", "</text", $textareaFixed);
+	$textareaFixed = str_replace("\n</text", "</text", $textareaFixed);
+	//$textareaFixed = str_replace("\n</text", "</text", $textareaFixed);
+	print $textareaFixed;
 	exit();	
 }
 
@@ -155,6 +174,7 @@ function UserLink($user, $field = "id")
 	}
 
 	return "<a href=\"profile.php?id=".$user[$field]."\"><span".$classing.">".$fname."</span></a>";
+	return "<a href=\"profile.php?id=".$user[$field]."\"".$classing.">".$fname."</a>";
 }
 
 function CanMod($userid, $fid)
@@ -180,11 +200,11 @@ function MakeCrumbs($path, $links)
 	{
 		$link = str_replace("&","&amp;",$link);
 		if($link)
-			$crumbs .= "<a href=\"".$link."\">".$text."</a> - ";
+			$crumbs .= "<a href=\"".$link."\">".$text."</a> &raquo; ";
 		else
-			$crumbs .= $text. " - ";
+			$crumbs .= $text. " &raquo; ";
 	}
-	$crumbs = substr($crumbs, 0, strlen($crumbs) - 3);
+	$crumbs = substr($crumbs, 0, strlen($crumbs) - 8);
 	//print "\t\t</td>\n\t\t<td class=\"right\">\n\t\t\t".$links."\n\t\t</td>\n\t</tr>\n";
 	//print "</table>\n";
 	print "<div class=\"margin\">\n";
@@ -233,7 +253,7 @@ function DoSmileyBar($taname = "text")
 {
 	global $smilies;
 	LoadSmilies();
-	print "<div class=\"outline width25 PoRT margin\">";
+	print "<div class=\"outline cell0 width25 PoRT margin\">";
 	print "<div class=\"errort\"><strong>Smilies</strong></div>";
 	print "<div class=\"errorc smilies\">";
 	for($i = 0; $i < count($smilies) - 1; $i++)
@@ -248,7 +268,7 @@ function DoSmileyBar($taname = "text")
 function DoPostHelp()
 {
 ?>
-	<div class="outline width25 PoRT margin">
+	<div class="outline cell0 width25 PoRT margin">
 		<div class="errort"><strong>Post help</strong></div>
 		<div class="errorc left">
 			<h4>Presentation</h4>
@@ -266,6 +286,11 @@ function DoPostHelp()
 			[url]http://&hellip;[/url] <br />
 			[url=http://&hellip;]&hellip;[/url] <br />
 			>>&hellip; &mdash; link to post by ID <br />
+			[trope]&hellip;[/trope] &mdash; link to trope <br />
+			[trope=&hellip;]&hellip;[/trope] <br/>
+			[wiki]&hellip;[/wiki] &mdash; link to Wikipedia <br/>
+			[wiki=&hellip;]&hellip;[/wiki] <br/>
+			[user=##] &mdash; link to user's profile by ID <br />
 			<br />
 			<h4>Quotations</h4>
 			[quote]&hellip;[/quote] &mdash; untitled quote<br />
@@ -275,7 +300,7 @@ function DoPostHelp()
 			<h4>Embeds</h4>
 			[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
 			[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
-			[swf ## ##]&hellip;[/svg] &mdash; insert SWF clip<br />
+			[swf ## ##]&hellip;[/swf] &mdash; insert SWF clip<br />
 			[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
 			<br />
 			Most plain HTML also allowed
