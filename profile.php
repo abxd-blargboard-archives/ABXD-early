@@ -55,6 +55,7 @@ if($loguserid)
 	{
 		$vote = (int)$_GET['vote'];
 		if($vote > 1) $vote = 1;
+		if($vote < -1) $vote = -1;
 		$k = FetchResult("select count(*) from uservotes where uid=".$id." and voter=".$loguserid);
 		if($k == 0)
 			$qKarma = "insert into uservotes (uid, voter, up) values (".$id.", ".$loguserid.", ".$vote.")";
@@ -115,16 +116,14 @@ if($user['minipic'])
 
 if($user['rankset'])
 {
-	$title = GetRank($user);
+	$currentRank = GetRank($user);
 	$toNextRank = GetToNextRank($user);
 	if($toNextRank)
 		$toNextRank = Plural($toNextRank, "post");
 }
 if($user['title'])
-	if($title)
-		$title = str_replace("<br />","",$title)." &mdash; ".$user['title'];
-	else
-		$title = $user['title'];
+	$title = str_replace("<br />", " &bull; ", $user['title']);
+//$title = "";
 
 if($user['homepageurl'])
 {
@@ -145,10 +144,20 @@ print "<tr>";
 print "<td class=\"cell0\" style=\"width: 20%;\">Name</td>";
 print "<td class=\"cell1\">".$minipic.$user['name']."</td>";
 print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Title</td>";
-print "<td class=\"cell1\">".$title."</td>";
-print "</tr>";
+if($title)
+{
+	print "<tr>";
+	print "<td class=\"cell0\">Title</td>";
+	print "<td class=\"cell1\">".$title."</td>";
+	print "</tr>";
+}
+if($currentRank)
+{
+	print "<tr>";
+	print "<td class=\"cell0\">Rank</td>";
+	print "<td class=\"cell1\">".$currentRank."</td>";
+	print "</tr>";
+}
 if($toNextRank)
 {
 	print "<tr>";
@@ -181,9 +190,18 @@ print "<tr>";
 print "<td class=\"cell0\">Browser</td>";
 print "<td class=\"cell1\">".$user['lastknownbrowser']."</td>";
 print "</tr>";
-print "<tr>";
+
+if($user['badges'])
+{
+	print "<tr>";
+	print "<td class=\"cell0\">Badges</td>";
+	print "<td class=\"cell1\">".GetBadgeList()."</td>";
+	print "</tr>";
+}
+
 if($groups)
 {
+	print "<tr>";
 	print "<td class=\"cell0\">Groups</td>";
 	print "<td class=\"cell1\">".$groups."</td>";
 	print "</tr>";
@@ -194,11 +212,11 @@ print "<th colspan=\"2\">Contact information</th>";
 print "</tr>";
 print "<tr>";
 print "<td class=\"cell0\">Email address</td>";
-print "<td class=\"cell1\">".$user['email']."</td>";
+print "<td class=\"cell1\">".CleanUpPost($user['email'])."</td>";
 print "</tr>";
 print "<tr>";
 print "<td class=\"cell0\">Homepage</td>";
-print "<td class=\"cell1\">".$homepage."</td>";
+print "<td class=\"cell1\">".CleanUpPost($homepage)."</td>";
 print "</tr>";
 
 print "<tr class=\"header0\">";
@@ -270,6 +288,7 @@ else
 	$f = "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
 if($_POST['action'] == "Post" && $loguserid && ($loguserid != $lastCommenter['id']))
 {
+	$_POST['text'] = strip_tags($_POST['text']);
 	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
 	$rComment = Query($qComment);
 	$lastCommenter['id'] = $loguserid;
@@ -280,6 +299,7 @@ if($_POST['action'] == "Post" && $loguserid && ($loguserid != $lastCommenter['id
 	$c .= "</td>";
 	$c .= "</tr>";
 	$f = $f . $c;
+	CheckCommentator();
 }
 print $f;
 if($loguserid)
@@ -326,14 +346,16 @@ $previewPost['text'] = $preview;
 $previewPost['num'] = "???";
 $previewPost['id'] = "???";
 $previewPost['uid'] = $id;
-$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,rankset,signature,posts,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$previewPost[$toCopy] = $user[$toCopy];
+
+$previewPost['activity'] = FetchResult("select count(*) from posts where user = ".$id." and date > ".(time() - 86400), 0, 0);
 
 MakePost($previewPost, 0, 0);
 
 if($loguser['powerlevel'] == 3)
-	$links .= "<a href=\"edituser.php?id=".$id."\">Edit user</a> | ";
+	$links .= "<a href=\"edituser.php?id=".$id."\">Edit user</a> | <a href=\"private.php?user=".$id."\">Show PMs</a> | ";
 if($loguserid)
 	$links .= "<a href=\"sendprivate.php?uid=".$id."\">Send PM</a> | ";
 $links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
