@@ -31,6 +31,7 @@ CREATE TABLE `forums` (
   `numthreads` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `numposts` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `lastpostdate` int(11) NOT NULL DEFAULT '0',
+  `lastpostid` int(11) NOT NULL DEFAULT '0',
   `lastpostuser` int(11) unsigned NOT NULL DEFAULT '0',
   `forder` smallint(5) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
@@ -99,7 +100,7 @@ CREATE TABLE `misc` (
 INSERT INTO `misc` (`views`, `hotcount`, `porabox`, `poratitle`) VALUES (0, 30, '&hellipSEMICOLON', 'Points of Required Attention');
 
 DROP TABLE IF EXISTS `moodavatars`;
-CREATE TABLE IF NOT EXISTS `moodavatars` (
+CREATE TABLE `moodavatars` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `uid` int(11) NOT NULL DEFAULT '0',
   `mid` int(11) NOT NULL DEFAULT '0',
@@ -143,8 +144,7 @@ DROP TABLE IF EXISTS `pollvotes`;
 CREATE TABLE `pollvotes` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` int(11) NOT NULL DEFAULT '0',
-  `user` int(11) NOT NULL DEFAULT '0',
-  UNIQUE KEY `choice` (`choice`,`user`)
+  `user` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `poll_choices`;
@@ -252,6 +252,7 @@ CREATE TABLE `threads` (
   `replies` smallint(5) unsigned NOT NULL DEFAULT '0',
   `lastpostdate` int(10) NOT NULL DEFAULT '0',
   `lastposter` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `lastpostid` int(11) NOT NULL DEFAULT '0',
   `sticky` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `poll` smallint(5) unsigned NOT NULL DEFAULT '0',
   `locked` tinyint(1) unsigned NOT NULL DEFAULT '0',
@@ -313,6 +314,7 @@ CREATE TABLE `users` (
   `signsep` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `dateformat` varchar(20) NOT NULL DEFAULT 'm-d-y',
   `timeformat` varchar(20) NOT NULL DEFAULT 'h:i a',
+  `fontsize` int(11) NOT NULL DEFAULT '80',
   `blocklayouts` tinyint(1) NOT NULL DEFAULT '0',
   `globalblock` tinyint(1) NOT NULL DEFAULT '0',
   `usebanners` tinyint(1) NOT NULL DEFAULT '1',
