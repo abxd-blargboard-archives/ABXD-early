@@ -39,6 +39,7 @@ if($action == "q")
 }
 else if($action == "o")
 {
+/*
 	$rOnlineUsers = Query("select id,name,sex,powerlevel,lastactivity,lastposttime,minipic from users where lastactivity > ".(time()-300)." or lastposttime > ".(time()-300)." order by name");
 	$onlineUsers = "";
 	$onlineUserCt = 0;
@@ -64,6 +65,9 @@ else if($action == "o")
 		$onlineUsers .= " | ".Plural($bots,"bot");
 
 	die($onlineUsers);
+*/
+	$fid = (int)$_GET['f'];
+	die(OnlineUsers($fid));
 }
 else if($action == "tf")
 {
