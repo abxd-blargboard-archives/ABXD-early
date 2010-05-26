@@ -20,7 +20,7 @@ function GetRank($poster)
 	$qRank = "select text from ranks where rset=".$poster['rankset']." and num<=".$poster['posts']." order by num desc limit 1";
 	$rRank = Query($qRank);
 	$rank = Fetch($rRank);
-	return $rank['text']."<br />";
+	return $rank['text'];
 }
 
 function GetToNextRank($poster)
@@ -295,6 +295,14 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	return $s;
 }
 
+function ApplyTags($text, $tags)
+{
+	$s = $text;
+	foreach($tags as $tag => $val)
+		$s = str_replace("&".$tag."&", $val, $s);
+	return $s;
+}
+
 function MakePost($post, $thread, $forum, $ispm=0)
 {
 	global $loguser, $loguserid, $dateformat, $theme, $hacks;
@@ -302,6 +310,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
 	$rBlock = Query($qBlock);
 	$isBlocked = NumRows($rBlock) | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
+	$noSmilies = $post['options'] & 2;
 
 //Deletion behavior A -- post is simply made invisible.
 	if($post['deleted'])
@@ -373,7 +382,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$sideBarStuff .= GetRank($post);
 	if($sideBarStuff)
-		$sideBarStuff .= "";
+		$sideBarStuff .= "<br />";
 	if($post['title'])
 		$sideBarStuff .= $post['title']."<br />";
 	else
@@ -415,31 +424,67 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	print "<table class=\"post\">";
 	print "<tr>";
 	
-	//Neritic uses a split sidebar.
-	//print "<td class=\"side\" rowspan=\"2\">";
-	//print UserLink($poster);
-	print "<td class=\"side userlink topbar".$post['uid']."_1\">";
-	print UserLink($post, "uid");
-	print "</td>";
-	print "<td class=\"meta right topbar".$post['uid']."_2\">";
-	print "<div style=\"float: left;\">".$meta."</div>";
-	//print $meta;
-	//print "</td>";
-	//print "<td class=\"links topbar".$post['uid']."_2\">";
-	print $links;
-	print "</td>";
-	print "</tr>";
+	if(!$isBlocked)
+	{
+		print "<td class=\"side userlink topbar".$post['uid']."_1\">";
+		print UserLink($post, "uid");
+		print "</td>";
+		print "<td class=\"meta right topbar".$post['uid']."_2\">";
+		print "<div style=\"float: left;\">".$meta."</div>";
+		print $links;
+		print "</td>";
+		print "</tr>";
 
-	print "<tr>";
-	print "<td class=\"side sidebar".$post['uid']."\">";
-	print "<div class=\"smallFonts\">";
-	print $sideBarStuff;
-	print "</div>";
-	print "</td>";
-	print "<td class=\"post mainbar".$post['uid']."\" colspan=\"2\">";
+		print "<tr>";
+		print "<td class=\"side sidebar".$post['uid']."\">";
+		print "<div class=\"smallFonts\">";
+		print $sideBarStuff;
+		print "</div>";
+		print "</td>";
+		print "<td class=\"post mainbar".$post['uid']."\" colspan=\"2\">";
+	}
+	else
+	{
+		//If we don't do this, and you have a regular and disablelayout post,
+		//your disablelayout post gets the same Neritic style.
+		print "<td class=\"side userlink\">";
+		print UserLink($post, "uid");
+		print "</td>";
+		print "<td class=\"meta right\">";
+		print "<div style=\"float: left;\">".$meta."</div>";
+		print $links;
+		print "</td>";
+		print "</tr>";
+
+		print "<tr>";
+		print "<td class=\"side\">";
+		print "<div class=\"smallFonts\">";
+		print $sideBarStuff;
+		print "</div>";
+		print "</td>";
+		print "<td class=\"post\" colspan=\"2\">";
+	}
+
+
+	$tags = array();
+	$rankHax = $post['posts'];
+	if($post['num'] == "???")
+		$post['num'] = $post['posts'];
+	$post['posts'] = $post['num'];
+	//Disable tags by commenting/removing this part.
+	$tags = array
+	(
+		"numposts" => $post['num'],
+		"5000" => 5000 - $post['num'],
+		"20000" => 20000 - $post['num'],
+		"30000" => 30000 - $post['num'],
+		"rank" => GetRank($post),
+	);
+
+	$post['posts'] = $rankHax;
 
 	if($post['postheader'] && !$isBlocked)
-		print str_replace('$theme', $theme, CleanUpPost($post['postheader']));
+		print str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
 
 	//Pirate Day filter
 	if($hacks['postfilter'])
@@ -455,13 +500,13 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	else if($hacks['postfilter'] == 5)
 		$post['text'] = FuddFilter($post['text']);
 
-	print CleanUpPost($post['text'],$post['name']);
+	print ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
 
 	if($post['signature'] && !$isBlocked)
 	{
 		if(!$post['signsep'])
 			print "<br />_________________________<br />";
-		print CleanUpPost($post['signature']);
+		print ApplyTags(CleanUpPost($post['signature']), $tags);
 	}
 	print "</td>";
 	print "</tr>";
