@@ -53,6 +53,7 @@
 						<li><a href="ranks.php">Ranks</a></li>
 						<li><a href="avatarlibrary.php">Avatars</a></li>
 						<li><a href="online.php">Online users</a></li>
+						<li><a href="search.php">Search</a></li>
 					</ul>
 				</td>
 				<td rowspan="2" class="smallFonts" style="text-align: center; width: 10%;">
