@@ -92,7 +92,7 @@ h3
 	background: hsl([huesat], 48%);
 }
 
-
+/*
 button, input[type=submit]
 {
 	border: 1px solid hsl([huesat], 20%);
@@ -127,6 +127,31 @@ input[type=checkbox], input[type=radio]
 input[type=radio]
 {
 	border-radius: 8px;
+}
+*/
+
+button, input[type=submit]
+{
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 30%);
+	color: white;
+	text-shadow: 1px 1px 0px #000;
+	border-radius: 8px;
+}
+
+input[type=text], input[type=password], textarea, select
+{
+	border-radius: 6px;
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 10%);
+	color: white;
+}
+
+input[type=checkbox], input[type=radio]
+{
+	border: 1px solid hsl([huesat], 20%);
+	background-color: hsl([huesat], 10%);
+	color: white;
 }
 
 ";
