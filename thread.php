@@ -95,9 +95,23 @@ else if($thread['user'] == $loguserid)
 
 $links = substr($links, 0, strlen($links) - 2);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
+$onlineUsers = OnlineUsers($fid);
+?>
+<script type="text/javascript" src="lib/Tween.js"></script>
+<script type="text/javascript" src="lib/OpacityTween.js"></script>
+<script type="text/javascript">
+	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
+</script>
+<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
+<span id="onlineUsers">
+<?php print $onlineUsers; ?>
+</span>
+</div>
+<?php
 
 DoPrivateMessageBar();
+
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
 
 if($thread['poll'])
 {
@@ -133,7 +147,7 @@ if($thread['poll'])
 		$options = array();
 		$noColors = 0;
 		$defaultColors = array(
-			"#000000","#0000B6","#00B600","#00B6B6","#B60000","#B600B6","#B66700","#B6B6B6",
+					  "#0000B6","#00B600","#00B6B6","#B60000","#B600B6","#B66700","#B6B6B6",
 			"#676767","#6767FF","#67FF67","#67FFFF","#FF6767","#FF67FF","#FFFF67","#FFFFFF",);
 		while($option = Fetch($rOptions))
 		{
@@ -142,7 +156,7 @@ if($thread['poll'])
 		foreach($options as $option)
 		{
 			if($option['color'] == "")
-				$option['color'] = $defaultColors[($pops + 9) % 16];
+				$option['color'] = $defaultColors[($pops + 9) % 15];
 
 			$qVotes = "select * from pollvotes where poll=".$thread['poll']." and choice=".$pops;
 			$rVotes = Query($qVotes);
