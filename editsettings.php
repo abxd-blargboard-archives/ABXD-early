@@ -24,13 +24,8 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "\$warnMonths = ".(int)$_POST['warnMonths'].";\n");
 	fputs($hax, "\$customTitleThreshold = ".(int)$_POST['customTitleThreshold'].";\n");
 	fputs($hax, "\$viewcountInterval = ".(int)$_POST['viewcountInterval'].";\n");
-	//fputs($hax, "\$overallTidy = ".(int)$_POST['overallTidy'].";\n");
-	fputs($hax, "\$overallTidy = 1;\n");
+	fputs($hax, "\$overallTidy = ".($_POST['overallTidy'] != "" ? 1 : 0).";\n");
 	fputs($hax, "\$theWord = \"".$_POST['theWord']."\";\n");
-	fputs($hax, "\n");
-	fputs($hax, "//reCAPTCHA keys\n");
-	fputs($hax, "\$publickey = \"".prepare($_POST['publickey'])."\";\n");
-	fputs($hax, "\$privatekey = \"".prepare($_POST['privatekey'])."\";\n");
 	fputs($hax, "\n");
 	fputs($hax, "//Hacks\n");
 	fputs($hax, "\$hacks['forcetheme'] = ".(int)$_POST['theme'].";\n");
@@ -56,7 +51,7 @@ print "<form action=\"editsettings.php\" method=\"post\">";
 print "<table id=\"t\" class=\"outline margin width50\">";
 
 print "<tr class=\"header1\">";
-print "<th colspan=\"2\">Looks</th>";
+print "<th colspan=\"2\">Settings</th>";
 print "<tr class=\"cell0\">";
 print "<td><label for=\"boardname\">Board name</label></td><td><input type=\"text\" id=\"boardname\" name=\"boardname\" value=\"".htmlval($boardname)."\" class=\"width75\"></td>";
 print "</tr>";
@@ -81,16 +76,10 @@ print "<tr class=\"cell1\">";
 print "<td><label for=\"customTitleThreshold\">Custom title threshold</label></td><td><input type=\"text\" id=\"customTitleThreshold\" name=\"customTitleThreshold\" value=\"".$customTitleThreshold."\"></td>";
 print "</tr>";
 print "<tr class=\"cell0\">";
-print "<td><label for=\"theWord\">Registration word</label></td><td><input type=\"text\" id=\"theWord\" name=\"theWord\" value=\"".htmlval($theWord)."\"></td>";
+print "<td>Markup Cleanup</td><td><input type=\"checkbox\" id=\"ot\" name=\"overallTidy\" ".($overallTidy ? "checked=\"checked\"" : "")."></input> <label for=\"ot\">Use HtmlTidy</label></td>";
 print "</tr>";
-
-print "<tr class=\"header1\">";
-print "<th colspan=\"2\">reCAPTCHA</th>";
 print "<tr class=\"cell1\">";
-print "<td><label for=\"publickey\">Public key</label></td><td><input type=\"text\" id=\"publickey\" name=\"publickey\" value=\"".htmlval($publickey)."\" class=\"width75\"></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"privatekey\">Private key</label></td><td><input type=\"text\" id=\"privatekey\" name=\"privatekey\" value=\"".htmlval($privatekey)."\" class=\"width75\"></td>";
+print "<td><label for=\"theWord\">Registration word</label></td><td><input type=\"text\" id=\"theWord\" name=\"theWord\" value=\"".htmlval($theWord)."\"></td>";
 print "</tr>";
 
 print "<tr class=\"header1\">";
