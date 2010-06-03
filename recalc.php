@@ -24,6 +24,7 @@ while($user = Fetch($rUsers))
 
 	$qUser = "update users set posts=".$posts." where id=".$user['id']." limit 1";
 	$rUser = Query($qUser);
+	RecalculateKarma($user['id']);
 }
 
 print "<tr class=\"header0\"><th colspan=\"4\">Counting thread replies&hellip;</th></tr>";
