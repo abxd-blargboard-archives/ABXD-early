@@ -249,6 +249,15 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "usebanners = '".$usebanners."' ";
 	$qUser.= "where id=".$id." limit 1";
 	$rUser = Query($qUser);
+
+	if($user['powerlevel'] != (int)$_POST['level'])
+	{
+		$votes = Query("select uid from uservotes where voter=".$id);
+		if(NumRows($votes))
+			while($karmaChameleon = Fetch($votes))
+				RecalculateKarma($karmaChameleon['uid']);
+	}
+	
 	Redirect("Profile updated.","profile.php?id=".$id,($id == $loguserid ? "your" : "that user's") . " profile");
 }
 
