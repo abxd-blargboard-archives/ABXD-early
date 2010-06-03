@@ -6,9 +6,9 @@ include("lib/common.php");
 
 $title = "Member list";
 
+$ppp = $loguser['postsperpage'];
 if($ppp<1) $ppp=50;
 
-$tpp = $loguser['threadsperpage'];
 if(isset($_GET['from']))
 	$from = (int)$_GET['from'];
 else
@@ -30,6 +30,7 @@ switch($sort)
 	case "id": $order = "id asc"; break;
 	case "name": $order = "name"; break;
 	case "reg": $order = "regdate desc"; break;
+	case "karma": $order = "karma desc"; break;
 	default: $order="posts desc";
 }
 
@@ -57,36 +58,37 @@ for($i = $ppp; $i < $numUsers; $i+=$ppp)
 	if($i == $from)
 		$pagelinks .= " ".(($i/$ppp)+1);
 	else
-		$pagelinks .= " ".mlink("",$sex,$pow,$ppp,$letter,$i).(($i/$ppp)+1)."</a>";
+		$pagelinks .= " ".mlink($sort,$sex,$pow,$ppp,$letter,$i).(($i/$ppp)+1)."</a>";
 }
 if($pagelinks)
 {
 	if($from == 0)
 		$pagelinks = "1".$pagelinks;
 	else
-		$pagelinks = mlink("",$sex,$pow,$ppp,$letter,0)."1</a>".$pagelinks;
+		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,0)."1</a>".$pagelinks;
 }
 
 //$numUsers = NumRows($rUsers);
 print "<table class=\"outline margin\">";
 print "<tr class=\"header0\">";
-print "<th colspan=\"6\">Options</th>";
+print "<th colspan=\"8\">Options</th>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"6\">".$numUsers." user".(($numUsers>1 || $numUsers==0) ? "s" : "")." found.</td>";
+print "<td colspan=\"8\">".$numUsers." user".(($numUsers>1 || $numUsers==0) ? "s" : "")." found.</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Sort by</td>";
-print "<td colspan=\"4\">";
-print mlink(""    ,$sex,$pow,$ppp,$letter)."Posts</a> | ";
-print mlink("id"  ,$sex,$pow,$ppp,$letter)."ID</a> | ";
-print mlink("name",$sex,$pow,$ppp,$letter)."Username</a> | ";
-print mlink("reg" ,$sex,$pow,$ppp,$letter)."Registration date</a>";
+print "<td colspan=\"6\">";
+print mlink(""     ,$sex,$pow,$ppp,$letter)."Posts</a> | ";
+print mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a> | ";
+print mlink("name" ,$sex,$pow,$ppp,$letter)."Username</a> | ";
+print mlink("karma",$sex,$pow,$ppp,$letter)."Karma</a> | ";
+print mlink("reg"  ,$sex,$pow,$ppp,$letter)."Registration date</a>";
 print "</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Sex</td>";
-print "<td colspan=\"4\">";
+print "<td colspan=\"6\">";
 print mlink($sort,"m",$pow,$ppp,$letter)."Male</a> | ";
 print mlink($sort,"f",$pow,$ppp,$letter)."Female</a> | ";
 print mlink($sort,"n",$pow,$ppp,$letter)."N/A</a> | ";
@@ -95,7 +97,7 @@ print "</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Power</td>";
-print "<td colspan=\"4\">";
+print "<td colspan=\"6\">";
 print mlink($sort,$sex,"-1",$ppp,$letter)."Banned</a> | ";
 print mlink($sort,$sex, "0",$ppp,$letter)."Normal</a> | ";
 print mlink($sort,$sex, "1",$ppp,$letter)."Local moderator</a> | ";
@@ -106,7 +108,7 @@ print "</td>";
 print "</tr>";
 print "<tr class=\"cell2 smallFonts\">";
 print "<td colspan=\"2\">Name</td>";
-print "<td colspan=\"4\">";
+print "<td colspan=\"6\">";
 for($l = 0; $l < 26; $l++)
 {
 	$let = chr(65+$l);
@@ -118,7 +120,7 @@ if($pagelinks)
 	print "</tr>";
 	print "<tr class=\"cell2 smallFonts\">";
 	print "<td colspan=\"2\">Page</td>";
-	print "<td colspan=\"4\">".$pagelinks."</td>";
+	print "<td colspan=\"6\">".$pagelinks."</td>";
 	print "</tr>";
 }
 
@@ -128,6 +130,8 @@ print "<th style=\"width: 62px; \">Picture</th>";
 print "<th>Name</th>";
 //print "<th style=\"width: 130px; \">Rank</th>";
 print "<th style=\"width: 50px; \">Posts</th>";
+print "<th style=\"width: 50px; \">Average</th>";
+print "<th style=\"width: 50px; \">Karma</th>";
 print "<th style=\"width: 80px; \">Birthday</th>";
 print "<th style=\"width: 130px; \">Registered on</th>";
 print "</tr>";
@@ -135,6 +139,9 @@ if($numUsers)
 {
 	while($user = Fetch($rUsers))
 	{
+		$daysKnown = (time()-$user['regdate'])/86400;
+		$user['average'] = sprintf("%1.02f", $user['posts'] / $daysKnown);
+
 		$userPic = "";
 		if($user['picture'] && $hacks['themenames'] != 3)
 			$userPic = "<img src=\"".str_replace("img/avatars/", "img/avatars/", $user['picture'])."\" alt=\"\" style=\"width: 60px;\" />";
@@ -146,6 +153,8 @@ if($numUsers)
 		print "<td>".UserLink($user)."</td>";
 //		print "<td>".GetRank($user)."</td>";
 		print "<td>".$user['posts']."</td>";
+		print "<td>".$user['average']."</td>";
+		print "<td>".$user['karma']."</td>";
 		print "<td>".($user['birthday'] ? gmdate("M jS",$user['birthday']) : "&nbsp;")."</td>";
 		print "<td>".gmdate("M jS Y",$user['regdate'])."</td>";
 		print "</tr>";
@@ -153,7 +162,7 @@ if($numUsers)
 } else
 {
 		print "<tr class=\"cell0\">";
-		print "<td colspan=\"6\">Nothing here.</td>";
+		print "<td colspan=\"8\">Nothing here.</td>";
 		print "</tr>";
 }
 
