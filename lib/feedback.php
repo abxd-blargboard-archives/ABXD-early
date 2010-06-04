@@ -17,7 +17,7 @@ function Kill($s, $t="Error")
 	global $noAutoHeader;
 	print "<div class=\"outline margin\"><div class=\"errort\"><strong>".$t."</strong></div><div class=\"errorc cell2\">".$s."</div></div>";
 	if(!$noAutoHeader)
-		doFooter();
+		DoFooter();
 	exit();
 }
 
