@@ -180,8 +180,6 @@ else //Has custom icon
 	$_POST['iconurl'] = $thread['icon'];
 }
 
-if($_POST['text']) $prefill = $_POST['text'];
-
 if(!isset($_POST['iconid'])) $_POST['iconid'] = 0;
 
 $qFora = "select title, id from forums order by catid, id";
@@ -197,7 +195,7 @@ if($canMod)
 	print "<table class=\"outline margin width50\">";
 	print "<tr class=\"cell0\">";
 	print "<td><label for=\"tit\">Title</label></td>";
-	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['title']."\"></input><br /></td>";
+	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".htmlval(deSlashMagic($_POST['title']))."\"></input><br /></td>";
 	print "</tr>";
 	print "<tr class=\"cell1\">";
 	print "<td>Icon</td>";
@@ -218,10 +216,10 @@ if($canMod)
 	if($_POST['iconid'] == 255)
 	{
 		$check = "checked=\"checked\" ";
-		$iconurl = $_POST['iconurl'];
+		$iconurl = htmlval(deSlashMagic($_POST['iconurl']));
 	}
 	print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input> Custom:";
-	print "<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
+	print "<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$iconurl."\"></input>";
 	print "</td>";
 	print "</tr>";
 	print "<tr class=\"cell2\">";
@@ -255,7 +253,7 @@ else
 	print "<table class=\"outline margin width50\">";
 	print "<tr class=\"cell0\">";
 	print "<td><label for=\"tit\">Title</label></td>";
-	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['title']."\"></input><br /></td>";
+	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".htmlval(deSlashMagic($_POST['title']))."\"></input><br /></td>";
 	print "</tr>";
 	print "<tr class=\"cell2\">";
 	print "<td></td>";
