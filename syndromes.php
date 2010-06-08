@@ -32,6 +32,7 @@ $syndromes = array
 	500 => array("$aff'Wooster Syndrome' ++++!!", "#A0A0A0"),
 	600 => array("$aff'Anya Syndrome'!!!", "#C762F2"),
 	800 => array("$aff'Something higher than Anya Syndrome' +++++!!", "#D06030"),
+
 */
 
 /*

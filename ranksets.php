@@ -111,6 +111,7 @@ $ranks = array
 			5000 => "Star Mario",
 		)
 	),
+
 );
 
 ?>
