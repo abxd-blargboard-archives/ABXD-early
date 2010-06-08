@@ -8,7 +8,9 @@ if(!$isBot)
 	$rViewCounter = Query($qViewCounter);
 
 	//Milestone reporting
-	if($misc['views'] % $viewcountInterval == 0)
+	$reporterID = 0; //set this to the user ID you want to recieve milestone reports from, or leave as 0 to disable.
+	
+	if($reporterID > 0 && $misc['views'] % $viewcountInterval == 0)
 	{
 		if($loguserid == 1)
 			$who = "you";
@@ -17,7 +19,7 @@ if(!$isBot)
 		else
 			$who = "a guest at ".$_SERVER['REMOTE_ADDR'];
 
-		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (1, 8, ".time().", '127.0.0.1', 0)";
+		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (1, ".$reporterID.", ".time().", '127.0.0.1', 0)";
 		$rPM = Query($qPM);
 		$pid = mysql_insert_id();
 		$qPM = "insert into pmsgs_text (pid, title, text) values (".$pid.", 'View ".$misc['views']." reached by ".justEscape($who)."', 'Take a note.')";
