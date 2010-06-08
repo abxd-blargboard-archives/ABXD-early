@@ -51,6 +51,20 @@ if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
 }
 
+$onlineUsers = OnlineUsers($fid);
+?>
+<script type="text/javascript" src="lib/Tween.js"></script>
+<script type="text/javascript" src="lib/OpacityTween.js"></script>
+<script type="text/javascript">
+	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
+</script>
+<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
+<span id="onlineUsers">
+<?php print $onlineUsers; ?>
+</span>
+</div>
+<?php
+
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
 $total = $forum['numthreads'];
@@ -110,26 +124,32 @@ if(NumRows($rThreads))
 		$last = $members[$thread['lastposter']];
 		$starter = $members[$thread['user']];
 
+		$tags = ParseThreadTags($thread['title']);
+
 		$NewIcon = "";
+		$newstuff = 0;
 		if($thread['closed'])
 			$NewIcon = "off";
 		if($thread['replies'] >= $misc['hotcount'])
 			$NewIcon .= "hot";
 		if((!$loguserid && $thread['lastpostdate'] > time() - 900) ||
 			($loguserid && $thread['lastpostdate'] > $postread[$thread['id']]))
+		{
 			$NewIcon .= "new";
+			$newstuff++;
+		}
 		if($NewIcon)
-			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
+			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>" . ($newstuff ? $newstuff : "");
 
 		if($thread['icon'])
 			$ThreadIcon = "<img src=\"".$thread['icon']."\" alt=\"\"/>";
 		else
 			$ThreadIcon = "";
 
-		$cellClass = ($cellClass+1) % 2;
+		$cellClass = ($cellClass + 1) % 2;
 
-		if($thread['sticky'])
-			$cellClass = 2;
+		//if($thread['sticky'])
+		//	$cellClass = 2;
 
 		if($thread['sticky'] == 0 && $haveStickies == 1)
 		{
@@ -152,9 +172,9 @@ if(NumRows($rThreads))
 			$lastLink = " <a href=\"thread.php?pid=".$thread['lastpostid']."#".$thread['lastpostid']."\">&raquo;</a>";
 
 		print "<tr class=\"cell".$cellClass."\">";
-		print "<td class=\"cell2\" style=\"width: 17px;\">".$NewIcon."</td>";
-		print "<td style=\"width: 17px; text-align: center;\">".$ThreadIcon."</td>";
-		print "<td>".$poll."<a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>".$pl."</td>";
+		print "<td class=\"cell2 threadIcon\">".$NewIcon."</td>";
+		print "<td class=\"threadIcon\" style=\"border-right: 0px none;\">".$ThreadIcon."</td>";
+		print "<td style=\"border-left: 0px none;\">".$poll."<a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>".$pl.$tags."</td>";
 		print "<td>".UserLink($starter)."</td>";
 		print "<td class=\"center\">".$thread['replies']."</td>";
 		print "<td class=\"center\">".$thread['views']."</td>";
