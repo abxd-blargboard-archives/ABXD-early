@@ -93,6 +93,7 @@ if($_POST['action']=="Edit")
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
+		if($_POST['nosm']) $options |= 2;
 
 		$qRev = "select max(revision) from posts_text where pid=".$pid;
 		$rRev = Query($qRev);
@@ -105,7 +106,6 @@ if($_POST['action']=="Edit")
 		$qPosts = "update posts set options='".$options."', mood=".$_POST['mood'].", currentrevision = currentrevision + 1 where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
 
-		Report("<message><action type=\"postedit\" id=\"".$pid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Edited!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
@@ -139,7 +139,9 @@ if($_POST['action']=="Preview")
 		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $user[$toCopy];
-		if($_POST['nopl']) $previewPost['options'] = 1;
+		$previewPost['options'] = 0;
+		if($_POST['nopl']) $previewPost['options'] |= 1;
+		if($_POST['nosm']) $previewPost['options'] |= 2;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		MakePost($previewPost, 0, $fid);
 	} else
@@ -153,6 +155,8 @@ if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
+if($_POST['nosm'])
+	$nosm = "checked=\"checked\"";
 
 DoSmileyBar();
 DoPostHelp();
@@ -181,6 +185,7 @@ print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input> ";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
+print " <input type=\"checkbox\" name=\"nosm\" id=\"ns\" $nosm></input> <label for=\"ns\">Disable smilies</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$pid."\"></input>";
 print "</td>";
 print "</tr>";
