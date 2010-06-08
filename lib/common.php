@@ -59,7 +59,6 @@ if(!isset($noViewCount))
 
 include("tidy.php");
 include("post.php");
-include("badges.php");
 
 include("css/themelist.php");
 $themeFiles = array_keys($themes);
@@ -105,21 +104,6 @@ function CheckTableBreaks($text)
 	return ($openers != $closers);
 }
 
-function Report($message)
-{
-/*
-	$reporters = Query("select ip from reporters");
-	while($reporter = Fetch($reporters))
-	{
-		if($server = @fsockopen($reporter['ip'], 6668, $errno, $errstr, 1))
-		{
-			fwrite($server, $message."\0");
-			fclose($server);
-		}
-	}
-*/
-}
-
 function htmlval($text)
 {
 	//$text = str_replace("\"", "&quot;", $text);
@@ -139,6 +123,46 @@ function filterPollColors($input)
 	return $output;
 */
 	return preg_replace("@[^#0123456789abcdef]@si", "", $input);
+}
+
+function RecalculateKarma($uid)
+{
+	$karma = 100;
+	$karmaWeights = array(5, 10, 10, 15);
+	$qKarma = "select powerlevel, up from uservotes left join users on id=voter where uid=".$uid." and powerlevel > -1";
+	$rKarma = Query($qKarma);
+	while($k = Fetch($rKarma))
+	{
+		if($k['up'])
+			$karma += $karmaWeights[$k['powerlevel']];
+		else
+			$karma -= $karmaWeights[$k['powerlevel']];
+	}
+	Query("update users set karma=".$karma." where id=".$uid);
+	return $karma;
+}
+
+function ParseThreadTags(&$title)
+{
+	preg_match_all("/\[(.*?)\]/", $title, $matches);
+	foreach($matches[1] as $tag)
+	{
+		$title = str_replace("[".$tag."]", "", $title);
+		$tag = strtolower($tag);
+		
+		//Start at a hue that makes "18" red.
+		$hash = -105;
+		for($i = 0; $i < strlen($tag); $i++)
+			$hash += ord($tag[$i]);
+
+		//That multiplier is only there to make "nsfw" and "18" the same color.
+		$color = "hsl(".(($hash * 57) % 360).", 70%, 40%)";
+		
+		$tags .= "<span class=\"threadTag\" style=\"background-color: ".$color.";\">".$tag."</span>";
+	}
+	if($tags)
+		$tags = " ".$tags;
+	return $tags;
 }
 
 ?>

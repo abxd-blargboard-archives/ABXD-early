@@ -2,15 +2,15 @@
 //  AcmlmBoard XD - User account registration page
 //  Access: any, but meant for guests.
 
+$haveSecurimage = is_file("securimage/securimage.php");
+if($haveSecurimage)
+{
+	session_start();
+}
+
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
-if($publickey)
-{
-	require_once('lib/recaptchalib.php');
-	$capt_resp  = null;
-	$capt_error = null;
-}
 
 $backtomain = "<br /><a href=\"./\">Back to main</a> or <a href=\"register.php\">try again</a>.";
 $sexes = array("Male","Female","N/A");
@@ -57,13 +57,16 @@ if(!isset($_POST['action']))
 	print "<td class=\"cell2\"><label for=\"tw\">The word</label></td>";
 	print "<td class=\"cell1\"><input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\"></input></td>";
 	print "</tr>";
-	if($publickey)
+
+	if($haveSecurimage)
 	{
-		print "<tr>";
-		print "<td class=\"cell2\">Security</td>";
-		print "<td class=\"cell1\">".recaptcha_get_html($publickey)."</td>";
-		print "</tr>";
+		print "<tr><td class=\"cell2\">Security</td><td class=\"cell1\">";
+		print "<img id=\"captcha\" src=\"captcha.php\" alt=\"CAPTCHA Image\" />";
+		print " <button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">New</button><br />";
+		print "<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" />";
+		print "</td></tr>";
 	}
+
 	print "<tr class=\"cell2\">";
 	print "<td></td>";
 	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input> <input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
@@ -106,10 +109,12 @@ if(!isset($_POST['action']))
 		$err = "That's not the right word. Are you sure you really <a href=\"faq.php\">read the FAQ</a>?";
 	else if(strlen($_POST['pass']) < 4)
 		$err = "Your password must be at least four characters long.".$backtomain;
-	elseif($publickey)
+
+	if($haveSecurimage)
 	{
-		$resp = recaptcha_check_answer ($privatekey, $_SERVER["REMOTE_ADDR"], $_POST["recaptcha_challenge_field"], $_POST["recaptcha_response_field"]);
-		if(!$resp->is_valid)
+		include("securimage/securimage.php");
+		$securimage = new Securimage();
+		if($securimage->check($_POST['captcha_code']) == false)
 			$err = "You got the CAPTCHA wrong.".$backtomain;
 	}
 
@@ -125,8 +130,6 @@ if(!isset($_POST['action']))
 	$uid = mysql_insert_id();
 	if($uid == 1)
 		Query("update users set powerlevel = 3 where id = 1;");
-
-	Report("<message><action type=\"newuser\" id=\"".$uid."\" /><user id=\"".$uid."\">".$_POST['name']."</user></message>");
 
 	if($_POST['autologin'])
 	{

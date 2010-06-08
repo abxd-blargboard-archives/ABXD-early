@@ -34,6 +34,20 @@ if($forum['minpowerthread'] > $loguser['powerlevel'])
 if(!isset($_POST['poll']) || isset($_GET['poll']))
 	$_POST['poll'] = $_GET['poll'];
 
+$onlineUsers = OnlineUsers($fid);
+?>
+<script type="text/javascript" src="lib/Tween.js"></script>
+<script type="text/javascript" src="lib/OpacityTween.js"></script>
+<script type="text/javascript">
+	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
+</script>
+<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
+<span id="onlineUsers">
+<?php print $onlineUsers; ?>
+</span>
+</div>
+<?php
+
 if($_POST['poll'])
 	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Poll"=>""), $links);
 else
@@ -62,17 +76,15 @@ if($_POST['text'] && $_POST['action'] != "")
 	}
 }
 
-/*
 if($_POST['text'] && $_POST['action'] == "Post")
 {
 	$lastPost = time() - $loguser['lastposttime'];
 	if($lastPost < 30)
 	{
 		$_POST['action'] = "";
-		Alert("You're going too damn fast! Slow down a little.", "I'm sorry, Lion.");
+		Alert("You're going too damn fast! Slow down a little.", "Hold your horses.");
 	}
 }
-*/
 
 if($_POST['action']=="Post")
 {
@@ -87,6 +99,7 @@ if($_POST['action']=="Post")
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
+		if($_POST['nosm']) $options |= 2;
 
 		if($_POST['iconid'])
 		{
@@ -134,7 +147,6 @@ if($_POST['action']=="Post")
 		$qFora = "update forums set numthreads=".($forum['numthreads']+1).", numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid.", lastpostid=".$pid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
-		Report("<message><action type=\"newthread\" id=\"".$tid."\" /><user id=\"".$loguserid."\">".$loguser['name']."</user><thread id=\"".$tid."\">".$_POST['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Posted!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
@@ -157,7 +169,7 @@ if($_POST['text'])
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 if($_POST['title'])
-	$trefill = htmlentities2($_POST['title']);
+	$trefill = htmlentities2(deSlashMagic($_POST['title']));
 	//$trefill = htmlentities2(stripslashes($_POST['title']));
 
 if($_POST['action']=="Preview")
@@ -209,7 +221,9 @@ if($_POST['action']=="Preview")
 		$previewPost['num'] = $loguser['posts']+1;
 		$previewPost['posts'] = $loguser['posts']+1;
 		$previewPost['id'] = "???";
-		if($_POST['nopl']) $previewPost['options'] = 1;
+		$previewPost['options'] = 0;
+		if($_POST['nopl']) $previewPost['options'] |= 1;
+		if($_POST['nosm']) $previewPost['options'] |= 2;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		$previewPost['uid'] = $loguserid;
 		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
@@ -229,13 +243,15 @@ if($_POST['action']=="Preview")
 
 if(!$_POST['text']) $_POST['text'] = $post['text'];
 if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
-if($_POST['title']) $trefill = stripslashes($_POST['title']);
+if($_POST['title']) $trefill = htmlval(deSlashMagic($_POST['title']));
 
 if(!isset($_POST['iconid']))
 	$_POST['iconid'] = 0;
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
+if($_POST['nosm'])
+	$nosm = "checked=\"checked\"";
 
 DoSmileyBar();
 DoPostHelp();
@@ -265,7 +281,7 @@ print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=
 $check = "";
 if($_POST['iconid'] == 255) $check = "checked=\"checked\" ";
 print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input> <label for=\"iconurl\">Custom</label> ";
-print "<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$_POST['iconurl']."\"></input>";
+print "<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".htmlval(deSlashMagic($_POST['iconurl']))."\"></input>";
 print "</td>";
 print "</tr>";
 
@@ -273,7 +289,7 @@ if($_POST['poll'])
 {
 	print "<tr class=\"cell0\">";
 	print "<td><label for=\"pq\">Poll question</label></td>";
-	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".stripslashes($_POST['pollQuestion'])."\" style=\"width: 98%;\" maxlength=\"100\"></input></td>";
+	print "<td><input type=\"text\" id=\"pq\" name=\"pollQuestion\" value=\"".htmlval(deSlashMagic($_POST['pollQuestion']))."\" style=\"width: 98%;\" maxlength=\"100\"></input></td>";
 	print "</tr>";
 	print "<tr class=\"cell1\">";
 	print "<td><label for=\"pn\">Number of options</label></td>";
@@ -284,13 +300,12 @@ if($_POST['poll'])
 	{
 		$cellClass = ($cellClass+1) % 2;
 
-		$fixed = htmlentities2(stripslashes($_POST['pollOption'.$pops]));
-		//$fixed = htmlentities2($_POST['pollOption'.$pops]);
+		$fixed = htmlval(deSlashMagic($_POST['pollOption'.$pops]));
 
 		print "<tr class=\"cell".$cellClass."\">";
 		print "<td><label for=\"p".$pops."\">Option ".($pops+1)."</label></td>";
-		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" style=\"width: 50%;\" maxlength=\"40\"></input> <label for=\"c".$pops."\">Color</label> ";
-		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".filterPollColors($_POST['pollColor'.$pops])."\" size=\"10\" maxlength=\"10\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left'}\"></input>".($first ? " (#rrggbb)" : "")."</td>";
+		print "<td><input type=\"text\" id=\"p".$pops."\" name=\"pollOption".$pops."\" value=\"".$fixed."\" style=\"width: 50%;\" maxlength=\"40\"></input>&nbsp;<label for=\"c".$pops."\">Color</label>&nbsp;";
+		print "<input type=\"text\" id=\"c".$pops."\" name=\"pollColor".$pops."\" value=\"".filterPollColors($_POST['pollColor'.$pops])."\" size=\"10\" maxlength=\"10\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left'}\"></input>".($first ? "&nbsp;(#rrggbb)" : "")."</td>";
 		print "</tr>";
 		$first = false;
 	}
@@ -317,6 +332,7 @@ if(!$_POST['poll'] || $_POST['pollOptions'])
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
+print " <input type=\"checkbox\" name=\"nosm\" id=\"ns\" $nosm></input> <label for=\"ns\">Disable smilies</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$fid."\"></input>";
 print "<input type=\"hidden\" name=\"poll\" value=\"".stripslashes($_POST['poll'])."\"></input>";
 print "</td>";

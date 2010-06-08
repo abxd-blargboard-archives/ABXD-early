@@ -4,7 +4,7 @@
 
 include("lib/common.php");
 
-print "<script type=\"text/javascript\">window.onload = function() { hookUpControls(); };</script>";
+//print "<script type=\"text/javascript\">window.onload = function() { hookUpControls(); };</script>";
 
 //if(!$loguserid) //Not logged in?
 //	Kill("You must be logged in to post.");
@@ -43,6 +43,20 @@ if($forum['minpowerreply'] > $loguser['powerlevel'])
 if($thread['closed'] && $loguser['powerlevel'] < 3)
 	Kill("This thread is locked.");
 
+$onlineUsers = OnlineUsers($fid);
+?>
+<script type="text/javascript" src="lib/Tween.js"></script>
+<script type="text/javascript" src="lib/OpacityTween.js"></script>
+<script type="text/javascript">
+	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
+</script>
+<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
+<span id="onlineUsers">
+<?php print $onlineUsers; ?>
+</span>
+</div>
+<?php
+
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
 if($warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
@@ -72,17 +86,15 @@ if($_POST['action'] && isset($_POST['ninja']) && $_POST['ninja'] != $ninja)
 	Alert("You got ninja'd. You might want to review the post made while you were typing before you submit yours.");
 }
 
-/*
 if($_POST['text'] && $_POST['action'] == "Post")
 {
 	$lastPost = time() - $loguser['lastposttime'];
-	if($lastPost < 10)
+	if($lastPost < 30)
 	{
 		$_POST['action'] = "";
-		Alert("You're going too damn fast! Slow down a little.", "I'm sorry, Lion.");
+		Alert("You're going too damn fast! Slow down a little.", "Hold your horses.");
 	}
 }
-*/
 
 $postingAs = $loguserid;
 $postingAsUser = $loguser;
@@ -121,6 +133,7 @@ if($_POST['action']=="Post")
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
+		if($_POST['nosm']) $options |= 2;
 
 		if($thread['lastposter']==$postingAs && $thread['lastpostdate']>=time()-86400 && $postingAsUser['powerlevel']<3)
 			Kill("You can't double post until it's been at least one day.");
@@ -141,7 +154,6 @@ if($_POST['action']=="Post")
 		$qFora = "update forums set numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$postingAs.", lastpostid=".$pid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
 
-		Report("<message><action type=\"newreply\" id=\"".$pid."\" /><user id=\"".$postingAs."\">".$postingAsUser['name']."</user><thread id=\"".$tid."\">".$thread['title']."</thread><forum id=\"".$fid."\">".$forum['title']."</forum></message>");
 		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
@@ -170,7 +182,9 @@ if($_POST['action']=="Preview")
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $postingAsUser[$toCopy];
 		$previewPost['mood'] = (int)$_POST['mood'];
-		if($_POST['nopl']) $previewPost['options'] = 1;
+		$previewPost['options'] = 0;
+		if($_POST['nopl']) $previewPost['options'] |= 1;
+		if($_POST['nosm']) $previewPost['options'] |= 2;
 		MakePost($previewPost, 0, $fid);
 	} else
 		Alert("Enter a message and try again.","Your post is empty.");
@@ -220,6 +234,8 @@ else if($_GET['quote'])
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
+if($_POST['nosm'])
+	$nosm = "checked=\"checked\"";
 
 DoSmileyBar();
 DoPostHelp();
@@ -257,6 +273,7 @@ print "<input type=\"submit\" name=\"action\" value=\"Post\"></input> ";
 print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
 print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
 print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
+print " <input type=\"checkbox\" name=\"nosm\" id=\"ns\" $nosm></input> <label for=\"ns\">Disable smilies</label>";
 print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
 print "</td>";
 print "</tr>";
