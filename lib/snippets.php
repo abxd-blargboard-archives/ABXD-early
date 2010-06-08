@@ -24,7 +24,7 @@ function DoFooter()
 {
 	global $timeStart, $queries, $overallTidy, $boardname, $title;
 	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 1.3<br />";
+	print "AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 1.3.1<br />";
 	print "AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>";
 	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
 
@@ -34,8 +34,6 @@ function DoFooter()
 	print "<a href=\"rss2.php\"><img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" /></a>";
 	print "<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\"><img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" /></a>";
 	print "<a href=\"http://opera.com\"><img src=\"img/opera.png\" alt=\"Opera!\" /></a>";
-	print "<a href=\"http://acmlm.kafuka.org/board/\"><img src=\"img/board2.png\" alt=\"We're a spin-off from here!\" /></a>";
-	print "<a href=\"get\"><img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" /></a>";
 
 	print "</div>";
 	print "</div>";
@@ -252,15 +250,22 @@ function DoPrivateMessageBar()
 function DoSmileyBar($taname = "text")
 {
 	global $smilies;
+	$expandAt = 26;
 	LoadSmilies();
-	print "<div class=\"outline cell0 width25 PoRT margin\">";
+	print "<div class=\"outline PoRT margin\" style=\"width: 180px;\">";
 	print "<div class=\"errort\"><strong>Smilies</strong></div>";
-	print "<div class=\"errorc smilies\">";
+	print "<div class=\"errorc cell0\" id=\"smiliesContainer\">";
+	if(count($smilies) > $expandAt)
+		print "<button class=\"expander\" id=\"smiliesExpand\" onclick=\"expandSmilies();\">&#x25BC;</button>"; 
+	print "<div class=\"smilies\" id=\"commonSet\">";
 	for($i = 0; $i < count($smilies) - 1; $i++)
 	{
+		if($i == $expandAt)
+			print "</div><div class=\"smilies\" id=\"expandedSet\">";
 		$s = $smilies[$i];
 		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".$s['code']."\" title=\"".$s['code']."\" onclick=\"insertSmiley(' ".$s['code']." ');\" />";
 	}
+	print "</div>";
 	print "</div>";
 	print "</div>";
 }
@@ -268,45 +273,89 @@ function DoSmileyBar($taname = "text")
 function DoPostHelp()
 {
 ?>
-	<div class="outline cell0 width25 PoRT margin">
+	<div class="outline cell0 PoRT margin" style="width: 180px;">
 		<div class="errort"><strong>Post help</strong></div>
 		<div class="errorc left">
-			<h4>Presentation</h4>
-			[b]&hellip;[/b] &mdash; <strong>bold type</strong> <br />
-			[i]&hellip;[/i] &mdash; <em>italic</em> <br />
-			[u]&hellip;[/u] &mdash; <span class="underline">underlined</span> <br />
-			[s]&hellip;[/s] &mdash; <del>Strikethrough</del><br />
-			[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
-			[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
-			[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
-			[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
-			<br />
-			<h4>Links</h4>
-			[img]http://&hellip;[/img] &mdash; insert image <br />
-			[url]http://&hellip;[/url] <br />
-			[url=http://&hellip;]&hellip;[/url] <br />
-			>>&hellip; &mdash; link to post by ID <br />
-			[trope]&hellip;[/trope] &mdash; link to trope <br />
-			[trope=&hellip;]&hellip;[/trope] <br/>
-			[wiki]&hellip;[/wiki] &mdash; link to Wikipedia <br/>
-			[wiki=&hellip;]&hellip;[/wiki] <br/>
-			[user=##] &mdash; link to user's profile by ID <br />
-			<br />
-			<h4>Quotations</h4>
-			[quote]&hellip;[/quote] &mdash; untitled quote<br />
-			[quote=&hellip;]&hellip;[/quote] &mdash; "Posted by &hellip;"<br />
-			[quote="&hellip;" id="&hellip;"]&hellip;[/quote] &mdash; "Post by &hellip;" with link by post ID<br />
-			<br />
-			<h4>Embeds</h4>
-			[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
-			[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
-			[swf ## ##]&hellip;[/swf] &mdash; insert SWF clip<br />
-			[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
-			<br />
+			<button class="expander" id="postHelpExpand" onclick="expandPostHelp();">&#x25BC;</button>
+			<div id="commonHelp">
+				<h4>Presentation</h4>
+				[b]&hellip;[/b] &mdash; <strong>bold type</strong> <br />
+				[i]&hellip;[/i] &mdash; <em>italic</em> <br />
+				[u]&hellip;[/u] &mdash; <span class="underline">underlined</span> <br />
+				[s]&hellip;[/s] &mdash; <del>Strikethrough</del><br />
+			</div>
+			<div id="expandedHelp">
+				[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
+				[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
+				[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
+				[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
+				<br />
+				<h4>Links</h4>
+				[img]http://&hellip;[/img] &mdash; insert image <br />
+				[url]http://&hellip;[/url] <br />
+				[url=http://&hellip;]&hellip;[/url] <br />
+				>>&hellip; &mdash; link to post by ID <br />
+				[trope]&hellip;[/trope] &mdash; link to trope <br />
+				[trope=&hellip;]&hellip;[/trope] <br/>
+				[wiki]&hellip;[/wiki] &mdash; link to Wikipedia <br/>
+				[wiki=&hellip;]&hellip;[/wiki] <br/>
+				[user=##] &mdash; link to user's profile by ID <br />
+				<br />
+				<h4>Quotations</h4>
+				[quote]&hellip;[/quote] &mdash; untitled quote<br />
+				[quote=&hellip;]&hellip;[/quote] &mdash; "Posted by &hellip;"<br />
+				[quote="&hellip;" id="&hellip;"]&hellip;[/quote] &mdash; "Post by &hellip;" with link by post ID<br />
+				<br />
+				<h4>Embeds</h4>
+				[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
+				[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
+				[swf ## ##]&hellip;[/swf] &mdash; insert SWF clip<br />
+				[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
+				<br />
+			</div>
 			Most plain HTML also allowed
 		</div>
 	</div>
 <?php
+}
+
+function OnlineUsers($forum = 0)
+{
+	$forumClause = "";
+	$browseLocation = " online";
+       
+	if ($forum)
+	{
+		$forumClause = " and lastforum=".$forum;
+		$forumName = FetchResult("SELECT title FROM forums WHERE id=".$forum);
+		$browseLocation = " browsing ".$forumName;
+	}
+       
+	$rOnlineUsers = Query("select id,name,sex,powerlevel,lastactivity,lastposttime,minipic from users where (lastactivity > ".(time()-300)." or lastposttime > ".(time()-300).")".$forumClause." order by name");
+	$onlineUsers = "";
+	$onlineUserCt = 0;
+	while($onlineUser = Fetch($rOnlineUsers))
+	{
+		$loggedIn = ($onlineUser['lastpost'] <= $onlineUser['lastview']);
+		$userLink = UserLink($onlineUser);
+		if($onlineUser['minipic'])
+			$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />".$userLink;
+		if(!$loggedIn)
+			$userLink = "(".$userLink.")";
+		$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;
+		$onlineUserCt++;
+	}
+	$onlineUsers = $onlineUserCt." user".(($onlineUserCt > 1 || $onlineUserCt == 0) ? "s" : "").$browseLocation.($onlineUserCt ? ": " : ".").$onlineUsers;
+
+	$guests = FetchResult("select count(*) from guests where bot=0 and date > ".(time() - 300).$forumClause);
+	$bots = FetchResult("select count(*) from guests where bot=1 and date > ".(time() - 300).$forumClause);
+
+	if($guests)
+		$onlineUsers .= " | ".Plural($guests,"guest");
+	if($bots)
+		$onlineUsers .= " | ".Plural($bots,"bot");
+	       
+	return $onlineUsers;
 }
 
 ?>

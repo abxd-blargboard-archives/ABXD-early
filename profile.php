@@ -62,6 +62,7 @@ if($loguserid)
 		else
 			$qKarma = "update uservotes set up=".$vote." where uid=".$id." and voter=".$loguserid;
 		$rKarma = Query($qKarma);
+		$user['karma'] = RecalculateKarma($id);
 	}
 
 	$qKarma = "select up from uservotes where uid=".$id." and voter=".$loguserid;
@@ -84,6 +85,7 @@ if($loguserid)
 	}	
 }
 
+/*
 $karma = 100;
 $karmaWeights = array(5, 10, 10, 15);
 $qKarma = "select powerlevel, up from uservotes left join users on id=voter where uid=".$id." and powerlevel > -1";
@@ -95,6 +97,8 @@ while($k = Fetch($rKarma))
 	else
 		$karma -= $karmaWeights[$k['powerlevel']];
 }
+*/
+$karma = $user['karma'];
 if(!$canVote)
 	$karmaLinks = "";
 
@@ -286,7 +290,7 @@ if(NumRows($rComments))
 }
 else
 	$f = "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
-if($_POST['action'] == "Post" && $loguserid && ($loguserid != $lastCommenter['id']))
+if($_POST['action'] == "Post" && strip_tags($_POST['text']) != "" && $loguserid && ($loguserid != $lastCommenter['id']))
 {
 	$_POST['text'] = strip_tags($_POST['text']);
 	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
@@ -299,7 +303,6 @@ if($_POST['action'] == "Post" && $loguserid && ($loguserid != $lastCommenter['id
 	$c .= "</td>";
 	$c .= "</tr>";
 	$f = $f . $c;
-	CheckCommentator();
 }
 print $f;
 if($loguserid)
@@ -362,6 +365,8 @@ $links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
 $links .= $blockLayoutLink;
 $links = substr($links, 0, strlen($links) - 2);
 print "<div class=\"smallFonts outline margin cell1\">".$links."</div>";
+
+$title = "Profile for ".$user['name'];
 
 doFooter();
 
