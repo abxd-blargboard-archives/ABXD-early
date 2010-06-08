@@ -30,6 +30,11 @@ $title = "FAQ";
 	The best place for newcomers to start is the <a href="thread.php?id=103">New Members thread</a> where you can introduce yourself to the board. If you have any questions not addressed by The Rules, feel free to ask them in the proper forum.
 </p>
 
+<h3>Why are there name and password fields in the New Reply form?</h3>
+<p>
+	You must not have seen many AcmlmBoards before. These allow you to post without needing to log in first, which is handy when cookies are disabled (see below), or when someone else is logged in and you want to get your message in without logging out the other guy.
+</p>
+
 <h3>Are cookies used for this board?</h3>
 <p>
 	Yes, it uses cookies to store your login information. You can still use this board with cookies disabled, but you'll have to enter your username and password every time it's asked, and some features may not be available. 
@@ -221,6 +226,29 @@ $title = "FAQ";
 	?>
 	
 	The following are possible: <code><?php print implode(", ", $themeFiles); ?></code>
+</p>
+
+<h3>Why does the board seem to scroll sluggishly?</h3>
+<p>
+	That's because of your browser's smooth scroll setting, combined with a fair amount of CSS3 special effects. Basically, with smooth scrolling disabled, each tick you scroll is a single frame, be it a single notch of the mouse wheel or a single press of the (page) up and down keys. With smooth scroll <em>enabled</em>, there are several frames per scroll tick, and each frame requires the effects to be rendered, slowing down what is otherwise a perfectly fine animation.
+</p>
+<p>
+	Some browsers may <em>seem</em> to handle this scenario better, but that's just because of different default settings or not even supporting smooth scroll:
+	<dl>
+		<dt>Opera</dt>
+		<dd>Enabled by default</dd>
+		<dt>Chrome</dt>
+		<dd>Requires SmoothScroll extension</dd>
+		<dt>Safari</dt>
+		<dd>Enabled by default on MacOS, unavailable on Windows</dd>
+		<dt>Firefox 2</dt>
+		<dd>Requires SmoothWheel extension</dd>
+		<dt>Firefox 3</dt>
+		<dd>Disabled by default</dd>
+		<dt>Internet Explorer</dt>
+		<dd>Enabled by default</dd>
+	</dl>
+	<!-- Research by Kiyoshi. -->
 </p>
 
 <h3>I tried to join a User Group but I’ve been waiting for approval for weeks. What gives?</h3>
