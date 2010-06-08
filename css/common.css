@@ -557,3 +557,46 @@ input[type="text"], input[type="password"], input[type="file"], select, textarea
 	border-color: rgb(123, 90, 0);
 	background: rgb(248, 180, 0);
 }
+
+
+
+
+#expandedSet, #expandedHelp
+{
+	display: none;
+}
+button.expander
+{
+	font-weight: bold;
+	border: 0px none;
+	border-radius: 8;
+	padding: 0px;
+	width: 20px;
+	box-shadow: none;
+	float: right;
+}
+button.expander:hover
+{
+	box-shadow: 1px 1px 1px white, -1px 1px 1px white, 1px -1px 1px white, -1px -1px 1px white;
+}
+
+
+
+.threadTag
+{
+	font-size: 0.8em;
+	text-shadow: 1px 1px 0px hsla(0,0%,0%,0.5);
+	padding: 0px 2px;
+	border: 1px dotted hsla(0,0%,100%,0.75);
+	box-shadow: 1px 1px 2px hsla(0,0%,0%,0.5);
+	margin-right: 2px;
+}
+
+td.threadIcon
+{
+	width: 20px;
+	text-align: center;
+	font-size: 0.8em;
+	font-weight: bold;
+	text-shadow: 1px 1px 0px black;
+}
