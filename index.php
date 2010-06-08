@@ -16,29 +16,7 @@ $rLastUser = Query("select id,name,powerlevel,sex from users order by regdate de
 $lastUser = Fetch($rLastUser);
 $last = Plural($numUsers,"registered user")."<br />Newest: ".UserLink($lastUser);
 
-$rOnlineUsers = Query("select id,name,sex,powerlevel,lastactivity,lastposttime,minipic from users where lastactivity > ".(time()-300)." or lastposttime > ".(time()-300)." order by name");
-$onlineUsers = "";
-$onlineUserCt = 0;
-while($onlineUser = Fetch($rOnlineUsers))
-{
-	$loggedIn = ($onlineUser['lastpost'] <= $onlineUser['lastview']);
-	$userLink = UserLink($onlineUser);
-	if($onlineUser['minipic'])
-		$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />".$userLink;
-	if(!$loggedIn)
-		$userLink = "(".$userLink.")";
-	$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;
-	$onlineUserCt++;
-}
-$onlineUsers = $onlineUserCt." user".(($onlineUserCt > 1 || $onlineUserCt == 0) ? "s" : "")." online".($onlineUserCt ? ": " : "").$onlineUsers;
-
-$guests = FetchResult("select count(*) from guests where bot=0 and date > ".(time() - 300));
-$bots = FetchResult("select count(*) from guests where bot=1 and date > ".(time() - 300));
-
-if($guests)
-	$onlineUsers .= " | ".Plural($guests,"guest");
-if($bots)
-	$onlineUsers .= " | ".Plural($bots,"bot");
+$onlineUsers = OnlineUsers();
 
 $pl = $loguser['powerlevel'];
 if($pl == -1) $pl = 0;
@@ -83,7 +61,7 @@ include("lib/header.php");
 <script type="text/javascript" src="lib/Tween.js"></script>
 <script type="text/javascript" src="lib/OpacityTween.js"></script>
 <script type="text/javascript">
-	window.onload = function() { startOnlineUsers(); };
+	window.onload = function() { startOnlineUsers(0); };
 </script>
 
 <div class="outline margin width100 smallFonts" style="overflow: auto;">
@@ -168,13 +146,10 @@ while($forum = Fetch($rFora))
 	$localMods = "";
 	foreach($threadsRead as $trd)
 		if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
-			$newstuff = 1;
+			$newstuff++; //adding counters to the NEW part was easy -- this used to just set it to TRUE.
 
-	if((!$loguserid && $forum['lastpostdate'] > time()-900) ||
-		($loguserid && $newstuff))
-		$NewIcon .= "new";
-	if($NewIcon)
-		$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
+	if((!$loguserid && $forum['lastpostdate'] > time() - 900) || ($loguserid && $newstuff))
+		$NewIcon = "<img src=\"img/status/new.png\" alt=\"New!\"/>".$newstuff;
 
 	foreach($mods as $mod)
 		if($mod['forum'] == $forum['id'])
@@ -188,7 +163,7 @@ while($forum = Fetch($rFora))
 
 	?>
 		<tr class="cell1">
-			<td class="cell0" style="width: 17px"><?php print $NewIcon; ?></td>
+			<td class="cell2 threadIcon"><?php print $NewIcon; ?></td>
 			<td>
 				<h4><a href="forum.php?id=<?php print $forum['id']; ?>"><?php print $forum['title']; ?></a></h4>
 
