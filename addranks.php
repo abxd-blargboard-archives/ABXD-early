@@ -10,18 +10,35 @@ if($loguser['powerlevel'] < 3)
 Query("truncate table ranks");
 Query("truncate table ranksets");
 
-print "<div>Ranksets cleared for refill.</div>";
+write("<div>Ranksets cleared for refill.</div>");
 
 include("ranksets.php");
 
 $bads = array(" ","-",".",",");
 
-print "<table class=\"outline margin width25\">";
-print "<tr class=\"header1\"><th>Postcount</th><th>Rank</th></tr>";
+write(
+"
+	<table class=\"outline margin width25\">
+		<tr class=\"header1\">
+			<th>
+				Postcount
+			</th>
+			<th>
+				Rank
+			</th>
+		</tr>
+");
 
 foreach($ranks as $rankset)
 {
-	print "<tr class=\"header0\"><th colspan=\"2\">".$rankset['name']."</th></tr>";
+	write(
+"
+		<tr class=\"header0\">
+			<th colspan=\"2\">
+				{0}
+			</th>
+		</tr>
+", $rankset['name']);
 
 	if(!$rankset['directory'])
 		$rankset['directory'] = strtolower($rankset['name']);
@@ -32,7 +49,15 @@ foreach($ranks as $rankset)
 		$description .= " Set does not use lowercase filenames.";
 	if($rankset['noimages'])
 		$description .= " Set is text-only.";
-	print "<tr class=\"cell1\"><td colspan=\"2\">".$description."</td></tr>";
+
+	write(
+"
+		<tr class=\"cell1\">
+			<td colspan=\"2\">
+				{0}
+			</td>
+		</tr>
+", $description);
 
 	Query("insert into ranksets (name) values ('".$rankset['name']."')");
 
@@ -41,14 +66,27 @@ foreach($ranks as $rankset)
 		$img = "<img src=\"img/ranks/".$rankset['directory']."/".str_replace($bads,"",(!$rankset['notolower']?strtolower($text):$text)).".gif\" alt=\"".$text."\" /> ".($rankset['splitlines'] ? "<br />" : "").$text;
 		if($val < 10 || $rankset['noimages'])
 			$img = $text;
-		print "<tr class=\"cell0\"><td>".$val."</td><td>".$img."</td></tr>";
+			write(
+"
+		<tr class=\"cell0\">
+			<td>
+				{0}
+			</td>
+			<td>
+				{1}
+			</td>
+		</tr>
+", $val, $img);
 		Query("insert into ranks (rset, num, text) values (".$index.", ".$val.", '".$img."')");
 	}
 }
-print "</table>";
 
-print "<div>The above ranks and sets have been imported.</div>";
-
-doFooter();
+write(
+"
+	</table>
+	<div>
+		The above ranks and sets have been imported.
+	</div>
+");
 
 ?>
