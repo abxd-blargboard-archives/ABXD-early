@@ -152,3 +152,85 @@ td.post code.Code
 	color: #888;
 }
 
+
+button, input[type="submit"]
+{
+	border: 1px solid #666;
+	background: #444;
+	color: #FFF;
+}
+
+input[type="text"], input[type="password"], input[type="file"], select, textarea
+{
+	background: #444;
+	border: 1px solid #666;
+	color: white;
+}
+
+input[type="checkbox"], input[type="radio"]
+{
+	background: #444;
+	border: 2px ridge #666;
+	color: white;
+}
+
+.pollbarContainer
+{
+	border: 1px solid #666;
+}
+
+
+.post_about
+{
+	background: url(../img/themes/grayscale/back2t2.png);
+	border: 1px solid #666;
+}
+.post_topbar
+{
+	background: url(../img/themes/grayscale/back2t2.png);
+	border: 1px solid #666;
+}
+.post_content
+{
+	background: url(../img/themes/grayscale/back2t1.png);
+	border: 1px solid #666;
+}
+
+
+table.outline
+{
+	border-collapse: separate;
+	border-spacing: 0px;
+	border: 1px solid #666;
+}
+table.outline tr:first-child th:last-child
+{
+	border-right: 1px solid black;
+}
+table.outline tr:first-child th
+{
+	border-top: 1px solid black;
+}
+table.outline td
+{
+	border-left: 0px none;
+	border-top: 0px none;
+}
+table.outline th
+{
+	border-bottom: 1px solid black;
+}
+table.outline tr td:first-child, table.outline tr th:first-child
+{
+	border-left: 1px solid black;
+}
+
+.header0 th
+{
+	border: 0px none;
+}
+
+div#tabs button.selected
+{
+	border-bottom: 1px solid #444;
+}
