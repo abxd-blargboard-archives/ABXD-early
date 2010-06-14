@@ -71,37 +71,21 @@ else
 function OptimizeLayouts($text)
 {
 	$bucket = array();
-	while(strpos($text, "<style") !== FALSE)
+
+	// Save the tags in the temp array and remove them from where they were originally
+	$regexps = array("@<style(.*?)</style(.*?)>(\r?\n?)@si", "@<link(.*?)>(\r?\n?)@si", "@<script(.*?)</script(.*?)>(\r?\n?)@si");
+	foreach ($regexps as $regexp)
 	{
-		$startPos = strpos($text, "<style", $i);
-		$endPos = strpos($text, "/style>", $startPos);
-		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("</style>") - 1);
-		$text = str_replace($thisStyle, "", $text);
-		$bucket[] = $thisStyle;
+		preg_match_all($regexp, $text, $temp, PREG_PATTERN_ORDER);
+		$text = preg_replace($regexp, "", $text);
+		$bucket = array_merge($bucket, $temp[0]);
 	}
-	while(strpos($text, "<link") !== FALSE)
-	{
-		$startPos = strpos($text, "<link", $i);
-		$endPos = strpos($text, "/>", $startPos);
-		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("/>"));
-		$text = str_replace($thisStyle, "", $text);
-		$bucket[] = $thisStyle;
-	}
-	while(strpos($text, "<script") !== FALSE)
-	{
-		$startPos = strpos($text, "<script", $i);
-		$endPos = strpos($text, "/script>", $startPos);
-		$thisStyle = substr($text, $startPos, $endPos - $startPos + strlen("/script>"));
-		if(strpos($thisStyle, "api.recaptcha.net") !== FALSE)
-		{
-			$text = str_replace($thisStyle, str_replace("<script", "<recaptcha", $thisStyle), $text);
-			continue;
-		}
-		$text = str_replace($thisStyle, "", $text);
-		$bucket[] = $thisStyle;
-	}
+
+	// Remove duplicates
 	$bucket = array_unique($bucket);
-	$newStyles = "<!-- styles -->".implode("", $bucket)."<!-- /styles -->";
+
+	// Put the tags back
+	$newStyles = "<!-- head tags -->".implode("", $bucket)."<!-- /head tags -->";
 	$text = str_replace("</head>", $newStyles."</head>", $text);
 	$text = str_replace("<recaptcha", "<script", $text);
 	return $text;
