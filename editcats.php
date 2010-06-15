@@ -17,19 +17,26 @@ elseif($_POST['action'] == "Add")
 	$qCategory = "select * from categories where id=".(int)$_POST['cid'];
 	$rCategory = Query($qCategory);
 	$category = Fetch($rCategory);
-	print "<div class=\"errort\"><strong>Confirm deletion of \"".$category['name']."\"</strong></div>";
-	print "<div class=\"errorc cell2\">";
-	print "<form action=\"editcats.php\" method=\"post\">";
-	print "<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\"></input>";
-	print "<input type=\"hidden\" name=\"cid\" value=\"".(int)$category['id']."\"></input>";
-	print "</form>";
-	print "</div>";
-} elseif($_POST['action'] == "Yes, do as I say.")
+	write(
+"
+	<div class=\"errort\">
+		<strong>Confirm deletion of \"{0}\"</strong>
+	</div>
+	<div class=\"errorc cell2\">
+		<form action=\"editcats.php\" method=\"post\">
+			<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\" />
+			<input type=\"hidden\" name=\"cid\" value=\"{1}\" />
+		</form>
+	</div>
+",	$category['name'], (int)$category['id']);
+}
+elseif($_POST['action'] == "Yes, do as I say.")
 {
 	$qCategory = "delete from categories where id=".(int)$_POST['cid'];
 	$rCategory = Query($qCategory);
 	Alert("Category removed.","Notice");
-} elseif($_POST['action'] == "Edit")
+}
+elseif($_POST['action'] == "Edit")
 {
 	$qCategory = "update categories set name='".justEscape($_POST['name'])."', minpower=".(int)$_POST['minpower']." where id=".(int)$_POST['cid']." limit 1";
 	$rCategory = Query($qCategory);
@@ -38,41 +45,49 @@ elseif($_POST['action'] == "Add")
 
 $levels = array(-1 => "-1 - Banned", 0 => "0 - Normal user", 1 => "1 - Local Mod", 2 => "2 - Full Mod", 3 => "3 - Admin");
 
-print "<div class=\"outline margin\">";
-print "<div class=\"errort\"><strong>Category list</strong></div>";
 
+$cats = "";
 $qCategories = "select * from categories";
 $rCategories = Query($qCategories);
 if(NumRows($rCategories))
 {
 	while($category = Fetch($rCategories))
 	{
-		print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
-		print "<form action=\"editcats.php\" method=\"post\">";
-		print "<input type=\"text\" name=\"name\" size=\"70\" value=\"".htmlval($category['name'])."\"></input> ";
-		print MakeSelect("minpower",$category['minpower'],$levels)." ";
-		print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
-		print "<input type=\"submit\" name=\"action\" value=\"Remove\"></input>";
-		print "<input type=\"hidden\" name=\"cid\" value=\"".$category['id']."\"></input>";
-		print "</form>";
-		print "</div>";
+		$cats .= format(
+"
+		<div class=\"errorc left cell0\" style=\"clear: both; overflow: auto;\">
+			<form action=\"editcats.php\" method=\"post\">
+				<input type=\"text\" name=\"name\" class=\"width50\" value=\"{0}\" />
+				{1}
+				<input type=\"submit\" name=\"action\" value=\"Edit\" />
+				<input type=\"submit\" name=\"action\" value=\"Remove\" />
+				<input type=\"hidden\" name=\"cid\" value=\"{2}\" />
+			</form>
+		</div>
+",	htmlval($category['name']),
+	MakeSelect("minpower",$category['minpower'],$levels),
+	$category['id']);
 	}
 }
-print "</div>";
 
-print "<form action=\"editcats.php\" method=\"post\">";
-print "<div class=\"outline margin\">";
-print "<div class=\"errort\"><strong>Add a Category</strong></div>";
-print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
-print "<input type=\"text\" name=\"name\" size=\"70\"></input></td>";
-print MakeSelect("minpower",0,$levels)." ";
-print "<input type=\"submit\" name=\"action\" value=\"Add\"></input>";
-print "</div>";
-print "</div>";
-print "</form>";
-print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
-
-doFooter();
+write(
+"
+	<div class=\"outline margin width50\">
+		<div class=\"errort center\"><strong>Category list</strong></div>
+		{0}
+	</div>
+	<form action=\"editcats.php\" method=\"post\">
+		<div class=\"outline margin width50\">
+			<div class=\"errort center\"><strong>Add a Category</strong></div>
+			<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
+				<input type=\"text\" name=\"name\" class=\"width50\" />
+				{1}
+				<input type=\"submit\" name=\"action\" value=\"Add\" />
+			</div>
+		</div>
+	</form>
+	<p>For more complex things, try PMA. This is just a toy-like quick access.</p>
+",	$cats, MakeSelect("minpower",0,$levels));
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList)
 {
