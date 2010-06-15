@@ -98,34 +98,58 @@ if(isset($_POST['action']))
 	}
 }
 
-print "<table class=\"margin outline width50\">";
+$moodRows = "";
 $rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
 while($mood = Fetch($rMoods))
 {
 	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td style=\"width: 100px;\"><img src=\"img/avatars/".$loguserid."_".$mood['mid']."\" alt=\"\"></td>";
-	print "<td>";
-	print "<form method=\"post\" action=\"editavatars.php\">";
-	print "<input type=\"hidden\" name=\"mid\" value=\"".$mood['mid']."\" />";
-	print "<label for=\"name".$mood['mid']."\"></label> <input type=\"text\" id=\"name".$mood['mid']."\" name=\"name\" style=\"width: 60%;\" value=\"".htmlval($mood['name'])."\" />";
-	print "<input type=\"submit\" name=\"action\" value=\"Rename\" />";
-	print "<input type=\"submit\" name=\"action\" value=\"Delete\" />";
-	print "</form>";
-	print "</td>";
-	print "</tr>";
+	$moodRows .= format(
+"
+		<tr class=\"cell{0}\">
+			<td style=\"width: 100px;\">
+				<img src=\"img/avatars/{1}_{2}\" alt=\"\">
+			</td>
+			<td>
+				<form method=\"post\" action=\"editavatars.php\">
+					<input type=\"hidden\" name=\"mid\" value=\"{2}\" />
+					<input type=\"text\" id=\"name{2}\" name=\"name\" style=\"width: 60%;\" value=\"{3}\" />
+					<input type=\"submit\" name=\"action\" value=\"Rename\" />
+					<input type=\"submit\" name=\"action\" value=\"Delete\" />
+				</form>
+			</td>
+		</tr>
+",	$cellClass, $loguserid, $mood['mid'], htmlval($mood['name']));
 }
-print "<tr class=\"cell2\">";
-print "<td>New</td>";
-print "<td>";
-print "<form method=\"post\" action=\"editavatars.php\" enctype=\"multipart/form-data\">";
-print "<label for=\"newName\">Name:</label> <input type=\"text\" id=\"newName\" name=\"name\" style=\"width: 60%;\" /><br />";
-print "<label for=\"pic\">Image:</label> <input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 75%;\"></input>";
-print "<input type=\"submit\" name=\"action\" value=\"Add\"></input>";
-print "</form>";
-print "</td>";
-print "</table>";
 
-DoFooter();
+write(
+"
+	<table class=\"margin outline width50\">
+		<tr class=\"header1\">
+			<th colspan=\"2\">
+				Mood Avatars
+			</th>
+		</tr>
+		{0}
+		<tr class=\"header1\">
+			<th colspan=\"2\">
+				Add New
+			</th>
+		</tr>
+		<tr class=\"cell2\">
+			<td>
+			</td>
+			<td>
+				<form method=\"post\" action=\"editavatars.php\" enctype=\"multipart/form-data\">
+					<label for=\"newName\">Name:</label>
+					<input type=\"text\" id=\"newName\" name=\"name\" style=\"width: 60%;\" /><br />
+					
+					<label for=\"pic\">Image:</label>
+					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 75%;\" />
+
+					<input type=\"submit\" name=\"action\" value=\"Add\" />
+				</form>
+			</td>
+	</table>
+", $moodRows);
 
 ?>
