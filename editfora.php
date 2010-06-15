@@ -22,31 +22,37 @@ if($_POST['action'] == "Move")
 	$qForum = "select * from forums where id=".(int)$_POST['fid'];
 	$rForum = Query($qForum);
 	$forum = Fetch($rForum);
-	print "<div class=\"errort\"><strong>Confirm deletion of \"".$forum['title']."\"</strong></div>";
-	print "<div class=\"errorc cell2\">";
-	print "<form action=\"editfora.php\" method=\"post\">";
-	print "<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\"></input>";
-	print "<input type=\"hidden\" name=\"fid\" value=\"".(int)$forum['id']."\"></input>";
-	print "</form>";
-	print "</div>";
-} elseif($_POST['action'] == "Yes, do as I say.")
+	write(
+"
+	<div class=\"outline margin center width50\" style=\"margin: 0px auto 16px;\">
+		<div class=\"errort\"><strong>Confirm deletion of \"{0}\"</strong></div>
+		<div class=\"errorc cell2\">
+			<form action=\"editfora.php\" method=\"post\">
+				<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\" />
+				<input type=\"hidden\" name=\"fid\" value=\"{1}\" />
+			</form>
+		</div>
+	</div>
+", $forum['title'], (int)$forum['id']);
+}
+elseif($_POST['action'] == "Yes, do as I say.")
 {
 	$qForum = "delete from forums where id=".(int)$_POST['fid'];
 	$rForum = Query($qForum);
 	Alert("Forum removed.","Notice");
-} elseif($_POST['action'] == "Edit")
+}
+elseif($_POST['action'] == "Edit")
 {
 	$qForum = "update forums set title='".justEscape($_POST['title'])."', description='".justEscape($_POST['description'])."' where id=".(int)$_POST['fid']." limit 1";
 	$rForum = Query($qForum);
 	Alert("Forum edited.","Notice");
 }
 
+$thelist = "";
 $qCategories = "select * from categories";
 $rCategories = Query($qCategories);
 if(NumRows($rCategories))
 {
-	print "<div class=\"outline margin\">";
-	print "<div class=\"errort\"><strong>Forum list</strong></div>";
 	while($category = Fetch($rCategories))
 	{
 		$qFora = "select * from forums where catid=".(int)$category['id']." order by forder";
@@ -55,7 +61,7 @@ if(NumRows($rCategories))
 		{
 			while($forum = Fetch($rFora))
 			{
-				$localMods = "<small>No mods";
+				$localMods = "No mods";
 				$qMods = "select * from forummods where forum=".(int)$forum['id'];
 				$rMods = Query($qMods);
 				if(NumRows($rMods))
@@ -67,55 +73,69 @@ if(NumRows($rCategories))
 						$mod2 = Fetch($rMod);
 						$localMods .= UserLink($mod2).", ";
 					}
-					$localMods = "<small>Moderated by: ".substr($localMods,0,strlen($localMods)-2);
+					$localMods = "Moderated by: ".substr($localMods,0,strlen($localMods)-2);
 				}
 
-				print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
+				$thelist .= format(
+"
+		<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
 
-				print "<div style=\"float: left; width: 70%;\">";
-				print "<form action=\"editfora.php\" method=\"post\">";
-				print "<input type=\"text\" name=\"title\" size=\"40\" value=\"".htmlval($forum['title'])."\"></input><br />";
-				print "<input type=\"text\" name=\"description\" size=\"100\" value=\"".htmlval($forum['description'])."\"></input>";
-				print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
-				print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
-				print "<br/>".$localMods. "<small> (<a href=\"managemods.php\">Edit</a>)</small>";
-				print " &bull; ".$forum['numthreads']." thread(s), ".$forum['numposts']." post(s).";
-				print "</form>";
-				print "</div>";
+			<div style=\"float: left; width: 60%;\">
+				<form action=\"editfora.php\" method=\"post\">
+					<input type=\"text\" name=\"title\" value=\"{0}\" style=\"width: 70%;\" />
+					<input type=\"submit\" name=\"action\" value=\"Edit\" /><br />
+					<input type=\"text\" name=\"description\" style=\"width: 90%;\" value=\"{1}\" />
+					<input type=\"hidden\" name=\"fid\" value=\"{2}\" /><br/>
+					<small>{3} (<a href=\"managemods.php\">Edit</a>) &bull; {4} thread(s), {5} post(s).</small>
+				</form>
+			</div>
 
-				print "<form action=\"editfora.php\" method=\"post\">";
-				print MakeOptions($forum['catid']);
-				print " <input type=\"text\" name=\"order\" value=\"".$forum['forder']."\" size=\"2\" maxlength=\"2\"></input><br />";
-				print "<input type=\"submit\" name=\"action\" value=\"Move\"></input> ";
-				print "<input type=\"submit\" name=\"action\" value=\"Remove\"></input>";
-				print "<input type=\"hidden\" name=\"fid\" value=\"".$forum['id']."\"></input>";
-				print "</form>";
+			<form action=\"editfora.php\" method=\"post\">
+				{7}
+				 <input type=\"text\" name=\"order\" value=\"{6}\" size=\"2\" maxlength=\"2\" /><br />
+				<input type=\"submit\" name=\"action\" value=\"Move\" /> 
+				<input type=\"submit\" name=\"action\" value=\"Remove\" />
+				<input type=\"hidden\" name=\"fid\" value=\"{2}\" />
+			</form>
 
-				print "</div>";
+		</div>
+",	htmlval($forum['title']), htmlval($forum['description']), $forum['id'], $localMods,
+	$forum['numthreads'], $forum['numposts'], $forum['forder'],
+	MakeOptions($forum['catid']));
 			}
 		}
 	}
-	print "</div>";
+	write(
+"
+	<div class=\"outline width50 margin\">
+		<div class=\"errort\"><strong>Forum list</strong></div>
+		{0}
+	</div>
+",	$thelist);
 }
 
-print "<form action=\"editfora.php\" method=\"post\">";
-print "<div class=\"outline margin\">";
-print "<div class=\"errort\"><strong>Add a Forum</strong></div>";
-print "<div class=\"errorc left\" style=\"clear: both; overflow: auto;\">";
-print "<div style=\"float: left; width: 70%;\">";
-print "<input type=\"text\" name=\"title\" size=\"40\"></input><br/>";
-print "<input type=\"text\" name=\"description\" size=\"100\"></input>";
-print "</div>";
-print MakeOptions(-1);
-print " <input type=\"text\" name=\"order\" value=\"0\" size=\"2\" maxlength=\"2\"></input> ";
-print $levels;
-print "<input type=\"submit\" name=\"action\" value=\"Add\"></input> ";
-print "</div>";
-print "</div>";
+write(
+"
+	<form action=\"editfora.php\" method=\"post\">
+		<div class=\"outline width50 margin\">
+			<div class=\"errort\"><strong>Add a Forum</strong></div>
+			<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
+				<div style=\"float: left; width: 60%;\">
+					<input type=\"text\" name=\"title\" style=\"width: 70%;\" /><br/>
+					<input type=\"text\" name=\"description\" style=\"width: 90%;\" />
+				</div>
+				{0}
+ 				<input type=\"text\" name=\"order\" value=\"0\" size=\"2\" maxlength=\"2\" /> 
+				{1}
+				<input type=\"submit\" name=\"action\" value=\"Add\" /> 
+			</div>
+		</div>
+	</form>
 
-print "<div>For more complex things, try PMA. This is just a toy-like quick access.</div>";
-
-doFooter();
+	<p>
+		For more complex things, try PMA. This is just a toy-like quick access.
+	</p>
+",	MakeOptions(-1), $levels);
 
 function MakeOptions($catid)
 {
