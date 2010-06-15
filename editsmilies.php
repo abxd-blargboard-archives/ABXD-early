@@ -41,18 +41,7 @@ if($_POST['action'] == "Apply")
 		Alert($log,"Log");
 }
 
-print "<div class=\"outline margin faq\">";
-print "To add, fill in both bottom fields and apply.<br />";
-print "To edit, change either code or image fields to <em>not</em> match their hidden counterparts.";
-print "</div>";
-
-print "<form method=\"post\" action=\"editsmilies.php\">";
-
-print "<table class=\"outline margin\" style=\"width: 30%;\">";
-print "<tr class=\"header1\">";
-print "<th>Code</th><th>Image</th>";
-print "</tr>";
-
+$smileyList = "";
 $qSmilies = "select * from smilies";
 $rSmilies = Query($qSmilies);
 while($smiley = Fetch($rSmilies))
@@ -60,27 +49,66 @@ while($smiley = Fetch($rSmilies))
 	$cellClass = ($cellClass+1) % 2;
 	$i++;
 
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td><input type=\"text\" name=\"code_".$i."\" value=\"".htmlentities2($smiley['code'])."\"></input><input type=\"hidden\" name=\"oldcode_".$i."\" value=\"".htmlentities2($smiley['code'])."\"></input></td>";
-	print "<td><input type=\"text\" name=\"image_".$i."\" value=\"".htmlentities2($smiley['image'])."\"></input><input type=\"hidden\" name=\"oldimage_".$i."\" value=\"".htmlentities2($smiley['image'])."\"></input> <img src=\"img/smilies/".$smiley['image']."\" alt=\"".$smiley['code']."\"></td>";
-	print "</tr>";
+	$smileyList .= format(
+"
+			<tr class=\"cell{0}\">
+				<td>
+					<input type=\"text\" name=\"code_{1}\" value=\"{2}\" />
+					<input type=\"hidden\" name=\"oldcode_{1}\" value=\"{2}\" />
+				</td>
+				<td>
+					<input type=\"text\" name=\"image_{1}\" value=\"{3}\" />
+					<input type=\"hidden\" name=\"oldimage_{1}\" value=\"{3}\" />
+					<img src=\"img/smilies/{4}\" alt=\"{5}\" title=\"{5}\">
+				</td>
+			</tr>
+",	$cellClass, $i, htmlentities2($smiley['code']), htmlentities2($smiley['image']),
+	$smiley['image'], $smiley['code']);
 }
 
-$cellClass = ($cellClass+1) % 2;
-print "<tr class=\"header0\"><th colspan=\"2\">Add</th></tr>";
-print "<tr class=\"cell".$cellClass."\">";
-print "<td><input type=\"text\" name=\"code_add\"></input></td>";
-print "<td><input type=\"text\" name=\"image_add\"></input></td>";
-print "</tr>";
+write(
+"
+	<div class=\"outline margin width25 faq\">
+		To add, fill in both bottom fields and apply.<br />
+		To edit, change either code or image fields to <em>not</em> match their hidden counterparts.
+	</div>
 
-print "<tr class=\"cell2\">";
-print "<td>&nbsp;</td>";
-print "<td><input type=\"submit\" name=\"action\" value=\"Apply\"></td>";
-print "</tr>";
+	<form method=\"post\" action=\"editsmilies.php\">
 
-print "</table>";
-print "</form>";
+		<table class=\"outline margin\" style=\"width: 30%;\">
+			<tr class=\"header1\">
+				<th>
+					Code
+				</th>
+				<th>
+					Image
+				</th>
+			</tr>
+			{0}
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Add
+				</th>
+			</tr>
+			<tr class=\"cell2\">
+				<td>
+					<input type=\"text\" name=\"code_add\" />
+				</td>
+				<td>
+					<input type=\"text\" name=\"image_add\" />
+				</td>
+			</tr>
 
-doFooter();
+			<tr class=\"cell2\">
+				<td>
+				</td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Apply\" />
+				</td>
+			</tr>
+
+		</table>
+	</form>
+", $smileyList);
 
 ?>
