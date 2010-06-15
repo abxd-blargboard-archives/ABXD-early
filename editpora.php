@@ -17,58 +17,55 @@ if($_POST['action'] == "Edit")
 	Redirect("Edited!","./","the main page");
 }
 
-print "<div class=\"PoRT\"><div class=\"errort\"><strong id=\"previewtitle\">";
-print htmlval($misc['poratitle']);
-print "</strong></div><div class=\"errorc cell2 left\" id=\"previewtext\">";
-print $misc['porabox'];
-print "</div></div>";
+write(
+"
+	<div class=\"PoRT\">
+		<div class=\"errort\">
+			<strong id=\"previewtitle\">
+				{0}
+			</strong>
+		</div>
+		<div class=\"errorc cell2 left\" id=\"previewtext\">
+			{1}
+		</div>
+	</div>
 
-/*
-print "<table class=\"PoRT outline margin\" style=\"width: 48%; float: right;\" id=\"preview\">";
-print "<tr class=\"header1\">";
-print "<th id=\"previewtitle\">".htmlval($misc['poratitle'])."</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\" id=\"previewtext\">";
-print "</td>";
-print "</tr>";
-print "</table>";
-*/
-
-print "<form action=\"editpora.php\" method=\"post\">";
-print "<table id=\"t\" class=\"outline margin width50\">";
-print "<tr class=\"cell0\">";
-print "<td>Title (plain)</td>";
-print "<td>";
-print "<input name=\"title\" id=\"title\" maxlength=\"256\" style=\"width: 80%;\" value=\"".htmlval($misc['poratitle'])."\"></input>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td>Content (HTML)</td>";
-print "<td style=\"width: 80%;\">";
-print "<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\">".htmlval($misc['porabox'])."</textarea>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2\">";
-print "<td></td>";
-print "<td>";
-print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
-print "</td>";
-print "</tr>";
-print "</table>";
-print "</form>";
-
+	<form action=\"editpora.php\" method=\"post\">
+		<table id=\"t\" class=\"outline margin width50\">
+			<tr class=\"header1\">
+				<th colspan=\"2\">
+					PoRA Editor
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					Title (plain)
+				</td>
+				<td>
+					<input type=\"text\" name=\"title\" id=\"title\" maxlength=\"256\" style=\"width: 80%;\" value=\"{2}\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					Content (HTML)
+				</td>
+				<td style=\"width: 80%;\">
+					<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\">{3}</textarea>
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Edit\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+	<script type=\"text/javascript\">
+		window.onload = function()
+		{
+			startPoraUpdate();
+		}
+	</script>
+",	$misc['poratitle'], $misc['porabox'], htmlval($misc['poratitle']), htmlval($misc['porabox']));
 ?>
-
-<script type="text/javascript">
-	window.onload = function()
-	{
-		startPoraUpdate();
-	}
-</script>
-
-<?php
-doFooter();
-
-?>
-
