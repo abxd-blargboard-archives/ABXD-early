@@ -81,51 +81,96 @@ if($_GET['action'] == "set")
 			}
 }
 
-print "<form action=\"avatarlibrary.php\" method=\"get\" id=\"myForm\">";
-print "<table class=\"outline margin\">";
-print "<tr class=\"header1\">";
-print "<th colspan=\"2\">Avatar library</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td style=\"width: 10%;\">Category</td>";
-print "<td><select name=\"fid\" size=\"1\" onchange=\"myForm.submit();\">";
 $i = 0;
+$options = "";
 foreach($avalib as $category)
-	print "<option value=\"".$i."\" ".$selected[$i++].">".$category['name']."</option>";
-print "</select><input type=\"submit\" value=\"Change\"></input></td>";
-print "</tr>";
-print "</table>";
+	$options .= format("<option value=\"{0}\" {1}>{2}</option>\n", $i, $selected[$i++], $category['name']);
+
+write(
+"
+	<form action=\"avatarlibrary.php\" method=\"get\" id=\"myForm\">
+		<table class=\"outline margin\">
+			<tr class=\"header1\">
+				<th colspan=\"2\">Avatar library</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td style=\"width: 10%;\">Category</td>
+				<td>
+					<select name=\"fid\" size=\"1\" onchange=\"myForm.submit();\">
+						{0}
+					</select>
+					<input type=\"submit\" value=\"Change\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+", $options);
 
 if(isset($fid))
 {
-	print "<div class=\"outline margin faq\">";
 	$i = 0;
+	$set = "";
 	if($loguserid)
 		foreach($avalib[$fid]['content'] as $image)
-			print "<a href=\"avatarlibrary.php?action=set&amp;fid=".$fid."&amp;img=".($i++)."\"><img src=\"img/avatars/library/".$avalib[$fid]['name']."/".$image.".png\" alt=\"".$image."\" title=\"".$image."\" onmouseover=\"this.style.borderColor='#fff';\" onmouseout=\"this.style.borderColor='#000';\" style=\"border: 1px solid #000;\" /></a>";
+			$set .= format(
+"
+		<a href=\"avatarlibrary.php?action=set&amp;fid={0}&amp;img={1}\">
+			<img src=\"img/avatars/library/{2}/{3}.png\" alt=\"{3}\" title=\"{3}\" />
+		</a>
+", $fid, $i++, $avalib[$fid]['name'], $image);
 	else
 		foreach($avalib[$fid]['content'] as $image)
-			print "<img src=\"img/avatars/library/".$avalib[$fid]['name']."/".$image.".png\" alt=\"".$image."\" title=\"".$image."\" />";
-	print "</div>";
+		$set .= format(
+"
+			<img src=\"img/avatars/library/{2}/{3}.png\" alt=\"{3}\" title=\"{3}\" />
+", $fid, $i++, $avalib[$fid]['name'], $image);
+	write(
+"
+	<div class=\"outline margin faq avaLib\">
+		{0}
+	</div>
+", $set);
 }
 
-print "<div class=\"outline margin\">";
 if($loguser['picture'] == "img/avatars/".$loguserid)
 {
-	print "<table><tr class=\"cell2\"><td>";
-	print "<a href=\"img/avatars/".$loguserid."\"><img src=\"img/avatars/".$loguserid."\" alt=\"\" style=\"border: 1px solid #888; width: 60px;\" /></a></td><td>";
-	print "Please note that anything you choose here will <em>overwrite</em> your previous avatar. Keep a backup in case you want to switch back later &mdash; we can't and won't help you restore your previous avatar. However, we can help make a backup &mdash; you can save the image to the left.";
-	print "</td></tr></table>";
+	write(
+"
+	<table class=\"outline margin\">
+		<tr class=\"header1\">
+			<th colspan=\"2\">
+				Notice
+			</th>
+		</tr>
+		<tr class=\"cell2\">
+			<td>
+				<a href=\"img/avatars/{0}\">
+					<img src=\"img/avatars/{0}\" alt=\"\" style=\"border: 1px solid #888; width: 60px;\" />
+				</a>
+			</td>
+			<td>
+				Please note that anything you choose here will <em>overwrite</em> your previous avatar. Keep a backup in case you want to switch back later &mdash; we can't and won't help you restore your previous avatar. However, we can help make a backup &mdash; you can save the image to the left.
+			</td>
+		</tr>
+	</table>
+", $loguserid);
 } elseif(!$loguserid)
 {
-	print "<table><tr class=\"cell2\"><td>";
-	print "Because you are not logged in, you cannot select any avatars. Feel free to browse, though.";
-	print "</td></tr></table>";
+	write(
+"
+	<table class=\"outline margin\">
+		<tr class=\"header1\">
+			<th colspan=\"2\">
+				Notice
+			</th>
+		</tr>
+		<tr class=\"cell2\">
+			<td>
+				Because you are not logged in, you cannot select any avatars. Feel free to browse, though.
+			</td>
+		</tr>
+	</table>
+");
 }
-print "</div>";
-
-print "</form>";
-
-doFooter();
 
 ?>
