@@ -6,6 +6,8 @@ include("lib/common.php");
 
 $title = "FAQ";
 
+$admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where id = 1")));
+
 /* Normally, I write my PHP with embedded HTML. However, the FAQ is very text-heavy which is a pain in the ass to do in embedded HTML, especially when there's a lot of " going on. And that is why, like lib/header.php, the FAQ is mostly raw HTML. -- Kawa */
 
 ?>
@@ -136,24 +138,45 @@ $title = "FAQ";
 	//This is where we embed a bit of PHP code to generate a nice table.
 	$sexes = array(0=>"Male",1=>"Female",2=>"N/A");
 	$powerlevels = array("x"=>"Banned user",0=>"Normal user",1=>"Local Moderator",2=>"Full Moderator",3=>"Administrator");
-	print "<table style=\"width: 50%; margin-left: 25%; margin-right: auto\">";
-	print "<tr class=\"header0\">";
-	foreach($sexes as $sn => $ss)
-	{
-		print "<th>".$ss."</th>";
-	}
-	print "</tr>";
+	$headers = "";
+	$colors = "";
+	foreach($sexes as $ss)
+		$headers .= format(
+"
+		<th>
+			{0}
+		</th>
+", $ss);
 	foreach($powerlevels as $pn => $ps)
 	{
 		$cellClass = ($cellClass+1) % 2;
-		print "<tr class=\"cell".$cellClass."\">";
+		$items = "";
 		foreach($sexes as $sn => $ss)
-		{
-			print "<td class=\"nc".$sn.$pn." center\" style=\"font-weight: bold;\">".$ps."</td>";
-		}
-		print "</tr>";
+			$items .= format(
+"
+		<td class=\"center\">
+			<a href=\"#\"><span class=\"nc{0}{1}\" style=\"font-weight: bold;\">
+				{2}
+			</span></a>
+		</td>
+", $sn, $pn, $ps);
+		$colors .= format(
+"
+	<tr class=\"cell{0}\">
+		{1}
+	</tr>
+", $cellClass, $items);
 	}
-	print "</table>";
+	
+	write(
+"
+<table class=\"width50 outline\" style=\"margin-left: 25%; margin-right: auto\">
+	<tr class=\"header1\">
+		{0}
+	</tr>
+	{1}
+</table>
+", $headers, $colors);
 ?>
 <p>
 	So basically, if a user's name is written in a solid yellow, that user is an administrator of unspecified gender, whereas a bright blue indicates an ordinary male user. Note that some themes may change these colors to better match their general style.
@@ -194,7 +217,7 @@ $title = "FAQ";
 
 <h3>How do I edit a poll I made?</h3>
 <p>
-	You don’t. Poll editing is rather difficult to correctly implement and carries a risk of gross abuse. Imagine if you will, that you make a poll about something, and you don’t like the results. With poll editing, you could then go and switch the answers around. If you <em>really</em> need to edit a poll, ask an admin with database access (read: Kawa) to edit it for you.
+	You don’t. Poll editing is rather difficult to correctly implement and carries a risk of gross abuse. Imagine if you will, that you make a poll about something, and you don’t like the results. With poll editing, you could then go and switch the answers around. If you <em>really</em> need to edit a poll, ask an admin with database access (for example, <?php print $admin; ?>) to edit it for you.
 </p>
 
 <h3>Are there any rules for post layouts?</h3>
@@ -222,10 +245,10 @@ $title = "FAQ";
 	<?php
 		$code1 = '<link rel="stylesheet" type="text/css" href="http://.../MyLayout_$theme.css" />';
 		$code2 = '<link rel="stylesheet" type="text/css" href="http://.../MyLayout_'.$theme.'.css" />';
-		print DoGeshi($code1)." becomes ".DoGeshi($code2)." with the current board settings.";
+		write("{0} becomes {1} with the current board settings.", DoGeshi($code1), DoGeshi($code2));
 	?>
 	
-	The following are possible: <code><?php print implode(", ", $themeFiles); ?></code>
+	The following are possible: <code><?php write(implode(", ", $themeFiles)); ?></code>
 </p>
 
 <h3>Why does the board seem to scroll sluggishly?</h3>
@@ -274,7 +297,6 @@ $title = "FAQ";
 </div>
 
 <?php
-doFooter();
 
 function DoGeshi($code)
 {
