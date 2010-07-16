@@ -60,10 +60,6 @@ if($qRecords)
 $qGuests = "delete from guests where ip='".$_SERVER['REMOTE_ADDR']."' or date < ".(time()-300);
 $rGuests = Query($qGuests);
 
-//Delete old reporters too, at a time limit of one hour.
-$qGuests = "delete from reporters where date < ".(time()-3600);
-$rGuests = Query($qGuests);
-
 //Lift dated IP Bans
 $qIPBan = "delete from ipbans where date != 0 and date < ".time();
 $rIPBan = Query($qIPBan);
@@ -74,7 +70,7 @@ $rIPBan = Query($qIPBan);
 if(NumRows($rIPBan))
 {
 	$ipban = Fetch($rIPBan);
-	print "You have been ".($ipban['date'] ? "" : "<strong>permanently</strong> ")."IP-banned from this board".($ipban['date'] ? " until ".gmdate("M jS Y, G:i:s",$ipban['date']).". That's ".TimeUnits($ipban['date']-time())." left" : "").". Attempting to get around this in any way will result in worse things.";
+	print "You have been ".($ipban['date'] ? "" : "<strong>permanently</strong> ")."IP-banned from this board".($ipban['date'] ? " until ".gmdate("M jS Y, G:i:s",$ipban['date'])." (GMT). That's ".TimeUnits($ipban['date']-time())." left" : "").". Attempting to get around this in any way will result in worse things.";
 	exit();
 }
 
@@ -120,41 +116,41 @@ switch ($ScriptName)
 
 $logdata = unserialize(base64_decode($_COOKIE['logdata']));
 $loguserid = (int)$logdata['loguserid'];
-$loguserpw = $logdata['loguserpw'];
+$loguserbull = $logdata['bull'];
 
-$guestuser = array("name"=>"Guest", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0,"dateformat"=>"m-d-y","timeformat"=>"h:i A");
+$wantGuest = TRUE;
 
 if($loguserid) //Are we logged in?
 {
-	$qLogUser = "select * from users where id=".(int)$loguserid." and password='".justEscape($loguserpw)."'";
+	//$qLogUser = "select * from users where id=".(int)$loguserid." and password='".justEscape($loguserpw)."'";
+	$qLogUser = "select * from users where id=".(int)$loguserid;
 	$rLogUser = Query($qLogUser);
 	if(NumRows($rLogUser)) //We have at least one result.
 	{
 		$loguser = Fetch($rLogUser);
-		$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."', lastforum=".$CurrentForum." where id=".$loguserid;
-		if(!$noOnlineUsers)
-			$qLastView = Query($rLastView);
+		
+		//Bullcheck
+		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$_SERVER['REMOTE_ADDR']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+		if($loguserbull == $ourbull)
+		{
+			$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."', lastforum=".$CurrentForum." where id=".$loguserid;
+			if(!$noOnlineUsers)
+				$qLastView = Query($rLastView);
 
-		$dateformat = $loguser['dateformat'].", ".$loguser['timeformat'];
-	} else
-	{
-		//No result found? Eat the cookies.
-		setcookie("logdata", 0);
-
-		$qGuest = "insert into guests (date, ip, lasturl, lastforum, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', ".$CurrentForum.", '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
-	 	if(!$noOnlineUsers)
-			$rGuest = Query($qGuest);
-
-		$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80);
-		$loguserid = 0;
+			$dateformat = $loguser['dateformat'].", ".$loguser['timeformat'];
+			
+			$wantGuest = FALSE;
+		}
 	}
-} else
+}
+
+if($wantGuest)
 {
 	$qGuest = "insert into guests (date, ip, lasturl, lastforum, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', ".$CurrentForum.", '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
  	if(!$noOnlineUsers)
  		$rGuest = Query($qGuest);
 	
-	$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80);
+	$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80, "timezone"=>0);
 	$loguserid = 0;
 }
 
