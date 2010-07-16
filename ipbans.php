@@ -26,55 +26,85 @@ if($_POST['action'] == "Add")
 $qIPBan = "select * from ipbans order by date desc";
 $rIPBan = Query($qIPBan);
 
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"header1\">";
-print "<th>IP</th>";
-print "<th>Reason</th>";
-print "<th>Date</th>";
-print "<th>&nbsp;</th>";
-print "</tr>";
-
+$banList = "";
 while($ipban = Fetch($rIPBan))
 {
 	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td>".$ipban['ip']."</td>";
-	print "<td>".$ipban['reason']."</td>";
 	if($ipban['date'])
-		print "<td>".gmdate($dateformat,$ipban['date'])." (".TimeUnits($ipban['date']-time())." left)</td>";
+		$date = gmdate($dateformat,$ipban['date'])." (".TimeUnits($ipban['date']-time())." left)";
 	else
-		print "<td>Permanent</td>";
-	print "<td><a href=\"ipbans.php?ip=".$ipban['ip']."&amp;action=delete\">del</a></td>";
-	print "</tr>";
+		$date = "Permanent";
+	$banList .= format(
+"
+	<tr class=\"cell{0}\">
+		<td>
+			{1}
+		</td>
+		<td>
+			{2}
+		</td>
+		<td>
+			{3}
+		</td>
+		<td>
+			<a href=\"ipbans.php?ip={1}&amp;action=delete\">del</a>
+		</td>
+	</tr>
+", $cellClass, $ipban['ip'], $ipban['reason'], $date);
 }
-print "</table>";
 
-print "<form action=\"ipbans.php\" method=\"post\">";
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"header1\">";
-print "<th colspan=\"2\">Add</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell2\">IP:</td>";
-print "<td class=\"cell0\"><input type=\"text\" name=\"ip\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell2\">Reason:</td>";
-print "<td class=\"cell1\"><input type=\"text\" name=\"reason\" style=\"width: 98%;\" maxlength=\"25\"></input></td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell2\">For:</td>";
-print "<td class=\"cell1\"><input type=\"text\" name=\"days\" size=\"13\" maxlength=\"13\"></input> days</td>";
-print "</tr>";
-print "<tr class=\"cell2\">";
-print "<td></td>";
-print "<td><input type=\"submit\" name=\"action\" value=\"Add\"></input></td>";
-print "</tr>";
-print "</table>";
-print "</form>";
+write("
+<table class=\"outline margin width50\">
+	<tr class=\"header1\">
+		<th>IP</th>
+		<th>Reason</th>
+		<th>Date</th>
+		<th>&nbsp;</th>
+	</tr>
+	{0}
+</table>
+
+<form action=\"ipbans.php\" method=\"post\">
+	<table class=\"outline margin width50\">
+		<tr class=\"header1\">
+			<th colspan=\"2\">
+				Add
+			</th>
+		</tr>
+		<tr>
+			<td class=\"cell2\">
+				IP
+			</td>
+			<td class=\"cell0\">
+				<input type=\"text\" name=\"ip\" style=\"width: 98%;\" maxlength=\"25\" />
+			</td>
+		</tr>
+		<tr>
+			<td class=\"cell2\">
+				Reason
+			</td>
+			<td class=\"cell1\">
+				<input type=\"text\" name=\"reason\" style=\"width: 98%;\" maxlength=\"25\" />
+			</td>
+		</tr>
+		<tr>
+			<td class=\"cell2\">
+				For
+			</td>
+			<td class=\"cell1\">
+				<input type=\"text\" name=\"days\" size=\"13\" maxlength=\"13\" /> days
+			</td>
+		</tr>
+		<tr class=\"cell2\">
+			<td></td>
+			<td>
+				<input type=\"submit\" name=\"action\" value=\"Add\" />
+			</td>
+		</tr>
+	</table>
+</form>
+", $banList);
 
 MakeCrumbs(array("Main"=>"./", "IP ban manager"=>""), "");
-
-doFooter();
 
 ?>
