@@ -13,37 +13,52 @@ if($loguser['powerlevel'] < 3)
 if(!isset($_GET['action']))
 {
 	include("lib/header.php");
-	print "<div class=\"faq outline margin\">";
-	print "<h3>Moderators as of ".gmdate("F jS Y")."</h3>";
-	print "<ul>";
 	$qFora = "select * from forums order by catid, forder";
 	$rFora = Query($qFora);
 	while($forum = Fetch($rFora))
 	{
-		print "<li>";
-		print $forum['title'];
-		print "<ul>";
+		$modList = "";
 		$qMods = "select * from forummods where forum=".$forum['id'];
 		$rMods = Query($qMods);
 		while($mods = Fetch($rMods))
 		{
-			print "<li>";
 			$qMod = "select name, id, powerlevel, sex from users where id=".$mods['user'];
 			$rMod = Query($qMod);
 			$mod = Fetch($rMod);
-			print UserLink($mod);
-			print " (<a href=\"managemods.php?action=delete&amp;fid=".$forum['id']."&amp;mid=".$mods['user']."\">Delete</a>)";
-			print "</li>";
+			$modList .= format(
+"
+				<li>
+					{0}
+					<sup>
+						[<a href=\"managemods.php?action=delete&amp;fid={1}&amp;mid={2}\">delete</a>]
+					</sup>
+				</li>
+", UserLink($mod), $forum['id'], $mods['user']);
 		}
-		print "<li>";
-		print "<a href=\"managemods.php?action=add&amp;fid=".$forum['id']."\">Add</a>";
-		print "</li>";
-		print "</ul>";
-		print "</li>";
+		$theList .= format(
+"
+		<li>
+			{0}
+			<ul>
+				{2}
+				<li>
+					<a href=\"managemods.php?action=add&amp;fid={1}\">Add</a>
+				</li>
+			</ul>
+		</li>
+", $forum['title'], $forum['id'], $modList);
 	}
-	print "</ul>";
-	print "</div>";
-} elseif($_GET['action'] == "delete")
+	write(
+"
+	<div class=\"faq outline margin\">
+		<h3>Moderators as of {0}</h3>
+		<ul>
+			{1}
+		</ul>
+	</div>
+", gmdate("F jS Y"), $theList);
+}
+elseif($_GET['action'] == "delete")
 {
 	include("lib/header.php");
 	if(!isset($_GET['fid']))
@@ -57,7 +72,8 @@ if(!isset($_GET['action']))
 	$qMod = "delete from forummods where forum=".$fid." and user=".$mid;
 	$rMod = Query($qMod);
 	Redirect("Removed!","managemods.php","the mod manager");
-} elseif($_GET['action'] == "add")
+}
+elseif($_GET['action'] == "add")
 {
 	include("lib/header.php");
 	if(!isset($_GET['fid']))
@@ -67,62 +83,42 @@ if(!isset($_GET['action']))
 
 	if(!isset($_GET['mid']))
 	{
-		print "<div class=\"faq outline margin\">";
-		print "Pick a mod, any mod.";
-		print "<ul>";
+		$modList = "";
 		$qMod = "select * from users where powerlevel=1 order by name asc";
 		$rMod = Query($qMod);
 		while($mod = Fetch($rMod))
 		{
-			$qCheck = "select * from forummods where forum=".$fid." and user=".$mod['id'];
+			$qCheck = "select user from forummods where forum=".$fid." and user=".$mod['id'];
 			$rCheck = Query($qCheck);
-			print "<li>";
-			print UserLink($mod);
 			if(NumRows($rCheck))
-				print " (already there)";
+				$add = "already there";
 			else
-				print " (<a href=\"managemods.php?action=add&amp;fid=".$fid."&amp;mid=".$mod['id']."\">Add</a>)";
-			print "</li>";
+				$add = format("<a href=\"managemods.php?action=add&amp;fid={0}&amp;mid={1}\">add</a>", $fid, $mod['id']);
+			$modList .= format(
+"
+<li>
+{0}
+<sup>[{1}]</sup>
+</li>
+", UserLink($mod), $add);
 		}
-		print "</ul>";
-		print "</div>";
-	} else
+		write(
+"
+		<div class=\"faq outline margin\">
+			Pick a mod, any mod.
+			<ul>
+				{0}
+			</ul>
+		</div>
+",	$modList);
+	}
+	else
 	{
 		$mid = (int)$_GET['mid'];
 		$qMod = "insert into forummods (forum	, user) values (".$fid.", ".$mid.")";
 		$rMod = Query($qMod);
 		Redirect("Added!","managemods.php","the mod manager");
 	}
-} elseif($_GET['action']=="print")
-{
-	print "<h3>Moderators as of ".gmdate("F jS Y")."</h3>";
-	print "<ul>";
-	$qFora = "select * from forums order by catid, forder";
-	$rFora = Query($qFora);
-	while($forum = Fetch($rFora))
-	{
-		print "<li>";
-		print $forum['title']." (#".$forum['id'].")";
-		print "<ul>";
-		$qMods = "select * from forummods where forum=".$forum['id'];
-		$rMods = Query($qMods);
-		while($mods = Fetch($rMods))
-		{
-			print "<li>";
-			$qMod = "select name, id from users where id=".$mods['user'];
-			$rMod = Query($qMod);
-			$mod = Fetch($rMod);
-			print $mod['name']." (#".$mod['id'].")";
-			print "</li>";
-		}
-		print "</ul>";
-		print "</li>";
-	}
-	print "</ul>";
-	print "</div>";
-	exit();
 }
-
-doFooter();
 
 ?>
