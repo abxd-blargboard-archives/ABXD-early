@@ -5,17 +5,18 @@ $title = "User groups";
 
 $groups = array();
 $rGroups = Query("select * from groups order by id asc");
-while($group = Fetch($rGroups))
-	$groups[$group['id']] = array('id' => $group['id'], 'name' => $group['name'], 'leader' => $group['leader'], 'members' => array() );
-
-$rAffils = Query("select name, gid, uid, powerlevel, sex, status from groupaffiliations left join users on users.id = uid order by gid asc");
-while($affil = Fetch($rAffils))
+if(NumRows($rGroups))
 {
-	$gid = $affil['gid'];
-	$groups[$gid]['members'][$affil['uid']] = array('id' => $affil['uid'], 'name' => $affil['name'], 'powerlevel' => $affil['powerlevel'], 'sex' => $affil['sex'], 'status' => $affil['status']);
-}
+	while($group = Fetch($rGroups))
+		$groups[$group['id']] = array('id' => $group['id'], 'name' => $group['name'], 'leader' => $group['leader'], 'members' => array() );
 
-//print_r($groups);
+	$rAffils = Query("select name, gid, uid, powerlevel, sex, status from groupaffiliations left join users on users.id = uid order by gid asc");
+	while($affil = Fetch($rAffils))
+	{
+		$gid = $affil['gid'];
+		$groups[$gid]['members'][$affil['uid']] = array('id' => $affil['uid'], 'name' => $affil['name'], 'powerlevel' => $affil['powerlevel'], 'sex' => $affil['sex'], 'status' => $affil['status']);
+	}
+}
 
 if($_GET['action'] == "pass")
 {
@@ -136,81 +137,126 @@ else if($_GET['action'] == "delete" && $loguser['powerlevel'] > 2)
 	}
 }
 
-print "<table class=\"outline margin width100\">";
-print "<tr class=\"header1\"><th>Name</th><th>Members</th></tr>";
-foreach($groups as $group)
+
+if(count($groups) == 0)
+	$groupList = format(
+"
+		<tr>
+			<td class=\"cell2\" colspan=\"2\">
+				There are no groups.
+			</td>
+		</tr>
+");
+else
 {
-	if($group == 0)
-		continue;
-	$members = "";
-	$waiters = "";
-	$leader = ($group['leader'] == $loguserid || $loguser['powerlevel'] >=3);
-	foreach($group['members'] as $member)
+	$groupList = "";
+	foreach($groups as $group)
 	{
-		$links = " ";
-		if($member['status'] == 0)
-		{
-			if($leader && $member['id'] != $group['leader'])
-			{
-				$links = "<sup>";
-				$links .= "[<a href=\"groups.php?action=pass&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Pass leadership\">p</a>]";
-				$links .= "[<a href=\"groups.php?action=kick&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Kick out\">k</a>]";
-				$links .= "[<a href=\"groups.php?action=ban&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Ban\" onclick=\"if(!confirm('Are you sure you want to just up and ban ".$member['name']."? This is quite permanent.') || !confirm('Seriously?')) return false;\">b</a>]";
-				$links .= "</sup> ";
-			}
-			$members .= UserLink($member).$links;
-		}
-		else if($member['status'] == 1)
-		{
-			if($leader)
-			{
-				$links = "<sup>";
-				$links .= "[<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">j</a>]";
-				$links .= "[<a href=\"groups.php?action=deny&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Deny membership\">d</a>]";
-				$links .= "</sup> ";
-			}
-			$waiters .= UserLink($member).$links;
+		if($group == 0)
 			continue;
+		$members = "";
+		$waiters = "";
+		$leader = ($group['leader'] == $loguserid || $loguser['powerlevel'] >=3);
+		foreach($group['members'] as $member)
+		{
+			$links = " ";
+			if($member['status'] == 0)
+			{
+				if($leader && $member['id'] != $group['leader'])
+				{
+					$links = "<sup>";
+					$links .= "[<a href=\"groups.php?action=pass&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Pass leadership\">p</a>]";
+					$links .= "[<a href=\"groups.php?action=kick&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Kick out\">k</a>]";
+					$links .= "[<a href=\"groups.php?action=ban&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Ban\" onclick=\"if(!confirm('Are you sure you want to just up and ban ".$member['name']."? This is quite permanent.') || !confirm('Seriously?')) return false;\">b</a>]";
+					$links .= "</sup> ";
+				}
+				$members .= UserLink($member).$links;
+			}
+			else if($member['status'] == 1)
+			{
+				if($leader)
+				{
+					$links = "<sup>";
+					$links .= "[<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">j</a>]";
+					$links .= "[<a href=\"groups.php?action=deny&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Deny membership\">d</a>]";
+					$links .= "</sup> ";
+				}
+				$waiters .= UserLink($member).$links;
+				continue;
+			}
+			else if($member['status'] == 3)
+				continue;
 		}
-		else if($member['status'] == 3)
-			continue;
+
+		if($waiters)
+			$waiters = "<br />Waiting: ".$waiters;
+
+		$join = "";
+		if(!array_key_exists($loguserid, $group['members']) && $loguserid)
+			$join = "<br /><small><a href=\"groups.php?action=request&amp;gid=".$group['id']."\">Request join</a></small>";
+
+		if($loguser['powerlevel'] > 2)
+			$delete = "<sup>[<a href=\"groups.php?action=delete&amp;gid=".$group['id']."\" title=\"Delete group\" onclick=\"if(!confirm('Are you sure you want to remove the user group ".$group['name']."?') || !confirm('Seriously?')) return false;\">d</a>]</sup>";
+
+		$groupList .= format(
+"
+		<tr>
+			<td class=\"cell2\">
+				{0}
+				{1}
+			</td>
+			<td class=\"cell1\">
+				{2}
+				{3}
+				{4}
+			</td>
+		</tr>
+",	$group['name'], $delete, $members, $waiters, $join);
 	}
-	
-	if($waiters)
-		$waiters = "<br />Waiting: ".$waiters;
-	
-	$join = "";
-	if(!array_key_exists($loguserid, $group['members']) && $loguserid)
-		$join = "<br /><small><a href=\"groups.php?action=request&amp;gid=".$group['id']."\">Request join</a></small>";
-	
-	if($loguser['powerlevel'] > 2)
-		$delete = "<sup>[<a href=\"groups.php?action=delete&amp;gid=".$group['id']."\" title=\"Delete group\" onclick=\"if(!confirm('Are you sure you want to remove the user group ".$group['name']."?') || !confirm('Seriously?')) return false;\">d</a>]</sup>";
-	
-	print "<tr>";
-	print "<td class=\"cell2\">".$group['name'].$delete."</td>";
-	print "<td class=\"cell1\">".$members.$waiters.$join."</td>";
-	print "</tr>";
 }
-print "</table>";
+
+write("
+	<table class=\"outline margin width100\">
+		<tr class=\"header1\">
+			<th>
+				Name
+			</th>
+			<th>
+				Members
+			</th>
+		</tr>
+		{0}
+	</table>
+",	$groupList);
 
 if($loguser['powerlevel'] > 2)
 {
-	print "<form action=\"groups.php\" method=\"post\" id=\"myForm\">";
-	print "<table class=\"outline margin width25\">";
-	print "<tr class=\"header1\">";
-	print "<th colspan=\"2\">Create group</th>";
-	print "</tr>";
-	print "<tr class=\"cell0\">";
-	print "<td>Name</td>";
-	print "<td class=\"cell0\"><input type=\"text\" name=\"name\" style=\"width: 98%;\" maxlength=\"64\"></input></td>";
-	print "</tr>";
-	print "<tr class=\"cell2\">";
-	print "<td></td>";
-	print "<td><input type=\"submit\" name=\"action\" value=\"Create\"></input></td>";
-	print "</tr>";
-	print "</table>";
-	print "</form>";
+	write(
+"
+	<form action=\"groups.php\" method=\"post\" id=\"myForm\">
+		<table class=\"outline margin width25\">
+			<tr class=\"header1\">
+				<th colspan=\"2\">
+					Create group
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"nm\">Name</label>
+				</td>
+				<td class=\"cell0\">
+					<input type=\"text\" id=\"nm\" name=\"name\" style=\"width: 98%;\" maxlength=\"64\" />
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Create\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+");
 }
 
-doFooter();
 ?>
