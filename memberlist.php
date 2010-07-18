@@ -47,6 +47,9 @@ if(isset($pow))
 if($letter != "")
 	$where.= " and name like '".$letter."%'";
 
+if(!(isset($pow) && $pow == 5))
+	$where.= " and powerlevel < 5";
+
 $numUsers = FetchResult("select count(*) from users where ".$where, 0, 0);
 
 $qUsers = "select * from users where ".$where." order by ".$order.", name asc limit ".$from.", ".$ppp;
@@ -68,73 +71,146 @@ if($pagelinks)
 		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,0)."1</a>".$pagelinks;
 }
 
-//$numUsers = NumRows($rUsers);
-print "<table class=\"outline margin\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"8\">Options</th>";
-print "</tr>";
-print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"8\">".$numUsers." user".(($numUsers>1 || $numUsers==0) ? "s" : "")." found.</td>";
-print "</tr>";
-print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"2\">Sort by</td>";
-print "<td colspan=\"6\">";
-print mlink(""     ,$sex,$pow,$ppp,$letter)."Posts</a> | ";
-print mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a> | ";
-print mlink("name" ,$sex,$pow,$ppp,$letter)."Username</a> | ";
-print mlink("karma",$sex,$pow,$ppp,$letter)."Karma</a> | ";
-print mlink("reg"  ,$sex,$pow,$ppp,$letter)."Registration date</a>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"2\">Sex</td>";
-print "<td colspan=\"6\">";
-print mlink($sort,"m",$pow,$ppp,$letter)."Male</a> | ";
-print mlink($sort,"f",$pow,$ppp,$letter)."Female</a> | ";
-print mlink($sort,"n",$pow,$ppp,$letter)."N/A</a> | ";
-print mlink($sort,"", $pow,$ppp,$letter)."All</a>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"2\">Power</td>";
-print "<td colspan=\"6\">";
-print mlink($sort,$sex,"-1",$ppp,$letter)."Banned</a> | ";
-print mlink($sort,$sex, "0",$ppp,$letter)."Normal</a> | ";
-print mlink($sort,$sex, "1",$ppp,$letter)."Local moderator</a> | ";
-print mlink($sort,$sex, "2",$ppp,$letter)."Full moderator</a> | ";
-print mlink($sort,$sex, "3",$ppp,$letter)."Administrator</a> | ";
-print mlink($sort,$sex, "", $ppp,$letter)."All</a>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2 smallFonts\">";
-print "<td colspan=\"2\">Name</td>";
-print "<td colspan=\"6\">";
 for($l = 0; $l < 26; $l++)
 {
 	$let = chr(65+$l);
-	print mlink($sort,$sex,$pow,$ppp,$let).$let."</a>".($l < 25 ? " | " :"");
-}
-print "</td>";
-if($pagelinks)
-{
-	print "</tr>";
-	print "<tr class=\"cell2 smallFonts\">";
-	print "<td colspan=\"2\">Page</td>";
-	print "<td colspan=\"6\">".$pagelinks."</td>";
-	print "</tr>";
+	$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,$let).$let."</a></li>\n";
 }
 
-print "<tr class=\"header0\">";
-print "<th style=\"width: 30px; \">#</th>";
-print "<th style=\"width: 62px; \">Picture</th>";
-print "<th>Name</th>";
-//print "<th style=\"width: 130px; \">Rank</th>";
-print "<th style=\"width: 50px; \">Posts</th>";
-print "<th style=\"width: 50px; \">Average</th>";
-print "<th style=\"width: 50px; \">Karma</th>";
-print "<th style=\"width: 80px; \">Birthday</th>";
-print "<th style=\"width: 130px; \">Registered on</th>";
-print "</tr>";
+write(
+"
+	<table class=\"outline margin\">
+		<tr class=\"header0\">
+			<th colspan=\"8\">
+				Options
+			</th>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"8\">
+				{0} found.
+			</td>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Sort by
+			</td>
+			<td colspan=\"6\">
+				<ul class=\"pipemenu\">
+					<li>
+						{1}
+					</li>
+					<li>
+						{2}
+					</li>
+					<li>
+						{3}
+					</li>
+					<li>
+						{4}
+					</li>
+					<li>
+						{5}
+					</li>
+				</ul>
+			</td>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Sex
+			</td>
+			<td colspan=\"6\">
+				<ul class=\"pipemenu\">
+					<li>
+						{6}
+					</li>
+					<li>
+						{7}
+					</li>
+					<li>
+						{8}
+					</li>
+					<li>
+						{9}
+					</li>
+				</ul>
+			</td>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Power
+			</td>
+			<td colspan=\"6\">
+				<ul class=\"pipemenu\">
+					<li>
+						{10}
+					</li>
+					<li>
+						{11}
+					</li>
+					<li>
+						{12}
+					</li>
+					<li>
+						{13}
+					</li>
+					<li>
+						{14}
+					</li>
+					<li>
+						{15}
+					</li>
+				</ul>
+			</td>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Name
+			</td>
+			<td colspan=\"6\">
+				<ul class=\"pipemenu\">
+					{16}
+				</ul>
+			</td>
+		</tr>
+",	Plural($numUsers, "user"),
+
+	mlink(""     ,$sex,$pow,$ppp,$letter)."Posts</a>",
+	mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
+	mlink("name" ,$sex,$pow,$ppp,$letter)."Username</a>",
+	mlink("karma",$sex,$pow,$ppp,$letter)."Karma</a>",
+	mlink("reg"  ,$sex,$pow,$ppp,$letter)."Registration date</a>",
+
+	mlink($sort,"m",$pow,$ppp,$letter)."Male</a>",
+	mlink($sort,"f",$pow,$ppp,$letter)."Female</a>",
+	mlink($sort,"n",$pow,$ppp,$letter)."N/A</a>",
+	mlink($sort,"", $pow,$ppp,$letter)."All</a>",
+	
+	mlink($sort,$sex,"-1",$ppp,$letter)."Banned</a>",
+	mlink($sort,$sex, "0",$ppp,$letter)."Normal</a>",
+	mlink($sort,$sex, "1",$ppp,$letter)."Local moderator</a>", 
+	mlink($sort,$sex, "2",$ppp,$letter)."Full moderator</a>",
+	mlink($sort,$sex, "3",$ppp,$letter)."Administrator</a>",
+	mlink($sort,$sex, "", $ppp,$letter)."All</a>",
+	
+	$alphabet
+);
+
+if($pagelinks)
+{
+	write(
+"
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Page
+			</td>
+			<td colspan=\"6\">
+				{0}
+			</td>
+		</tr>
+",	$pagelinks);
+}
+
+$memberList = "";
 if($numUsers)
 {
 	while($user = Fetch($rUsers))
@@ -147,36 +223,69 @@ if($numUsers)
 			$userPic = "<img src=\"".str_replace("img/avatars/", "img/avatars/", $user['picture'])."\" alt=\"\" style=\"width: 60px;\" />";
 
 		$cellClass = ($cellClass+1) % 2;
-		print "<tr class=\"cell".$cellClass."\">";
-		print "<td>".$user['id']."</td>";
-		print "<td>".$userPic."</td>";
-		print "<td>".UserLink($user)."</td>";
-//		print "<td>".GetRank($user)."</td>";
-		print "<td>".$user['posts']."</td>";
-		print "<td>".$user['average']."</td>";
-		print "<td>".$user['karma']."</td>";
-		print "<td>".($user['birthday'] ? gmdate("M jS",$user['birthday']) : "&nbsp;")."</td>";
-		print "<td>".gmdate("M jS Y",$user['regdate'])."</td>";
-		print "</tr>";
+		$memberList .= format(
+"
+		<tr class=\"cell{0}\">
+			<td>{1}</td>
+			<td>{2}</td>
+			<td>{3}</td>
+			<td>{4}</td>
+			<td>{5}</td>
+			<td>{6}</td>
+			<td>{7}</td>
+			<td>{8}</td>
+		</tr>
+",	$cellClass, $user['id'], $userPic, UserLink($user), $user['posts'],
+	$user['average'], $user['karma'],
+	($user['birthday'] ? cdate("M jS", $user['birthday']) : "&nbsp;"),
+	cdate("M jS Y", $user['regdate'])
+	);
 	}
 } else
 {
-		print "<tr class=\"cell0\">";
-		print "<td colspan=\"8\">Nothing here.</td>";
-		print "</tr>";
+	$memberList = format(
+"
+		<tr class=\"cell0\">
+			<td colspan=\"8\">
+				Nothing here.
+			</td>
+		</tr>
+");
 }
+
+write(
+"
+		<tr class=\"header1\">
+			<th style=\"width: 30px; \">#</th>
+			<th style=\"width: 62px; \">Picture</th>
+			<th>Name</th>
+			<th style=\"width: 50px; \">Posts</th>
+			<th style=\"width: 50px; \">Average</th>
+			<th style=\"width: 50px; \">Karma</th>
+			<th style=\"width: 80px; \">Birthday</th>
+			<th style=\"width: 130px; \">Registered on</th>
+		</tr>
+		{0}
+",	$memberList);
 
 if($pagelinks)
 {
-	print "</tr>";
-	print "<tr class=\"cell2 smallFonts\">";
-	print "<td colspan=\"2\">Page</td>";
-	print "<td colspan=\"4\">".$pagelinks."</td>";
-	print "</tr>";
+	write(
+"
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Page
+			</td>
+			<td colspan=\"6\">
+				{0}
+			</td>
+		</tr>
+",	$pagelinks);
 }
-print "</table>";
 
-doFooter();
+write("
+	</table>
+");
 
 function mlink($sort,$sex,$pow,$ppp,$letter="",$from=1)
 {
@@ -185,7 +294,6 @@ function mlink($sort,$sex,$pow,$ppp,$letter="",$from=1)
 			.($sex    ?"&amp;sex=$sex":"")
 			.(isset($pow)?"&amp;pow=$pow":"")
 			.($letter!=""?"&amp;letter=$letter":"")
-			//.($ppp!=50?"&amp;ppp=$ppp":"")
 			.($from!=1?"&amp;from=$from":"")
 			."\">";
 }
