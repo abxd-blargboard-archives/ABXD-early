@@ -4,6 +4,8 @@
 	<title>[[BOARD TITLE HERE]]</title>
 	<meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=8" />
+	<meta name="description" content="<?php print $metaDescription; ?>" />
+	<meta name="keywords" content="<?php print $metaKeywords; ?>" />
 	<link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="css/common.css" />
 	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" id="theme_css" />
@@ -47,7 +49,7 @@
 						?>
 						<li><a href="index.php">Main</a></li>
 						<li><a href="faq.php">FAQ</a></li>
-						<li><a href="posttest.php">Post function demo</a>
+						<li><a href="uploader.php">Uploader</a></li>
 						<li><a href="memberlist.php">Member list</a></li>
 						<li><a href="groups.php">Groups</a></li>
 						<li><a href="ranks.php">Ranks</a></li>
@@ -57,7 +59,7 @@
 					</ul>
 				</td>
 				<td rowspan="2" class="smallFonts" style="text-align: center; width: 10%;">
-					<?php print gmdate($dateformat)."\n"; ?>
+					<?php print cdate($dateformat)."\n"; ?>
 				</td>
 			</tr>
 			<tr class="cell2">
@@ -68,8 +70,7 @@
 							print UserLink($loguser).": \n";
 					?>
 					<ul class="pipemenu">
-						<!-- <li><a href="login.php?action=logout">Log out</a></li> -->
-						<a href="#" onclick="document.logout.submit();">Log out</a></li>
+						<li><a href="#" onclick="if(confirm('Are you sure you want to log out?')) document.forms[0].submit();">Log out</a></li>
 						<li><a href="editprofile.php">Edit profile</a></li>
 						<li><a href="private.php">Private messages</a></li>
 						<li><a href="editavatars.php">Mood avatars</a></li>
@@ -95,8 +96,10 @@
 			</tr>
 		</table>
 	</div>
-	<form action="login.php" method="post" name="logout">
-		<input type="hidden" name="action" value="logout" />
+	<form action="login.php" method="post" id="logout">
+		<div style="display: none;">
+			<input type="hidden" name="action" value="logout" />
+		</div>
 	</form>
 	<div id="body">
 <?php
