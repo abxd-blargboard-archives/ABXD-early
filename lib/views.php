@@ -6,24 +6,17 @@ if(!$isBot)
 {
 	$qViewCounter = "update misc set views = views + 1";
 	$rViewCounter = Query($qViewCounter);
+	$misc['views']++;
 
 	//Milestone reporting
-	$reporterID = 0; //set this to the user ID you want to recieve milestone reports from, or leave as 0 to disable.
-	
-	if($reporterID > 0 && $misc['views'] % $viewcountInterval == 0)
+	if($viewcountInterval > 0 && $misc['views'] > 0 && $misc['views'] % $viewcountInterval == 0)
 	{
-		if($loguserid == 1)
-			$who = "you";
-		elseif($loguserid)
-			$who = $loguser['name'];
+		if($loguserid)
+			$who = UserLink($loguser); //$loguser['name'];
 		else
 			$who = "a guest at ".$_SERVER['REMOTE_ADDR'];
 
-		$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (1, ".$reporterID.", ".time().", '127.0.0.1', 0)";
-		$rPM = Query($qPM);
-		$pid = mysql_insert_id();
-		$qPM = "insert into pmsgs_text (pid, title, text) values (".$pid.", 'View ".$misc['views']." reached by ".justEscape($who)."', 'Take a note.')";
-		$rPM = Query($qPM);
+		Query("update misc set milestone = 'View ".$misc['views']." reached by ".justEscape($who)."'");
 	}
 }
 
