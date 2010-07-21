@@ -4,63 +4,122 @@
 
 include("lib/common.php");
 
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"header0\"><th colspan=\"2\">Highest Numbers</th></tr>";
+$df = "l, F jS Y, G:i:s";
 
-$df = "l, F jS Y, h:i:s";
-print "<tr class=\"cell0\">";
-print "<td>Highest number of posts in 24 hours</td>";
-print "<td><strong>".$misc['maxpostsday']."</strong>, on ".gmdate($df, $misc['maxpostsdaydate'])."</td>";
-print "</tr>";
-
-print "<tr class=\"cell1\">";
-print "<td>Highest number of posts in one hour</td>";
-print "<td><strong>".$misc['maxpostshour']."</strong>, on ".gmdate($df, $misc['maxpostshourdate'])."</td>";
-print "</tr>";
-
-print "<tr class=\"cell0\">";
-print "<td>Highest number of users in five minutes</td>";
-print "<td><strong>".$misc['maxusers']."</strong>, on ".gmdate($df, $misc['maxusersdate'])."</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td></td>";
-print "<td>".$misc['maxuserstext']."</td>";
-print "</tr>";
-
-print "</table>";
+write(
+"
+<table class=\"outline margin width75\">
+	<tr class=\"header0\">
+		<th colspan=\"2\">
+			Highest Numbers
+		</th>
+	</tr>
+	<tr class=\"cell0\">
+		<td>
+			Highest number of posts in 24 hours
+		</td>
+		<td>
+			<strong>{0}</strong>, on {1} GMT
+		</td>
+	</tr>
+	<tr class=\"cell1\">
+		<td>
+			Highest number of posts in one hour
+		</td>
+		<td>
+			<strong>{2}</strong>, on {3} GMT
+		</td>
+	</tr>
+	<tr class=\"cell0\">
+		<td>
+			Highest number of users in five minutes
+		</td>
+		<td>
+			<strong>{4}</strong>, on {5} GMT
+		</td>
+	</tr>
+	<tr class=\"cell1\">
+		<td></td>
+		<td>
+			{6}
+		</td>
+	</tr>
+</table>
+",	$misc['maxpostsday'], gmdate($df, $misc['maxpostsdaydate']),
+	$misc['maxpostshour'], gmdate($df, $misc['maxpostshourdate']),
+	$misc['maxusers'], gmdate($df, $misc['maxusersdate']),
+	$misc['maxuserstext']);
 
 $rStats = Query("show table status");
 while($stat = Fetch($rStats))
 	$tables[$stat['Name']] = $stat;
 
-print "<table class=\"outline margin\">";
-print "<tr class=\"header0\"><th colspan=\"7\">Table Status</th></tr>";
-print "<tr class=\"header1\">";
-print "<th>Name</th>";
-print "<th>Rows</th>";
-print "<th>Avg. data/row</th>";
-print "<th>Data size</th>";
-print "<th>Index size</th>";
-print "<th>Unused data</th>";
-print "<th>Total size</th>";
-print "</tr>";
+$tablelist = "";
 foreach($tables as $table)
 {
 	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td class=\"cell2\">".$table['Name']."</td>";
-	print "<td>".$table['Rows']."</td>";
-	print "<td>".sp($table['Avg_row_length'])."</td>";
-	print "<td>".sp($table['Data_length'])."</td>";
-	print "<td>".sp($table['Index_length'])."</td>";
-	print "<td>".sp($table['Data_free'])."</td>";
-	print "<td>".sp($table['Data_length']+$table['Index_length'])."</td>";
-	print "</tr>";
+	$tablelist .= format(
+"
+	<tr class=\"cell{0}\">
+		<td class=\"cell2\">{1}</td>
+		<td>
+			{2}
+		</td>
+		<td>
+			{3}
+		</td>
+		<td>
+			{4}
+		</td>
+		<td>
+			{5}
+		</td>
+		<td>
+			{6}
+		</td>
+		<td>
+			{7}
+		</td>
+	</tr>
+",	$cellClass, $table['Name'], $table['Rows'], sp($table['Avg_row_length']),
+	sp($table['Data_length']), sp($table['Index_length']), sp($table['Data_free']),
+	sp($table['Data_length'] + $table['Index_length']));
 }
 
-print "</table>";
-
-doFooter();
+write(
+"
+<table class=\"outline margin\">
+	<tr class=\"header0\">
+		<th colspan=\"7\">
+			Table Status
+		</th>
+	</tr>
+	<tr class=\"header1\">
+		<th>
+			Name
+		</th>
+		<th>
+			Rows
+		</th>
+		<th>
+			Avg. data/row
+		</th>
+		<th>
+			Data size
+		</th>
+		<th>
+			Index size
+		</th>
+		<th>
+			Unused data
+		</th>
+		<th>
+			Total size
+		</th>
+	</tr>
+	{0}
+</table>
+", $tablelist);
 
 function sp($sz)
 {
