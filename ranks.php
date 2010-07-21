@@ -11,51 +11,83 @@ $rRanks = Query("select num, text from ranks where rset=".$rankset." order by nu
 while($rank = Fetch($rRanks))
 	$ranks[] = $rank;
 
-print "<form action=\"ranks.php\" method=\"post\" id=\"myForm\">";
-print "<table class=\"outline margin width25\">";
-print "<tr class=\"header1\">";
-print "<th colspan=\"2\">User ranks</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td>Set</td>";
-print "<td><select name=\"rankset\" size=\"1\" onchange=\"myForm.submit();\">";
 $rSets = Query("select * from ranksets order by id asc");
 $selected[$rankset] = " selected = \"selected\"";
+$ranksets = "";
 while($set = Fetch($rSets))
-	print "<option value=\"".$set['id']."\"".$selected[$set['id']].">".$set['name']."</option>";
-print "</select><input type=\"submit\" value=\"Change\"></input></td>";
-print "</tr>";
-print "</table>";
-print "</form>";
+	$ranksets .= format(
+"
+					<option value=\"{0}\"{1}>{2}</option>
+",	$set['id'], $selected[$set['id']], $set['name']);
 
-print "<table class=\"width75 margin outline\">";
-print "<tr class=\"header0\"><th>Rank</th><th>To get</th><th>&nbsp;</th></tr>";
+write(
+"
+<form action=\"ranks.php\" method=\"post\" id=\"myForm\">
+	<table class=\"outline margin width25\">
+		<tr class=\"header0\">
+			<th colspan=\"2\">
+				User ranks
+			</th>
+		</tr>
+		<tr class=\"cell0\">
+			<td>
+				Set
+			</td>
+			<td>
+				<select name=\"rankset\" size=\"1\" onchange=\"myForm.submit();\">
+					{0}
+				</select>
+				<input type=\"submit\" value=\"Change\" />
+			</td>
+		</tr>
+	</table>
+</form>
+", $ranksets);
+
+$ranklist = "";
 for($i = 0; $i < count($ranks); $i++)
 {
 	$rank = $ranks[$i];
 	$nextRank = $ranks[$i+1];
-	$members = "";
-	$comma = "";
+	$members = array();
 	foreach($users as $user)
 	{
 		if($user['posts'] >= $rank['num'] && $user['posts'] < $nextRank['num'])
-		{
-			$members .= $comma.UserLink($user);
-			$comma = ", ";
-		}
+			$members[] = $comma.UserLink($user);
 	}
-	$rankText = ($loguser['powerlevel'] > 0 || $loguser['posts'] >= $rank['num'] || $members) ? str_replace("<br />", " ", $rank['text']) : "???";
-	if($members == "")
+	$rankText = ($loguser['powerlevel'] > 0 || $loguser['posts'] >= $rank['num'] || count($members) > 0) ? str_replace("<br />", " ", $rank['text']) : "???";
+	if(count($members) == 0)
 		$members = "&nbsp;";
+	else
+		$members = join(", ", $members);
+
 	$cellClass = ($cellClass+1) % 2;
 	
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td class=\"cell2\">".$rankText."</td>";
-	print "<td>".$rank['num']."</td>";
-	print "<td>".$members."</td>";
-	print "</tr>";
+	$ranklist .= format(
+"
+	<tr class=\"cell{0}\">
+		<td class=\"cell2\">{1}</td>
+		<td>{2}</td>
+		<td>{3}</td>
+	</tr>
+", $cellClass, $rankText, $rank['num'], $members);
 }
-print "</table>";
+write(
+"
+<table class=\"width75 margin outline\">
+	<tr class=\"header1\">
+		<th>
+			Rank
+		</th>
+		<th>
+			To get
+		</th>
+		<th>
+			&nbsp;
+		</th>
+	</tr>
+	{0}
+</table>
+",	$ranklist);
 
-doFooter();
 ?>
