@@ -28,12 +28,10 @@ if(isset($_POST['location']))
 	$_POST['location'] = htmlentities2($_POST['location']);
 
 $newMD5 = md5($_POST['newPW']);
-if($_POST['action'] == "Edit user")
+if($_POST['action'] == "Edit profile")
 {
 	$wantToChange = FALSE;
 	$allowedToChange = FALSE;
-	//print "User PW: ".$user['password']."<br />";
-	//print "New PW: ".$newMD5."<br />";
 	if($_POST['newPW'] != "")
 	{
 		if($newMD5 != $user['password'])
@@ -44,8 +42,6 @@ if($_POST['action'] == "Edit user")
 		if($_POST['newPW'] == $_POST['repeatPW'])
 			$allowedToChange = TRUE;
 	}
-	//print "Want to change: ".(int)$wantToChange."<br />";
-	//print "Allowed to change: ".(int)$allowedToChange."<br />";
 	if($wantToChange && !$allowedToChange)
 	{
 		Alert("To change your password, you must type it twice without error.");
@@ -53,7 +49,7 @@ if($_POST['action'] == "Edit user")
 	}
 }
 
-if($_POST['action'] == "Edit user")
+if($_POST['action'] == "Edit profile")
 {
 	//Lots of stolen avatar bullcrap
 	if($_POST['removepic'])
@@ -134,39 +130,34 @@ if($_POST['action'] == "Edit user")
 		$fext = strtolower(substr($fname,-4));
 		$error = "";
 
-		$dimx = 12;
-		$dimy = 12;
-		$size = 100000;
+		$dimx = 16;
+		$dimy = 16;
+		$size = 200000;
 
 		$validext = false;
 		if($fext == ".png")
 			$validext = true;
 		if(!$validext)
-			$error.="<li>Invalid file type, must be either: ".$extlist."</li>";
+			$error.="<li>Invalid file type, must be .png</li>";
+			
+		$fsize = $_FILES['minipic']['size'];
+		$tmpfile = $_FILES['minipic']['tmp_name'];
+		list($width, $height, $type) = getimagesize($tmpfile);
 
-		if(($fsize=$_FILES['picture']['size']) > $size)
-			$error.="<li>File size is too high, limit is ".$size." bytes.</li>";
-
-		if(!$error)
-		{
-			$tmpfile = $_FILES['minipic']['tmp_name'];
-			$file = "img/minipics/".$id.".png";
-
-			list($width, $height, $type) = getimagesize($tmpfile);
-
-			if($type != 3)
-				$error.="<li>Image must be in PNG format.</li>";
-
-			if($width == $dimx && $height == $dimy && !$error)
-				copy($tmpfile,$file);
-			else
-			{
-				$error.="<li>Image must be ".$dimx." by ".$dimy." pixels.</li>";
-			}
-
-			$usempic = $file;
-		} else
+		if($type != 3)
+			$error.="<li>Image must be in PNG format.</li>";
+		if($width > $dimx || $height > $dimy)
+			$error.="<li>Image must be at most ".$dimx." by ".$dimy." pixels.</li>";
+		if($fsize > $size)
+			$error.="<li>File size is too high, limit is ".$size." bytes, uploaded image is ".$fsize." bytes.</li>";
+		if($error)
 			Kill("Could not update your minipic for the following reason(s):<ul>".$error."</ul>");
+		else
+		{
+			$file = "img/minipics/".$id.".png";
+			copy($tmpfile, $file);
+			$usempic = $file;
+		}
 	}
 
 	$newscheme = array_search($_POST['theme'],$themeFiles);
@@ -190,6 +181,9 @@ if($_POST['action'] == "Edit user")
 	$globalblock = (int)($_POST['globalblock'] == "on");
 	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
 	$usebanners = (int)($_POST['usebanners'] == "on");
+	$signsep = (int)($_POST['signsep'] != "on");
+
+    $timezone = ((int)$_POST['timezoneH'] * 3600) + ((int)$_POST['timezoneM'] * 60) * ((int)$_POST['timezoneH'] < 0 ? -1 : 1);
 
 	if($_POST['presetdate'] != "dummy")
 		$_POST['dateformat'] = $_POST['presetdate'];
@@ -201,11 +195,15 @@ if($_POST['action'] == "Edit user")
 	else
 		$bday = 0;
 
+	if($_POST['newPW'])
+		$sha = base64_encode(hash("sha256", $_POST['newPW'], "sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH"));
+
 	$qUser = "update users set ";
-	if($_POST['newPW']) $qUser.= "password='".md5($_POST['newPW'])."', ";
+	if($sha)
+		$qUser.= "password='".$sha."', ";
 	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
 	if(TitleCheck())
-		$qUser.= "title = '".justEscape(CleanUpPost($_POST['title']))."', ";
+		$qUser.= "title = '".justEscape(CleanUpPost($_POST['title'], "", true))."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
@@ -221,9 +219,11 @@ if($_POST['action'] == "Edit user")
 	$qUser.= "scheme = '".justEscape($newscheme)."', ";
 	$qUser.= "threadsperpage = ".$tpp.", ";
 	$qUser.= "postsperpage = ".$ppp.", ";
+	$qUser.= "timezone = ".$timezone.", ";
 	$qUser.= "dateformat = '".justEscape($_POST['dateformat'])."', ";
 	$qUser.= "timeformat = '".justEscape($_POST['timeformat'])."', ";
 	$qUser.= "fontsize = ".$fontsize.", ";
+	$qUser.= "signsep = '".$signsep."', ";
 	$qUser.= "blocklayouts = '".$blocklayouts."', ";
 	$qUser.= "usebanners = '".$usebanners."' ";
 	$qUser.= "where id=".$id." limit 1";
@@ -256,162 +256,363 @@ $dateformats=array('','m-d-y','d-m-y','y-m-d','Y-m-d','m/d/Y','d.m.y','M j Y','D
 $timeformats=array('','h:i A','h:i:s A','H:i','H:i:s');
 
 foreach($dateformats as $format)
-	$datelist[$format] = ($format ? $format.' ('.gmdate($format).')':'');
+	$datelist[$format] = ($format ? $format.' ('.cdate($format).')':'');
 foreach($timeformats as $format)
-	$timelist[$format] = ($format ? $format.' ('.gmdate($format).')':'');
+	$timelist[$format] = ($format ? $format.' ('.cdate($format).')':'');
 
 if($user['birthday'] == 0)
 	$bday = "";
 else
 	$bday = gmdate("F j, Y", $user['birthday']);
 
-print "<table class=\"outline margin width50\" id=\"tabs\"><tr><td class=\"cell0\">";
-print "<button onclick=\"showEditProfilePart('general');\">General</button> ";
-print "<button onclick=\"showEditProfilePart('login');\">Login</button> ";
-print "<button onclick=\"showEditProfilePart('avatar');\">Avatar</button> ";
-print "<button onclick=\"showEditProfilePart('personal');\">Personal</button> ";
-print "<button onclick=\"showEditProfilePart('postlayout');\">Post Layout</button>";
-print "</td></tr></table>";
+write(
+"
+	<div class=\"margin width50\" id=\"tabs\">
+		<button id=\"generalButton\" onclick=\"showEditProfilePart('general');\" class=\"selected\">General</button>
+		<button id=\"loginButton\" onclick=\"showEditProfilePart('login');\">Login</button>
+		<button id=\"avatarButton\" onclick=\"showEditProfilePart('avatar');\">Avatar</button>
+		<button id=\"personalButton\" onclick=\"showEditProfilePart('personal');\">Personal</button>
+		<button id=\"postlayoutButton\" onclick=\"showEditProfilePart('postlayout');\">Post Layout</button>
+	</div>
 
-print "<form action=\"editprofile.php\" method=\"post\" enctype=\"multipart/form-data\">";
+	<form action=\"editprofile.php\" method=\"post\" enctype=\"multipart/form-data\">
+");
 
-print "<table class=\"outline margin width50\" id=\"general\" style=\"display: table;\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Appearance</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"rankset\">Rank set</label></td><td>".MakeSelect("rankset",$user['rankset'],$ranksets)."</td>";
-print "</tr>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"general\" style=\"display: table;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">Appearance</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"rankset\">Rank set</label>
+				</td>
+				<td>
+					{0}
+				</td>
+			</tr>
+", MakeSelect("rankset",$user['rankset'],$ranksets));
+
 if(TitleCheck())
 {
-	print "<tr class=\"cell1\">";
-	print "<td><label for=\"tit\">Title</td><td><input type=\"text\" id=\"tit\" name=\"title\" value=\"".htmlval($user['title'])."\" style=\"width: 98%;\" maxlength=\"255\" /></td>";
-	print "</tr>";
+	write(
+	"
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"tit\">Title</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"tit\" name=\"title\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"255\" />
+				</td>
+			</tr>
+	", htmlval($user['title']));
 }
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Presentation</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"theme\">Theme</label></td><td>".MakeSelect("theme",$themeFiles[$user['scheme']],$themes, "onchange=\"ChangeTheme(this.value);\"")."</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"tpp\">Threads per page</label></td><td><input type=\"text\" id=\"tpp\" name=\"tpp\" value=\"".$user['threadsperpage']."\"></input></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"ppp\">Posts per page</label></td><td><input type=\"text\" id=\"ppp\" name=\"ppp\" value=\"".$user['postsperpage']."\"></input></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"df\">Date format</label></td><td><input type=\"text\" id=\"df\" name=\"dateformat\" value=\"".$user['dateformat']."\"></input> or preset: ".MakeSelect("presetdate", -1, $datelist)."</td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"tf\">Time format</label></td><td><input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"".$user['timeformat']."\"></input> or preset: ".MakeSelect("presettime", -1, $timelist)."</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"fontsize\">Font scale</label></td><td><input type=\"text\" id=\"fontsize\" name=\"fontsize\" value=\"".$user['fontsize']."\"></input></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td>Extras</td><td>";
-print "<input type=\"checkbox\" id=\"bl\" name=\"blocklayouts\" ".($user['blocklayouts'] ? "checked=\"checked\"" : "")."></input> <label for=\"bl\">Block all layouts</label><br />";
-print "<input type=\"checkbox\" id=\"ub\" name=\"usebanners\" ".($user['usebanners'] ? "checked=\"checked\"" : "")."></input> <label for=\"ub\">Use nice notification banners</label>";
-print "</td>";
-print "</tr>";
-print "</table>";
 
-print "<table class=\"outline margin width50\" id=\"login\" style=\"display: none;\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Login information</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td>User name</td><td>".htmlval($user['name'])."</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"pw\">Password</label></td><td><input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\"></input> / Repeat: <input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\"></input></td>";
-print "</tr>";
-print "</table>";
+write(
+"
+			<tr class=\"header0\">
+				<th colspan=\"2\">Presentation</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"theme\">Theme</label>
+				</td>
+				<td>
+					{0}
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"tpp\">Threads per page</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"tpp\" name=\"tpp\" value=\"{1}\" />
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"ppp\">Posts per page</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"ppp\" name=\"ppp\" value=\"{2}\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"df\">Date format</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"df\" name=\"dateformat\" value=\"{3}\" />
+					or preset:
+					{4}
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"tf\">Time format</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"{5}\" />
+					or preset:
+					{6}
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"fontsize\">Font scale</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"fontsize\" name=\"fontsize\" value=\"{7}\" />
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					Extras
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"blocklayouts\" {8} />
+						Block all layouts
+					</label><br />
+					<label>
+						<input type=\"checkbox\" name=\"usebanners\" {9} />
+						Use nice notification banners
+					</label>
+				</td>
+			</tr>
+		</table>
+",
+	MakeSelect("theme",$themeFiles[$user['scheme']],$themes, "onchange=\"ChangeTheme(this.value);\""),
+	$user['threadsperpage'], $user['postsperpage'], $user['dateformat'],
+	MakeSelect("presetdate", -1, $datelist), $user['timeformat'],
+	MakeSelect("presettime", -1, $timelist), $user['fontsize'],
+	($user['blocklayouts'] ? "checked=\"checked\"" : ""),
+	($user['usebanners'] ? "checked=\"checked\"" : "")
+);
 
-print "<table class=\"outline margin width50\" id=\"avatar\" style=\"display: none;\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Avatar</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"pic\">Picture</label></td><td><input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\"></input> ";
-print "<input type=\"checkbox\" id=\"rp\" name=\"removepic\"></input><label for=\"rp\">Remove</label></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"mpic\">Minipic</label></td><td><input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\"></input> ";
-print "<input type=\"checkbox\" id=\"rmp\" name=\"removempic\"></input><label for=\"rmp\">Remove</label></td>";
-print "</tr>";
-print "</table>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"login\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Login information
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					User name
+				</td>
+				<td>
+					{0}
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"pw\">Password</label>
+				</td>
+				<td>
+					<input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\" />
+					/ Repeat:
+					<input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\" />
+				</td>
+			</tr>
+		</table>
+", htmlval($user['name']));
 
-print "<table class=\"outline margin width50\" id=\"personal\" style=\"display: none;\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Personal information</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td>Sex</td><td>".MakeOptions("sex",$user['sex'],$sexes)."</td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"rn\">Real name</label></td><td><input type=\"text\" id=\"rn\" name=\"realname\" value=\"".htmlval($user['realname'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"loc\">Location</label></td><td><input type=\"text\" id=\"loc\" name=\"location\" value=\"".htmlval($user['location'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"bd\">Birthday</label></td><td class=\"smallFonts\"><input type=\"text\" id=\"bd\" name=\"birthday\" value=\"".$bday."\" style=\"width: 98%;\" maxlength=\"60\" /> (example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"bio\">Bio</label></td><td><textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea></td>";
-print "</tr>";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Contact information</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"email\">Email address</label></td><td><input type=\"text\" id=\"email\" name=\"email\" value=\"".$user['email']."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"hpurl\">Homepage URL</label></td><td><input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"".$user['homepageurl']."\" style=\"width: 98%;\" maxlength=\"200\" /></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"hpname\">Homepage name</label></td><td><input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"".htmlval($user['homepagename'])."\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
-print "</tr>";
-print "</table>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"avatar\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Avatar
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"pic\">Picture</label>
+				</td>
+				<td>
+					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\" /> 
+					<label>
+						<input type=\"checkbox\" name=\"removepic\" />
+						Remove
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"mpic\">Minipic</label>
+				</td>
+				<td>
+					<input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\" />
+					<label>
+						<input type=\"checkbox\" name=\"removempic\" />
+						Remove
+					</label>
+				</td>
+			</tr>
+		</table>
+");
 
-print "<table class=\"outline margin width50\" id=\"postlayout\" style=\"display: none;\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Post layout</th>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td><label for=\"hd\">Header</label></td><td><textarea id=\"hd\" name=\"postheader\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['postheader'])."</textarea></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td><label for=\"sig\">Footer</label></td><td><textarea id=\"sig\" name=\"signature\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['signature'])."</textarea></td>";
-print "</tr>";
-print "</table>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"personal\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Personal information
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					Sex
+				</td>
+				<td>
+					{0}
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"rn\">Real name</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"rn\" name=\"realname\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"60\" />
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"loc\">Location</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"loc\" name=\"location\" value=\"{2}\" style=\"width: 98%;\" maxlength=\"60\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"bd\">Birthday</label>
+				</td>
+				<td class=\"smallFonts\">
+					<input type=\"text\" id=\"bd\" name=\"birthday\" value=\"{3}\" style=\"width: 98%;\" maxlength=\"60\" />
+					(example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"bio\">Bio</label>
+				</td>
+				<td>
+					<textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">{4}</textarea>
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					Timezone offset
+				</td>
+				<td>
+					<input type=\"text\" name=\"timezoneH\" size=\"2\" maxlength=\"3\" value=\"{8}\" />
+					:
+					<input type=\"text\" name=\"timezoneM\" size=\"2\" maxlength=\"3\" value=\"{9}\" />
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Contact information
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"email\">Email address</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"email\" name=\"email\" value=\"{5}\" style=\"width: 98%;\" maxlength=\"60\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"hpurl\">Homepage URL</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"{6}\" style=\"width: 98%;\" maxlength=\"200\" />
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"hpname\">Homepage name</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"{7}\" style=\"width: 98%;\" maxlength=\"60\" />
+				</td>
+			</tr>
+		</table>
+",	MakeOptions("sex",$user['sex'],$sexes), htmlval($user['realname']), htmlval($user['location']), $bday,
+	htmlval($user['bio']), $user['email'], $user['homepageurl'], htmlval($user['homepagename']),
+	(int)($loguser['timezone']/3600), floor(abs($loguser['timezone']/60)%60));
 
-print "<table class=\"outline margin width50\" id=\"button\"><tr><td class=\"cell0\">";
-print "<input type=\"submit\" name=\"action\" value=\"Edit user\"></input>";
-print "<input type=\"hidden\" name=\"id\" value=\"".$id."\"></input>";
-print "</td></tr></table>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"postlayout\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Post layout
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"hd\">Header</label>
+				</td>
+				<td>
+					<textarea id=\"hd\" name=\"postheader\" rows=\"8\" style=\"width: 98%;\">{0}</textarea>
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"sig\">Footer</label>
+				</td>
+				<td>
+					<textarea id=\"sig\" name=\"signature\" rows=\"8\" style=\"width: 98%;\">{1}</textarea>
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"signsep\" {2} />
+						Show signature separator
+					</label>
+				</td>
+			</tr>
+		</table>
 
-print "</form>";
+		<div class=\"margin right width50\" id=\"button\">
+			<input type=\"submit\" name=\"action\" value=\"Edit profile\"></input>
+			<input type=\"hidden\" name=\"id\" value=\"{3}\"></input>
+		</div>
 
-doFooter();
+	</form>
+",	htmlval($user['postheader']), htmlval($user['signature']), ($user['signsep'] ? "" : "checked=\"checked\""), $id);
 
 function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
 	$checks[$checkedIndex] = " checked=\"checked\"";
 	foreach($choicesList as $key=>$val)
-		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
+		$result .= format("
+					<label>
+						<input type=\"radio\" name=\"{1}\" value=\"{0}\"{2} />
+						{3}
+					</label>", $key, $fieldName, $checks[$key], $val);
 	return $result;
 }
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
 {
 	$checks[$checkedIndex] = " selected=\"selected\"";
-	$result = "<select id=\"".$fieldname."\" name=\"".$fieldName."\" size=\"1\" ".$extras." >";
 	foreach($choicesList as $key=>$val)
-		$result .= "<option value=\"".$key."\"".$checks[$key].">".$val."</option>";
-	$result .= "</select>";
+		$options .= format("
+					<option value=\"{0}\"{1}>{2}</option>", $key, $checks[$key], $val);
+	$result = format(
+"
+				<select id=\"{0}\" name=\"{0}\" size=\"1\" {1} >{2}
+				</select>
+", $fieldName, $extras, $options);
 	return $result;
 }
 
