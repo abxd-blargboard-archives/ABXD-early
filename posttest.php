@@ -154,6 +154,4 @@ foreach($copies as $toCopy)
 	$previewPost[$toCopy] = $user[$toCopy];
 MakePost($previewPost, 0, 0);
 
-doFooter();
-
 ?>
