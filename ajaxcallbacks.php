@@ -2,6 +2,8 @@
 $noAutoHeader = TRUE;
 $noViewCount = TRUE;
 $noOnlineUsers = TRUE;
+$noFooter = TRUE;
+$ajax = TRUE;
 include("lib/common.php");
 
 $action = $_GET['a'];
@@ -39,35 +41,7 @@ if($action == "q")
 }
 else if($action == "o")
 {
-/*
-	$rOnlineUsers = Query("select id,name,sex,powerlevel,lastactivity,lastposttime,minipic from users where lastactivity > ".(time()-300)." or lastposttime > ".(time()-300)." order by name");
-	$onlineUsers = "";
-	$onlineUserCt = 0;
-	while($onlineUser = Fetch($rOnlineUsers))
-	{
-		$loggedIn = ($onlineUser['lastpost'] <= $onlineUser['lastview']);
-		$userLink = UserLink($onlineUser);
-		if($onlineUser['minipic'])
-			$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />".$userLink;
-		if(!$loggedIn)
-			$userLink = "(".$userLink.")";
-		$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;
-		$onlineUserCt++;
-	}
-	$onlineUsers = $onlineUserCt." user".(($onlineUserCt > 1 || $onlineUserCt == 0) ? "s" : "")." online".($onlineUserCt ? ": " : "").$onlineUsers;
-
-	$guests = FetchResult("select count(*) from guests where bot=0 and date > ".(time() - 300));
-	$bots = FetchResult("select count(*) from guests where bot=1 and date > ".(time() - 300));
-
-	if($guests)
-		$onlineUsers .= " | ".Plural($guests,"guest");
-	if($bots)
-		$onlineUsers .= " | ".Plural($bots,"bot");
-
-	die($onlineUsers);
-*/
-	$fid = (int)$_GET['f'];
-	die(OnlineUsers($fid));
+	die(OnlineUsers((int)$_GET['f']));
 }
 else if($action == "tf")
 {
@@ -86,5 +60,50 @@ else if($action == "tf")
 		$logopic = "img/themes/".$theme."/logo.png";
 	die($themeFile."|".$logopic);
 }
+else if($action = "ni")
+{
+	$pl = $loguser['powerlevel'];
+
+	$threadsRead = array();
+	$rThreadsRead = Query("select id, lastpostdate, forum from threads");
+	while($trd = Fetch($rThreadsRead))
+		$threadsRead[$trd['id']] = $trd;
+
+	$ignored = array();
+	if($loguserid)
+	{
+		$rIgnores = Query("select fid from ignoredforums where uid=".$loguserid);
+		while($ignore = Fetch($rIgnores))
+			$ignored[$ignore['fid']] = TRUE;
+	}
+
+	$postreads = Query("select * from threadsread where id=".$loguserid);
+	while($read1 = Fetch($postreads))
+		$postread[$read1['thread']]=$read1['date'];
+
+	$rCategories = Query("select name,minpower from categories");
+	$category[] = "dummy";
+	while($cat = Fetch($rCategories))
+		$category[] = array("name" => $cat['name'], "minpower" => $cat['minpower']);
+
+	$news = array();
+
+	$rFora = Query("select * from forums order by catid, forder");
+	while($forum = Fetch($rFora))
+	{
+		if($category[$forum['catid']]['minpower'] > $pl)
+			continue;
+
+		$newstuff = 0;
+		if(!$ignored[$forum['id']])
+			foreach($threadsRead as $trd)
+				if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
+					$newstuff++;
+		$news[] = $newstuff;		
+	}
+
+	die(join(",", $news));
+}
+
 die("Unknown action.");
 ?>
