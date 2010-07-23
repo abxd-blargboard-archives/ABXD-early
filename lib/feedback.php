@@ -3,29 +3,66 @@
 
 function Debug($s)
 {
-	print "<strong>Debug</strong>: ".$s."<br />";
+	write("<strong>Debug</strong>: {0}<br />", $s);
 }
 
 //	Not really much different to kill()
 function Alert($s, $t="Alert")
 {
-	print "<div class=\"outline margin\"><div class=\"errort\"><strong>".$t."</strong></div><div class=\"errorc cell2\">".$s."</div></div>";
+	write("<div class=\"outline margin\"><div class=\"errort\"><strong>{1}</strong></div><div class=\"errorc cell2\">{0}</div></div>", $s, $t);
 }
 
 function Kill($s, $t="Error")
 {
-	global $noAutoHeader;
-	print "<div class=\"outline margin\"><div class=\"errort\"><strong>".$t."</strong></div><div class=\"errorc cell2\">".$s."</div></div>";
-	if(!$noAutoHeader)
-		DoFooter();
+	Alert($s, $t);
 	exit();
 }
 
 function Redirect($s,$t,$n)
 {
-	print "<div class=\"outline margin\"><div class=\"errort\"><strong>".$s."</strong></div><div class=\"errorc cell2\">You will now be redirected to <a href=\"".$t."\">".$n."</a>…</div></div>";
-	print "<meta http-equiv=\"REFRESH\" content=\"2;URL=$t\" />";
-	doFooter();
+	write(
+"
+	<div class=\"outline margin\">
+		<div class=\"errort\">
+			<strong>{0}</strong>
+		</div>
+		<div class=\"errorc cell2\">
+			You will now be redirected to <a href=\"{1}\">{2}</a>&hellip;
+			<div class=\"pollbarContainer\" style=\"margin: 4px auto; width: 25%; display: none;\">
+				<div class=\"pollbar\" id=\"theBar\" style=\"background: silver; width: 1%;\">&nbsp;</div>
+			</div>
+		</div>
+	</div>
+	<meta http-equiv=\"REFRESH\" content=\"5;URL={1}\" />
+	<script type=\"text/javascript\">
+		var barWidth = 1;
+		var target = \"{1}\";
+		
+		function doBar()
+		{
+			barWidth += 5; //use 2 here for smoother animation
+			if (barWidth > 101)
+			{
+				document.location = target;
+			}
+			else
+			{
+				if(barWidth > 100)
+					theBar.style['width'] = \"100%\";
+				else
+					theBar.style['width'] = barWidth + \"%\";
+				setTimeout(\"doBar()\", 50); //use 20 here for smoother animation
+			}
+		}
+		
+		window.onload = function()
+		{
+			theBar = document.getElementById(\"theBar\");
+			theBar.parentNode.style['display'] = \"block\";
+			doBar();
+		}
+	</script>
+",	$s, $t, $n);
 	exit();
 }
 
