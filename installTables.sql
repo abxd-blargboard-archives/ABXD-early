@@ -144,7 +144,7 @@ DROP TABLE IF EXISTS `pollvotes`;
 CREATE TABLE `pollvotes` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` int(11) NOT NULL DEFAULT '0',
-  `user` int(11) NOT NULL DEFAULT '0'
+  `user` int(11) NOT NULL DEFAULT '0',
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `poll_choices`;
@@ -315,6 +315,7 @@ CREATE TABLE `users` (
   `dateformat` varchar(20) NOT NULL DEFAULT 'm-d-y',
   `timeformat` varchar(20) NOT NULL DEFAULT 'h:i a',
   `fontsize` int(11) NOT NULL DEFAULT '80',
+  `karma` int(11) NOT NULL DEFAULT '100',
   `blocklayouts` tinyint(1) NOT NULL DEFAULT '0',
   `globalblock` tinyint(1) NOT NULL DEFAULT '0',
   `usebanners` tinyint(1) NOT NULL DEFAULT '1',
