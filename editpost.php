@@ -37,6 +37,7 @@ if(NumRows($rThread))
 	Kill("Unknown thread ID.");
 }
 
+$thread['title'] = htmlspecialchars($thread['title']);
 $fid = $thread['forum'];
 
 if((int)$_GET['delete'] == 1)
@@ -62,6 +63,11 @@ if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
 
 if($thread['closed'])
 	Kill("This thread is closed.");
+	
+write("
+	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
+	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+");
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
 {
@@ -84,12 +90,11 @@ if($_POST['action']=="Edit")
 {
 	if($_POST['text'])
 	{
-		//$post = htmlentities2(stripslashes($_POST['text']));
-		$post = htmlentities2($_POST['text']);
+		$post = htmlentities2(deSlashMagic($_POST['text']));
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 		TidyPost($post);
 		$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-		$post = justEscape($post);
+		$post = mysql_real_escape_string($post);
 
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
@@ -148,50 +153,118 @@ if($_POST['action']=="Preview")
 		Alert("Enter a message and try again.","Your post is empty.");
 }
 
-if(!$_POST['text']) $_POST['text'] = $post['text'];
-if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 //if(!$_POST['text']) $_POST['text'] = $post['text'];
-//if($_POST['text']) $prefill = $_POST['text'];
+//if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
+if(!$_POST['text']) $prefill = htmlval($post['text']);
+else $prefill = htmlval(deSlashMagic($_POST['text']));
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 if($_POST['nosm'])
 	$nosm = "checked=\"checked\"";
 
-DoSmileyBar();
-DoPostHelp();
-
 if(!isset($_POST['mood']))
 	$_POST['mood'] = $post['mood'];
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default]</option>\n";
+$moodOptions = Format("<option {0}value=\"0\">[Default avatar]</option>\n", $moodSelects[0]);
 $rMoods = Query("select mid, name from moodavatars where uid=".$post['user']." order by mid asc");
 while($mood = Fetch($rMoods))
-	$moodOptions .= "<option ".$moodSelects[$mood['mid']]."value=\"".$mood['mid']."\">".$mood['name']."</option>\n";
+	$moodOptions .= Format("<option {0}value=\"{1}\">{2}</option>\n", $moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
 
-print "<form action=\"editpost.php\" method=\"post\">";
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"cell0\">";
-print "<td>Post</td>";
-print "<td>";
-print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea><br />";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2\">";
-print "<td></td>";
-print "<td>";
-print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input> ";
-print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
-print " <select size=\"1\" name=\"mood\">".$moodOptions."</select>";
-print " <input type=\"checkbox\" name=\"nopl\" id=\"np\" $nopl></input> <label for=\"np\">Disable post layout</label>";
-print " <input type=\"checkbox\" name=\"nosm\" id=\"ns\" $nosm></input> <label for=\"ns\">Disable smilies</label>";
-print "<input type=\"hidden\" name=\"id\" value=\"".$pid."\"></input>";
-print "</td>";
-print "</tr>";
-print "</table>";
-print "</form>";
+Write(
+"
+	<table style=\"width: 100%;\">
+		<tr>
+			<td style=\"vertical-align: top; border: none;\">
+				<form action=\"editpost.php\" method=\"post\">
+					<table class=\"outline margin width100\">
+						<tr class=\"header1\">
+							<th colspan=\"2\">
+								Edit Post
+							</th>
+						</tr>
+						<tr class=\"cell0\">
+							<td>
+								Post
+							</td>
+							<td>
+								<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
+							</td>
+						</tr>
+						<tr class=\"cell2\">
+							<td></td>
+							<td>
+								<input type=\"submit\" name=\"action\" value=\"Edit\" /> 
+								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+								<select size=\"1\" name=\"mood\">
+									{1}
+								</select>
+								<label>
+									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;Disable&nbsp;post&nbsp;layout
+								</label>
+								<label>
+									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;Disable&nbsp;smilies
+								</label>
+								<input type=\"hidden\" name=\"id\" value=\"{2}\" />
+							</td>
+						</tr>
+					</table>
+				</form>
+			</td>
+			<td style=\"width: 200px; vertical-align: top; border: none;\">
+",	$prefill, $moodOptions, $pid, $nopl, $nosm);
 
-doFooter();
+DoSmileyBar();
+DoPostHelp();
+
+Write(
+"
+			</td>
+		</tr>
+	</table>
+");
+
+$qPosts = "select ";
+$qPosts .=
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.sex, users.posts";
+$qPosts .= 
+	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
+$qPosts .= " where thread=".$tid." and deleted=0 order by date desc limit 0, 20";
+
+$rPosts = Query($qPosts);
+if(NumRows($rPosts))
+{
+	$posts = "";
+	while($post = Fetch($rPosts))
+	{
+		$cellClass = ($cellClass+1) % 2;
+
+		$poster = $post;
+		$poster['id'] = $post['uid'];
+
+		$posts .= Format(
+"
+		<tr>
+			<td class=\"cell2\">
+				{1}
+			</td>
+			<td class=\"cell{0}\">
+				<button style=\"float: right;\" onclick=\"insertQuote({2});\">Quote</button>
+				<button style=\"float: right;\" onclick=\"insertChanLink({2});\">Link</button>
+				{3}
+			</td>
+		</tr>
+",	$cellClass, UserLink($poster), $post['id'], CleanUpPost($post['text'], $poster['name']));
+	}
+	Write(
+"
+	<table class=\"outline margin\">
+		{0}
+	</table>
+",	$posts);
+}
+
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "Edit Post"=>""), $links);
 
 ?>

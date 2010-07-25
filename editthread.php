@@ -21,6 +21,7 @@ if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
 	Kill("Unknown thread ID.");
+$thread['title'] = htmlspecialchars($thread['title']);
 
 $canMod = CanMod($loguserid,$thread['forum']);
 
@@ -37,22 +38,26 @@ if($canMod)
 		$qThread = "update threads set closed=1 where id=".$tid;
 		$rThread = Query($qThread);
 		Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum");
-	} elseif($_GET['action']=="open")
+	}
+	elseif($_GET['action']=="open")
 	{
 		$qThread = "update threads set closed=0 where id=".$tid;
 		$rThread = Query($qThread);
 		Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum");
-	} elseif($_GET['action']=="stick")
+	}
+	elseif($_GET['action']=="stick")
 	{
 		$qThread = "update threads set sticky=1 where id=".$tid;
 		$rThread = Query($qThread);
 		Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum");
-	} elseif($_GET['action']=="unstick")
+	}
+	elseif($_GET['action']=="unstick")
 	{
 		$qThread = "update threads set sticky=0 where id=".$tid;
 		$rThread = Query($qThread);
 		Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum");
-	} elseif($_POST['action']=="Move")
+	}
+	elseif($_POST['action']=="Move")
 	{
 		//Tweak forum counters
 		$qForum = "update forums set numthreads=numthreads-1, numposts=numposts-".($thread['replies']+1)." where id=".$thread['forum'];
@@ -64,7 +69,8 @@ if($canMod)
 		$qThread = "update threads set forum=".(int)$_POST['moveTo']." where id=".$tid;
 		$rThread = Query($qThread);
 		Redirect("Thread moved.","forum.php?id=".(int)$_POST['moveTo'],"the new forum");
-	} elseif($_GET['action']=="delete")
+	}
+	elseif($_GET['action']=="delete")
 	{
 		$qPosts = "select id,user from posts where thread=".$tid;
 		$rPosts = Query($qPosts);
@@ -107,7 +113,8 @@ if($canMod)
 		}
 
 		Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum");
-	} elseif($_GET['action'] == "trash")
+	}
+	elseif($_GET['action'] == "trash")
 	{
 		$qForum = "select id, title from forums where description like '%[trash]%' limit 1";
 		$rForum = Query($qForum);
@@ -124,7 +131,8 @@ if($canMod)
 			$rForum = Query($qForum);
 
 			Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
-		} else
+		}
+		else
 			Kill("Could not identify trash forum.");
 	}
 
@@ -149,8 +157,9 @@ if($canMod)
 
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
-		} else
-			print "<div>Your thread title is empty. Enter a message and try again.</div>";
+		}
+		else
+			Alert("Your thread title is empty. Enter a message and try again.");
 	}
 }
 else
@@ -164,8 +173,9 @@ else
 
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
-		} else
-			print "<div>Your thread title is empty. Enter a message and try again.</div>";
+		}
+		else
+			Alert("Your thread title is empty. Enter a message and try again.");
 	}
 }
 
@@ -191,81 +201,124 @@ while($forum = Fetch($rFora))
 
 if($canMod)
 {
-	print "<form action=\"editthread.php\" method=\"post\">";
-	print "<table class=\"outline margin width50\">";
-	print "<tr class=\"cell0\">";
-	print "<td><label for=\"tit\">Title</label></td>";
-	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".htmlval(deSlashMagic($_POST['title']))."\"></input><br /></td>";
-	print "</tr>";
-	print "<tr class=\"cell1\">";
-	print "<td>Icon</td>";
-	print "<td>";
+	$icons = "";
 	$i = 1;
 	while(is_file("img/icons/icon".$i.".png"))
 	{
 		$check = "";
 		if($_POST['iconid'] == $i) $check = "checked=\"checked\" ";
-		print "<input type=\"radio\" ".$check."id=\"icon".$i."\" name=\"iconid\" value=\"".$i."\"></input> <label for=\"icon".$i."\"><img src=\"img/icons/icon".$i.".png\" alt=\"Icon ".$i."\" /></label> ";
-	//	if($i % 10 == 9) print "<br />";
+		$icons .= format(
+"
+				<label>
+					<input type=\"radio\" {0}\" name=\"iconid\" value=\"{1}\" />
+					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" /
+				</label>
+				&nbsp;
+", $check, $i);
 		$i++;
 	}
-	$check = "";
-	if($_POST['iconid'] == 0) $check = "checked=\"checked\" ";
-	print "<br/><input type=\"radio\" ".$check."id=\"noicon\" name=\"iconid\" value=\"0\"></input> <label for=\"noicon\">None</label> ";
-	$check = "";
+	$check[0] = "";
+	$check[1] = "";
+	if($_POST['iconid'] == 0) $check[0] = "checked=\"checked\" ";
 	if($_POST['iconid'] == 255)
 	{
-		$check = "checked=\"checked\" ";
+		$check[1] = "checked=\"checked\" ";
 		$iconurl = htmlval(deSlashMagic($_POST['iconurl']));
 	}
-	print "<input type=\"radio\" ".$check."name=\"iconid\" value=\"255\"></input> Custom:";
-	print "<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"".$iconurl."\"></input>";
-	print "</td>";
-	print "</tr>";
-	print "<tr class=\"cell2\">";
-	print "<td>Extras</td>";
-	print "<td>";
-	print " <input type=\"checkbox\" id=\"cl\" name=\"isClosed\"".($thread['closed'] ? " checked=\"checked\"" : "")."></input><label for=\"cl\">Closed</label>";
-	print " <input type=\"checkbox\" id=\"st\" name=\"isSticky\"".($thread['sticky'] ? " checked=\"checked\"" : "")."></input><label for=\"st\">Sticky</label>";
-	print "</td>";
-	print "</tr>";
-	print "<tr class=\"cell2\">";
-	print "<td></td>";
-	print "<td>";
-	print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
-	//if($thread['closed'])
-	//	print "<input type=\"button\" value=\"Open\" onclick=\"window.navigate('editthread.php?id=".$tid."&amp;action=open');\"></input>";
-	//else
-	//	print "<input type=\"button\" value=\"Close\" onclick=\"window.navigate('editthread.php?id=".$tid."&amp;action=close');\"></input>";
-	print "<input type=\"button\" value=\"Delete\" onclick=\"window.navigate('editthread.php?id=".$tid."&amp;action=delete');\"></input>";
+	
+	write(
+"
+	<form action=\"editthread.php\" method=\"post\">
+		<table class=\"outline margin width75\">
+			<tr class=\"header1\">
+				<th colspan=\"2\">
+					Edit Thread
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"tit\">Title</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{0}\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					Icon
+				</td>
+				<td>
+					{1}
 
-	print "<select name=\"moveTo\" size=\"1\">".$moveToTargets."</select>";
-	print "<input type=\"submit\" name=\"action\" value=\"Move\"></input>";
-	print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
-	print "</td>";
-	print "</tr>";
-	print "</table>";
-	print "</form>";
+					<br/>
+					<label>
+						<input type=\"radio\" {2} id=\"noicon\" name=\"iconid\" value=\"0\">
+						None
+					</label>
+					<label>
+						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" />
+						Custom:
+						<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"{4}\" />
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td>
+					Extras
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"isClosed\" {5} />
+						Closed
+					</label>
+					<label>
+						<input type=\"checkbox\" name=\"isSticky\" {6} />
+						Sticky
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Edit\"></input>
+					<input type=\"button\" value=\"Delete\" onclick=\"window.navigate('editthread.php?id={7}&amp;action=delete');\" />
+
+					<select name=\"moveTo\" size=\"1\">{8}</select>
+					<input type=\"submit\" name=\"action\" value=\"Move\" />
+					<input type=\"hidden\" name=\"id\" value=\"{7}\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+",	htmlval(deSlashMagic($_POST['title'])), $icons, $check[0], $check[1], $iconurl,
+	($thread['closed'] ? " checked=\"checked\"" : ""),
+	($thread['sticky'] ? " checked=\"checked\"" : ""),
+	$tid, $moveToTargets);
 }
 else
 {
-	print "<form action=\"editthread.php\" method=\"post\">";
-	print "<table class=\"outline margin width50\">";
-	print "<tr class=\"cell0\">";
-	print "<td><label for=\"tit\">Title</label></td>";
-	print "<td><input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".htmlval(deSlashMagic($_POST['title']))."\"></input><br /></td>";
-	print "</tr>";
-	print "<tr class=\"cell2\">";
-	print "<td></td>";
-	print "<td>";
-	print "<input type=\"submit\" name=\"action\" value=\"Edit\"></input>";
-	print "<input type=\"hidden\" name=\"id\" value=\"".$tid."\"></input>";
-	print "</td>";
-	print "</tr>";
-	print "</table>";
-	print "</form>";
+	write(
+"
+	<form action=\"editthread.php\" method=\"post\">
+		<table class=\"outline margin width50\">
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"tit\">Title</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{0}\" />
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Edit\" />
+					<input type=\"hidden\" name=\"id\" value=\"{1}\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+",	htmlval(deSlashMagic($_POST['title'])), $tid);
 }
-
-doFooter();
 
 ?>
