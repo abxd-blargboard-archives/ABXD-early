@@ -45,25 +45,50 @@ if($autoLockMonths > 0)
 }
 //</autolock>
 
+$isIgnored = FetchResult("select count(*) from ignoredforums where uid=".$loguserid." and fid=".$fid, 0, 0) == 1;
+if(isset($_GET['ignore']))
+{
+	if(!$isIgnored)
+	{
+		Query("insert into ignoredforums values (".$loguserid.", ".$fid.")");
+		Alert("Forum ignored. You will no longer see any \"New\" markers for this forum.");
+	}
+}
+else if(isset($_GET['unignore']))
+{
+	if($isIgnored)
+	{
+		Query("delete from ignoredforums where uid=".$loguserid." and fid=".$fid);
+		Alert("Forum unignored.");
+	}
+}
+
+$isIgnored = FetchResult("select count(*) from ignoredforums where uid=".$loguserid." and fid=".$fid, 0, 0) == 1;
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
+	if($isIgnored)
+		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;unignore\">Unignore Forum</a></li>";
+	else
+		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;ignore\">Ignore Forum</a></li>";
+
 	$links .= "<li><a href=\"newthread.php?id=".$fid."\">Post Thread</a></li>";
 	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
 }
 
 $onlineUsers = OnlineUsers($fid);
-?>
-<script type="text/javascript" src="lib/Tween.js"></script>
-<script type="text/javascript" src="lib/OpacityTween.js"></script>
-<script type="text/javascript">
-	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
-</script>
-<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
-<span id="onlineUsers">
-<?php print $onlineUsers; ?>
-</span>
-</div>
-<?php
+Write(
+"
+	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
+	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+	<script type=\"text/javascript\">
+		window.onload = function() { startOnlineUsers({0}); };
+	</script>
+	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		<span id=\"onlineUsers\">
+			{1}
+		</span>
+	</div>
+",	$fid, $onlineUsers);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
@@ -98,7 +123,7 @@ if($pagelinks)
 		$pagelinks = " 1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"forum.php?id=".$fid."\">1</a>".$pagelinks;
-	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
+	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 }
 
 $ppp = $loguser['postsperpage'];
@@ -107,18 +132,8 @@ if(!$ppp) $ppp = 20;
 DoPrivateMessageBar();
 
 if(NumRows($rThreads))
-{
-	print "<table class=\"outline margin width100\">";
-	print "<tr class=\"header1\">";
-	print "<th style=\"width: 20px;\">&nbsp;</th>";
-	print "<th style=\"width: 16px;\">&nbsp;</th>";
-	print "<th style=\"width: 60%;\">Title</th>";
-	print "<th>Started by</th>";
-	print "<th>Replies</th>";
-	print "<th>Views</th>";
-	print "<th>Last post</th>";
-	print "</tr>";
-	
+{	
+	$forumList = "";
 	while($thread = Fetch($rThreads))
 	{
 		$last = $members[$thread['lastposter']];
@@ -133,16 +148,17 @@ if(NumRows($rThreads))
 		if($thread['replies'] >= $misc['hotcount'])
 			$NewIcon .= "hot";
 		if((!$loguserid && $thread['lastpostdate'] > time() - 900) ||
-			($loguserid && $thread['lastpostdate'] > $postread[$thread['id']]))
+			($loguserid && $thread['lastpostdate'] > $postread[$thread['id']]) &&
+			!$isIgnored)
 		{
 			$NewIcon .= "new";
 			$newstuff++;
 		}
 		if($NewIcon)
-			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>" . ($newstuff ? $newstuff : "");
+			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
 
 		if($thread['icon'])
-			$ThreadIcon = "<img src=\"".$thread['icon']."\" alt=\"\"/>";
+			$ThreadIcon = "<img src=\"".$thread['icon']."\" width=\"15\" alt=\"\"/>";
 		else
 			$ThreadIcon = "";
 
@@ -154,7 +170,7 @@ if(NumRows($rThreads))
 		if($thread['sticky'] == 0 && $haveStickies == 1)
 		{
 			$haveStickies = 2;
-			print "<tr class=\"header0\"><th colspan=\"7\" style=\"height: 8px;\"></th></tr>";
+			$forumList .= "<tr class=\"header1\"><th colspan=\"7\" style=\"height: 8px;\"></th></tr>";
 		}
 		if($thread['sticky'] && $haveStickies == 0) $haveStickies = 1;
 
@@ -171,17 +187,53 @@ if(NumRows($rThreads))
 		if($thread['lastpostid'])
 			$lastLink = " <a href=\"thread.php?pid=".$thread['lastpostid']."#".$thread['lastpostid']."\">&raquo;</a>";
 
-		print "<tr class=\"cell".$cellClass."\">";
-		print "<td class=\"cell2 threadIcon\">".$NewIcon."</td>";
-		print "<td class=\"threadIcon\" style=\"border-right: 0px none;\">".$ThreadIcon."</td>";
-		print "<td style=\"border-left: 0px none;\">".$poll."<a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>".$pl.$tags."</td>";
-		print "<td>".UserLink($starter)."</td>";
-		print "<td class=\"center\">".$thread['replies']."</td>";
-		print "<td class=\"center\">".$thread['views']."</td>";
-		print "<td class=\"smallFonts\">".gmdate($dateformat,$thread['lastpostdate'])."<br />by ".UserLink($last).$lastLink."</td>";
-		print "</tr>";
+		$forumList .= Format(
+"
+		<tr class=\"cell{0}\">
+			<td class=\"cell2 threadIcon\">{1}</td>
+			<td class=\"threadIcon\" style=\"border-right: 0px none;\">
+				{2}
+			</td>
+			<td style=\"border-left: 0px none;\">
+				{3}
+				<a href=\"thread.php?id={4}\">
+					{5}
+				</a>
+				{6}
+				{7}
+			</td>
+			<td>
+				{8}
+			</td>
+			<td class=\"center\">
+				{9}
+			</td>
+			<td class=\"center\">
+				{10}
+			</td>
+			<td class=\"smallFonts\">
+				{11}<br />
+				by {12} {13}</td>
+		</tr>
+",	$cellClass, $NewIcon, $ThreadIcon, $poll, $thread['id'], htmlspecialchars($thread['title']), $pl, $tags,
+	UserLink($starter), $thread['replies'], $thread['views'],
+	cdate($dateformat,$thread['lastpostdate']), UserLink($last), $lastLink);
 	}
-	print "</table>";
+	Write(
+"
+	<table class=\"outline margin width100\">
+		<tr class=\"header1\">
+			<th style=\"width: 20px;\">&nbsp;</th>
+			<th style=\"width: 16px;\">&nbsp;</th>
+			<th style=\"width: 60%;\">Title</th>
+			<th>Started by</th>
+			<th>Replies</th>
+			<th>Views</th>
+			<th>Last post</th>
+		</tr>
+		{0}
+	</table>
+",	$forumList);
 } else
 	if($forum['minpowerthread'] > $loguser['powerlevel'])
 		Alert("You cannot start any threads here.", "Empty forum");
@@ -191,17 +243,16 @@ if(NumRows($rThreads))
 		Alert("<a href=\"login.php\">Log in</a> so you can post something.", "Empty forum");
 
 if($pagelinks)
-	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
+	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
-doFooter();
-
-function readpostread($userid){
-  $postreads = Query("select * from threadsread where id=".$userid);
-  while($read1 = Fetch($postreads))
-  	$postread[$read1['thread']]=$read1['date'];
-  return $postread;
+function readpostread($userid)
+{
+	$postreads = Query("select * from threadsread where id=".$userid);
+	while($read1 = Fetch($postreads))
+		$postread[$read1['thread']] = $read1['date'];
+	return $postread;
 }
 
 ?>
