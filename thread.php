@@ -41,7 +41,19 @@ if(NumRows($rFora))
 } else
 	Kill("Unknown forum ID.");
 
+$qCategories = "select * from categories where id=".$forum['catid'];
+$rCategories = Query($qCategories);
+if(NumRows($rCategories))
+{
+	$category = Fetch($rCategories);
+	if($category['minpower'] > $pl)
+		Kill("You are not allowed to browse forums in this category.");
+} else
+	Kill("Unknown category ID.");
+
+$thread['title'] = htmlspecialchars($thread['title']);
 $title = $thread['title'];
+$thread['title'] .= " ".ParseThreadTags($thread['title']);
 
 $qViewCounter = "update threads set views=".($thread['views']+1)." where id=".$tid." limit 1";
 $rViewCounter = Query($qViewCounter);
@@ -54,60 +66,76 @@ if(isset($_GET['vote']))
 		Kill("Poll's closed!");
 	if($thread['poll'])
 	{
-		$qCheck = "select * from pollvotes where poll=".$thread['poll']." and user=".$loguserid;
-		$rCheck = Query($qCheck);
-		if(NumRows($rCheck))
+		$poll = Fetch(Query("select * from poll where id=".$thread['poll']));
+		if($poll['doublevote'])
 		{
-			$qCheck = "delete from pollvotes where  poll=".$thread['poll']." and user=".$loguserid;
-			$rCheck = Query($qCheck);
+			//Multivote.
+			$rCheck = Query("select * from pollvotes where poll=".$thread['poll']." and choice=".(int)$_GET['vote']." and user=".$loguserid);
+			if(NumRows($rCheck))
+				$rCheck = Query("delete from pollvotes where  poll=".$thread['poll']." and choice=".(int)$_GET['vote']." and user=".$loguserid);		
+			else
+				$rPoll = Query("insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")");
 		}
-		$qPoll = "insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")";
-		$rPoll = Query($qPoll);
-	} else
+		else
+		{
+			//Single vote only?
+			//Remove any old votes by this user on this poll, then add a new one.
+			$rCheck = Query("select * from pollvotes where poll=".$thread['poll']." and user=".$loguserid);
+			if(NumRows($rCheck))
+				$rCheck = Query("delete from pollvotes where  poll=".$thread['poll']." and user=".$loguserid);
+			$rPoll = Query("insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")");
+		}
+	}
+	else
 		Kill("This is not a poll.");
 }
 
 if($loguser['powerlevel'] == -1)
-	$links .= "You're banned. | ";
+	$links .= "<li>You're banned.</li>";
 elseif(!$thread['closed'] || $loguser['powerlevel'] > 2)
-	$links .= "<a href=\"newreply.php?id=".$tid."\">Post Reply</a> | ";
+	$links .= "<li><a href=\"newreply.php?id=".$tid."\">Post Reply</a></li>";
 else
 	$links .= "Thread closed. | ";
 if(CanMod($loguserid,$forum['id']))
 {
-	$links .= "<a href=\"editthread.php?id=".$tid."\">Edit</a> | ";
+	$links .= "<li><a href=\"editthread.php?id=".$tid."\">Edit</a></li>";
 	if($thread['closed'])
-		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=open\">Open</a> | ";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=open\">Open</a></li>";
 	else
-		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=close\">Close</a> | ";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=close\">Close</a></li>";
 	if($thread['sticky'])
-		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=unstick\">Unstick</a> | ";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=unstick\">Unstick</a></li>";
 	else
-		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=stick\">Stick</a> | ";
-	$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=delete\" onclick=\"if(!confirm('Are you sure you want to just up and delete this whole thread?') || !confirm('Seriously?')) return false;\">Delete</a> | ";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=stick\">Stick</a></li>";
+	$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=delete\" onclick=\"if(!confirm('Are you sure you want to just up and delete this whole thread?') || !confirm('Seriously?')) return false;\">Delete</a></li>";
 	if(strpos($forum['description'],"[trash]") === FALSE)
-		$links .= "<a href=\"editthread.php?id=".$tid."&amp;action=trash\">Trash</a> | ";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=trash\">Trash</a></li>";
 }
 else if($thread['user'] == $loguserid)
 {
-	$links .= "<a href=\"editthread.php?id=".$tid."\">Edit</a> | ";
+	$links .= "<li><a href=\"editthread.php?id=".$tid."\">Edit</a></li>";
 }
 
-$links = substr($links, 0, strlen($links) - 2);
+if($isBot)
+	$links = "";
+
+//$links = substr($links, 0, strlen($links) - 2);
 
 $onlineUsers = OnlineUsers($fid);
-?>
-<script type="text/javascript" src="lib/Tween.js"></script>
-<script type="text/javascript" src="lib/OpacityTween.js"></script>
-<script type="text/javascript">
-	window.onload = function() { startOnlineUsers(<?php print $fid; ?>); };
-</script>
-<div class="header0 cell1 center outline smallFonts" style="overflow: auto;">
-<span id="onlineUsers">
-<?php print $onlineUsers; ?>
-</span>
-</div>
-<?php
+
+write(
+"
+	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
+	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+	<script type=\"text/javascript\">
+		window.onload = function() { startOnlineUsers({0}); };
+	</script>
+	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		<span id=\"onlineUsers\">
+			{1}
+		</span>
+	</div>
+", $fid, $onlineUsers);
 
 DoPrivateMessageBar();
 
@@ -120,22 +148,13 @@ if($thread['poll'])
 	if(NumRows($rPoll))
 	{
 		$poll = Fetch($rPoll);
-		print "<table class=\"outline margin\">";
-		print "<tr class=\"header0\">";
-		print "<th colspan=\"2\">Poll</th>";
-		print "</tr>";
-		print "<tr class=\"cell0\">";
-		print "<td colspan=\"2\">".$poll['question']."</td>";
-		print "</tr>";
 
 		$qCheck = "select * from pollvotes where poll=".$thread['poll']." and user=".$loguserid;
 		$rCheck = Query($qCheck);
 		if(NumRows($rCheck))
 		{
-			$check = Fetch($rCheck);
-			$pc[$check['choice']] = "&#x2714; ";
-			//use &#x2605; for a star
-			//"<img src=\"img/pollchoice.png\" alt=\"*\" /> ";
+			while($check = Fetch($rCheck))
+				$pc[$check['choice']] = "&#x2714; "; //use &#x2605; for a star
 		}
 
 		$qVotes = "select count(*) from pollvotes where poll=".$thread['poll'];
@@ -157,27 +176,60 @@ if($thread['poll'])
 		{
 			if($option['color'] == "")
 				$option['color'] = $defaultColors[($pops + 9) % 15];
+				
+			$option['choice'] = htmlspecialchars($option['choice']);
 
 			$qVotes = "select * from pollvotes where poll=".$thread['poll']." and choice=".$pops;
 			$rVotes = Query($qVotes);
 			$votes = NumRows($rVotes);
 
 			$cellClass = ($cellClass+1) % 2;
-			print "<tr class=\"cell".$cellClass."\">";
 			if($loguserid && !$thread['closed'])
-				print "<td>".$pc[$pops]."<a href=\"thread.php?id=".$thread['id']."&amp;vote=".$pops."\">".$option['choice']."</a></td>";
+				$label = format("{0} <a href=\"thread.php?id={1}&amp;vote={2}\">{3}</a>", $pc[$pops], $thread['id'], $pops, $option['choice']);
 			else
-				print "<td>".$pc[$pops].$option['choice']."</td>";
-			print "<td><img src=\"img/bargraph.php?z=".$votes."&amp;n=".$totalVotes."&amp;c=".str_replace("#","",$option['color'])."\" title=\"".$votes." of ".$totalVotes."\" alt=\"\" /></td>";
-			print "</tr>";
+				$label = format("{0} {1}", $pc[$pops], $option['choice']);
+			
+			$bar = "&nbsp;0";
+			if($totalVotes > 0)
+			{
+				$width = 100 * ($votes / $totalVotes);
+				$alt = format("{0}&nbsp;of&nbsp;{1},&nbsp;{2}%", $votes, $totalVotes, $width);
+				$bar = format("<div class=\"pollbar\" style=\"background: {0}; width: {1}%;\" title=\"{2}\">&nbsp;{3}</div>", $option['color'], $width, $alt, $votes);
+				if($width == 0)
+					$bar = "&nbsp;".$votes;
+			}
+
+			$pollLines .= format(
+"
+		<tr class=\"cell{0}\">
+			<td>
+				{1}
+			</td>
+			<td class=\"width75\">
+				<div class=\"pollbarContainer\">
+					{2}
+				</div>
+			</td>
+		</tr>
+", $cellClass, $label, $bar);
 			$pops++;
 		}
-
-		print "</table>";
-		print "</div>";
-	} else
-	{
-		//Silently discard the stuff...
+		write(
+"
+	<table class=\"outline margin\">
+		<tr class=\"header0\">
+			<th colspan=\"2\">
+				Poll
+			</th>
+		</tr>
+		<tr class=\"cell0\">
+			<td colspan=\"2\">
+				{1}
+			</td>
+		</tr>
+		{2}
+	</table>
+", $cellClass, htmlspecialchars($poll['question']), $pollLines);
 	}
 }
 
@@ -204,7 +256,7 @@ else
 
 $qPosts = "select ";
 $qPosts .=
-	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, users.postheader, users.signature, users.globalblock, users.lastposttime, users.lastactivity, users.regdate";
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, users.postheader, users.signature, users.signsep, users.globalblock, users.lastposttime, users.lastactivity, users.regdate";
 $qPosts .= 
 	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
 $qPosts .= " where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
@@ -225,7 +277,7 @@ if($pagelinks)
 		$pagelinks = " 1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"thread.php?id=".$tid."\">1</a>".$pagelinks;
-	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
+	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 }
 
 if(NumRows($rPosts))
@@ -241,10 +293,8 @@ if(NumRows($rPosts))
 }
 
 if($pagelinks)
-	print "<div class=\"smallFonts pages\">Pages: ".$pagelinks."</div>";
+	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
-
-doFooter();
 
 ?>
