@@ -2,14 +2,20 @@
 //  AcmlmBoard XD support - Post functions
 
 include_once("geshi.php");
+include_once("write.php");
 
-function LoadSmilies()
+function LoadSmilies($byOrder = FALSE)
 {
 	global $smilies;
-	if(isset($smilies))
-		return;
+	//if(isset($smilies))
+	//	return;
 	$qSmilies = "select * from smilies";
+	if($byOrder)
+		$qSmilies .= " order by id asc";
+	else
+		$qSmilies .= " order by length(code) desc";
 	$rSmilies = Query($qSmilies);
+	$smilies = array();
 	while($smilies[] = Fetch($rSmilies));
 }
 
@@ -50,7 +56,24 @@ function MakeFlash($match)
 {
 	global $flashloops;
 	$flashloops++;
-	return "<div class=\"swf\" style=\"width: ".($match[1]+4)."px;\"><div class=\"swfmain\" id=\"swf".$flashloops."main\" style=\"width: ".$match[1]."px; height: ".$match[2]."px;\"></div><div class=\"swfcontrol\"><span class=\"swfbuttonoff\" id=\"swf".$flashloops."play\" onclick=\"startFlash(".$flashloops."); return false;\">&#x25BA;</span><span class=\"swfbuttonon\" id=\"swf".$flashloops."stop\" onclick=\"stopFlash(".$flashloops."); return false;\">&#x25A0;</span><span class=\"swfurl\" id=\"swf".$flashloops."url\">".$match[3]."</span></div></div>";
+	return format(
+"
+	<div class=\"swf\" style=\"width: {0}px;\">
+		<div class=\"swfmain\" id=\"swf{4}main\" style=\"width: {1}px; height: {2}px;\">
+		</div>
+		<div class=\"swfcontrol\">
+			<span class=\"swfbuttonoff\" id=\"swf{4}play\" onclick=\"startFlash({4}); return false;\">
+				&#x25BA;
+			</span>
+			<span class=\"swfbuttonon\" id=\"swf{4}stop\" onclick=\"stopFlash({4}); return false;\">
+				&#x25A0;
+			</span>
+			<span class=\"swfurl\" id=\"swf{4}url\">
+				{3}
+			</span>
+		</div>
+	</div>
+", $match[1] + 4, $match[1], $match[2], $match[3], $flashloops);
 }
 
 function GeshiCallback($matches)
@@ -58,7 +81,7 @@ function GeshiCallback($matches)
 	$geshi = new GeSHi(trim($matches[1]), "csharp", null);
 	$geshi->set_header_type(GESHI_HEADER_NONE);
 	$geshi->enable_classes();
-	return "<div class=\"geshi\">".str_replace("\n", "", $geshi->parse_code())."</div>";
+	return format("<div class=\"geshi\">{0}</div>", str_replace("\n", "", $geshi->parse_code()));
 }
 
 function GeshiCallbackL($matches)
@@ -66,28 +89,28 @@ function GeshiCallbackL($matches)
 	$geshi = new GeSHi(trim($matches[2]), $matches[1], null);
 	$geshi->set_header_type(GESHI_HEADER_NONE);
 	$geshi->enable_classes();
-	return "<div class=\"geshi\">".str_replace("\n", "", $geshi->parse_code())."</div>";
+	return format("<div class=\"geshi\">{0}</div>", str_replace("\n", "", $geshi->parse_code()));
 }
 
 function MakeWikipedia($matches)
 {
 	$wikiTitle = $matches[2];
 	$escaped = str_replace(" ", "_", $matches[1]);
-	return "[url=http://en.wikipedia.org/wiki/".$escaped."]".$wikiTitle."[/url]";
+	return format("[url=http://en.wikipedia.org/wiki/{0}]{1}[/url]", $escaped, $wikiTitle);
 }
 
 function MakeShortWikipedia($matches)
 {
 	$wikiTitle = $matches[1];
 	$escaped = str_replace(" ", "_", $wikiTitle);
-	return "[url=http://en.wikipedia.org/wiki/".$escaped."]".$wikiTitle."[/url]";
+	return format("[url=http://en.wikipedia.org/wiki/{0}]{1}[/url]", $escaped, $wikiTitle);
 }
 
 function MakeTrope($matches)
 {
 	$tropeTitle = $matches[1];
 	$tropeText = $matches[2];
-	return "[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/".$tropeTitle."]".$tropeText."[/url]";
+	return format("[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/{0}]{1}[/url]", $tropeTitle, $tropeText);
 }
 
 function MakeShortTrope($matches)
@@ -101,7 +124,7 @@ function MakeShortTrope($matches)
 		$tropeText .= $tropeTitle[$i];
 	}
 	$tropeText = trim($tropeText);
-	return "[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/".$tropeTitle."]".$tropeText."[/url]";
+	return format("[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/{0}]{1}[/url]", $tropeTitle, $tropeText);
 }
 
 function MakeUserLink($matches)
@@ -217,6 +240,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 
 
 	//Various other stuff
+	//[SUGGESTION] Block "display: none" instead of just "display:" -- Mega-Mario
 	$s = preg_replace("'display:'si", "display<em></em>:", $s);
 
 	//$s = preg_replace("'([\s]+)([o])([n])([a-z]*)'si","\\1\\2<z>\\3\\4", $s);
@@ -225,7 +249,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace("/<([^>]+)bonw+s*=s*'[^>]+'/Uis", "<$1", $s);
 	$s = preg_replace('/<([^>]+)bonw+s*=s*[^>s]+/i', "<$1", $s);
 	*/
-	$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change");
+	$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error");
 	foreach($onEvents as $onEvent)
 		$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
 
@@ -270,12 +294,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	//Smilies
 	if(!$noSmilies)
 	{
-	/*
-		for($i = 0; $i < count($smilies); $i++)
-			$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
-		for($i = 0; $i < count($smilies); $i++)
-			$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".$smilies[$i]['code']."\" />", $s);
-	*/
 		for($i = 0; $i < count($smilies); $i++)
 		{
 			$preg_special = array("\\","^","$",".","*","+","?","|","(",")","[","]","{","}","@");
@@ -305,40 +323,42 @@ function ApplyTags($text, $tags)
 
 function MakePost($post, $thread, $forum, $ispm=0)
 {
-	global $loguser, $loguserid, $dateformat, $theme, $hacks;
+	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot;
 
 	$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
 	$rBlock = Query($qBlock);
 	$isBlocked = NumRows($rBlock) | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
 	$noSmilies = $post['options'] & 2;
 
-//Deletion behavior A -- post is simply made invisible.
 	if($post['deleted'])
 	{
-		$meta = "Posted on ".gmdate($dateformat,$post['date']);
+		$meta = "Posted on ".cdate($dateformat,$post['date']);
 		$links = "Post deleted | ";
 		if(CanMod($loguserid,$forum) || $post['uid'] == $loguserid)
 			$links .= "<a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a> | ";
 		$links .= "ID: ".$post['id'];
-		print "<div class=\"outline margin\">";
-		print "<a name=\"".$post['id']."\"></a>";
-		print "<table class=\"post\">";
-		print "<tr>";
-		print "<td class=\"side userlink\">";
-		print UserLink($post, "uid");
-		print "</td>";
-		print "<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">";
-		print $meta;
-		print "</td>";
-		print "<td class=\"smallFonts right\" style=\"border-left: 0px none;\">";
-		print $links;
-		print "</td>";
-		print "</tr>";
-		print "</table>";
-		print "</div>";
+		write(
+"
+		<div class=\"outline margin\">
+			<a name=\"{0}\"></a>
+			<table class=\"post\">
+				<tr>
+					<td class=\"side userlink\">
+						{1}
+					</td>
+					<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">
+						{2}
+					</td>
+					<td class=\"smallFonts right\" style=\"border-left: 0px none;\">
+						{3}
+					</td>
+				</tr>
+			</table>
+		</div>
+",	$post['id'], UserLink($post, "uid"), $meta, $links
+);
 		return;
 	}
-//</Deletion method A>
 
 	if($ispm == 1)
 		$thread = $ispm;
@@ -346,7 +366,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	if($thread)
 	{
 		$links = "";
-		if(!$ispm)
+		if(!$ispm && !$isBot)
 		{
 			$links .= "<a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a> | ";
 			if($thread && $loguser['powerlevel'] > -1 && $forum != -2)
@@ -363,7 +383,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 				$links .= " | ".$post['ip'];
 		}
 
-		$meta = (!$ispm ? "Posted on " : 'Sent on ').gmdate($dateformat,$post['date']);
+		$meta = (!$ispm ? "Posted on " : 'Sent on ').cdate($dateformat,$post['date']);
 		//Threadlinks for listpost.php
 		if($forum == -2)
 			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".$post['threadname']."</a>";
@@ -375,7 +395,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$meta = "Sample post";
 
 	if($forum==-1)
-		$meta = "Posted in <a href=\"thread.php?id=".$thread['id']."\">".$thread['title']."</a>";
+		$meta = "Posted in <a href=\"thread.php?id=".$thread['id']."\">".htmlspecialchars($thread['title'])."</a>";
 
 	//if($post['postbg'])
 	//	$postbg = " style=\"background: url(".$post['postbg'].");\"";
@@ -404,10 +424,10 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$lastpost = ($post['lastposttime'] ? timeunits(time() - $post['lastposttime']) : "none");
 	$lastview = timeunits(time() - $post['lastactivity']);
 
-	$sideBarStuff .= "<br />Posts: ".$post['num']."/".$post['posts'];
-	$sideBarStuff .= "<br />Since: ".gmdate($loguser['dateformat'], $post['regdate']);
-	$sideBarStuff .= "<br /><br />Last post: ".$lastpost;
-	$sideBarStuff .= "<br />Last view: ".$lastview;
+	$sideBarStuff .= "<br />\nPosts: ".$post['num']."/".$post['posts'];
+	$sideBarStuff .= "<br />\nSince: ".cdate($loguser['dateformat'], $post['regdate']);
+	$sideBarStuff .= "<br /><br />\nLast post: ".$lastpost;
+	$sideBarStuff .= "<br />\nLast view: ".$lastview;
 
 	if($hacks['themenames'] == 3)
 	{
@@ -416,55 +436,17 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	}
 
 	if($post['lastactivity'] > time() - 3600)
-		$sideBarStuff .= "<br />User is <strong>online</strong>";
+		$sideBarStuff .= "<br />\nUser is <strong>online</strong>";
 
-	print "<div class=\"outline margin\">";
 	if($post['id'] != "???")
-		print "<a name=\"".$post['id']."\" />";
-	print "<table class=\"post\">";
-	print "<tr>";
-	
+		$anchor = "<a name=\"".$post['id']."\" />";
 	if(!$isBlocked)
 	{
-		print "<td class=\"side userlink topbar".$post['uid']."_1\">";
-		print UserLink($post, "uid");
-		print "</td>";
-		print "<td class=\"meta right topbar".$post['uid']."_2\">";
-		print "<div style=\"float: left;\">".$meta."</div>";
-		print $links;
-		print "</td>";
-		print "</tr>";
-
-		print "<tr>";
-		print "<td class=\"side sidebar".$post['uid']."\">";
-		print "<div class=\"smallFonts\">";
-		print $sideBarStuff;
-		print "</div>";
-		print "</td>";
-		print "<td class=\"post mainbar".$post['uid']."\" colspan=\"2\">";
+		$topBar1 = "topbar".$post['uid']."_1";
+		$topBar2 = "topbar".$post['uid']."_2";
+		$sideBar = "sidebar".$post['uid'];
+		$mainBar = "mainbar".$post['uid'];
 	}
-	else
-	{
-		//If we don't do this, and you have a regular and disablelayout post,
-		//your disablelayout post gets the same Neritic style.
-		print "<td class=\"side userlink\">";
-		print UserLink($post, "uid");
-		print "</td>";
-		print "<td class=\"meta right\">";
-		print "<div style=\"float: left;\">".$meta."</div>";
-		print $links;
-		print "</td>";
-		print "</tr>";
-
-		print "<tr>";
-		print "<td class=\"side\">";
-		print "<div class=\"smallFonts\">";
-		print $sideBarStuff;
-		print "</div>";
-		print "</td>";
-		print "<td class=\"post\" colspan=\"2\">";
-	}
-
 
 	$tags = array();
 	$rankHax = $post['posts'];
@@ -484,7 +466,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$post['posts'] = $rankHax;
 
 	if($post['postheader'] && !$isBlocked)
-		print str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
+		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
 
 	//Pirate Day filter
 	if($hacks['postfilter'])
@@ -500,18 +482,130 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	else if($hacks['postfilter'] == 5)
 		$post['text'] = FuddFilter($post['text']);
 
-	print ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
+	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
 
 	if($post['signature'] && !$isBlocked)
 	{
+		$postFooter = ApplyTags(CleanUpPost($post['signature']), $tags);
 		if(!$post['signsep'])
-			print "<br />_________________________<br />";
-		print ApplyTags(CleanUpPost($post['signature']), $tags);
+			$separator = "<br />_________________________<br />";
+		else
+			$separator = "<br />";
 	}
-	print "</td>";
-	print "</tr>";
-	print "</table>";
-	print "</div>";
+
+	$postCode =
+"
+		<div class=\"outline margin id=\"post_{13}\">
+			{0}
+			<table class=\"post\">
+				<tr>
+					<td class=\"side userlink {1}\">
+						{5}
+					</td>
+					<td class=\"meta right {2}\">
+						<div style=\"float: left;\">
+							{7}
+						</div>
+						{8}
+					</td>
+				</tr>
+				<tr>
+					<td class=\"side {3}\">
+						<div class=\"smallFonts\">
+							{6}
+						</div>
+					</td>
+					<td class=\"post {4}\">
+
+						{9}
+						
+						{10}
+						
+						{12}
+						{11}
+
+					</td>
+				</tr>
+			</table>
+		</div>
+";
+
+	$postCode =
+"
+		<table class=\"post margin\">
+			<tr>
+				<td class=\"side userlink {1}\">
+					{0}
+					{5}
+				</td>
+				<td class=\"meta right {2}\">
+					<div style=\"float: left;\">
+						{7}
+					</div>
+					{8}
+				</td>
+			</tr>
+			<tr>
+				<td class=\"side {3}\">
+					<div class=\"smallFonts\">
+						{6}
+					</div>
+				</td>
+				<td class=\"post {4}\">
+
+					{9}
+
+					{10}
+
+					{12}
+					{11}
+
+				</td>
+			</tr>
+		</table>
+";
+
+/*
+	$postCode =
+"
+	<div class=\"post_container\" id=\"post_{13}B\">
+		{0}
+		<div class=\"post_about {3}B1\">
+			<div class=\"post_user {1}B\">
+				{5}
+			</div>
+			<div class=\"post_info {3}B2\">
+				{6}
+			</div>
+		</div>
+		<div class=\"post_topbar {2}B\">
+
+			<div class=\"post_timestamp\">
+				{7}
+			</div>
+			<div class=\"post_options\">
+				{8}
+			</div>
+		</div>
+		<div class=\"post_content {4}B\">
+
+						{9}
+						
+						{10}
+						
+						{12}
+						{11}
+
+		</div>
+	</div>
+";
+*/
+
+	write($postCode,
+			$anchor, $topBar1, $topBar2, $sideBar, $mainBar,
+			UserLink($post, "uid"), $sideBarStuff, $meta, $links,
+			$postHeader, $postText, $postFooter, $separator, $post['id']);
+
 }
 
 ?>
