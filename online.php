@@ -16,98 +16,187 @@ $rUsers = Query($qUsers);
 $rGuests = Query($qGuests);
 $rBots = Query($qBots);
 
-print "<div class=\"smallFonts\">";
-print "Show visitors during the last ";
 $spans = array(60, 300, 900, 3600, 86400);
+$spanList = "";
 foreach($spans as $span)
 {
-	print "<a href=\"online.php?time=".$span."\">".timeunits($span)."</a>";
-	if($boo++ < count($spans)-1)
-		print " | ";
+	$spanList .= format(
+"
+			<li>
+				<a href=\"online.php?time={0}\">{1}</a>
+			</li>
+",	$span, timeunits($span));
 }
-print "</div>";
+write(
+"
+	<div class=\"smallFonts\">
+		Show visitors during the last
+		<ul class=\"pipemenu\">
+			{0}
+		</ul>
+	</div>
+", $spanList);
 
-print "<table class=\"outline margin\">";
-print "<tr class=\"header0\">";
-print "<th colspan=\"5\">Online users</th>";
-print "</tr>";
-print "<tr class=\"header1\">";
-print "<th style=\"width: 30px;\">#</th>";
-print "<th>Name</th>";
-print "<th style=\"width: 140px;\">Last view</th>";
-print "<th style=\"width: 140px;\">Last post</th>";
-print "<th>URL</th>";
-print "</tr>";
 
+$userList = "";
 $i = 1;
-while($user = Fetch($rUsers))
+if(NumRows($rUsers))
 {
-	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\">";
-	print "<td>".$i."</td>";
-	print "<td>".UserLink($user)."</td>";
-	print "<td>".gmdate("d-m-y G:i:s",$user['lastactivity'])."</td>";
-	print "<td>".($user['lastposttime'] ? gmdate("d-m-y G:i:s",$user['lastposttime']) : "Never")."</td>";
-	print "<td>".($user['lasturl'] ? "<a href=\"".$user['lasturl']."\">".str_replace(array("%20","_")," ", $user['lasturl'])."</a>" : "None")."</td>";
-	print "</tr>";
-	$i++;
+	while($user = Fetch($rUsers))
+	{
+		$cellClass = ($cellClass+1) % 2;
+		if($user['lasturl'])
+			$lastUrl = "<a href=\"".$user['lasturl']."\">".str_replace(array("%20","_"), " ", $user['lasturl'])."</a>";
+		else
+			$lastUrl = "None";
+
+		$userList .= format(
+	"
+		<tr class=\"cell{0}\">
+			<td>
+				{1}
+			</td>
+			<td>
+				{2}
+			</td>
+			<td>
+				{3}
+			</td>
+			<td>
+				{4}
+			</td>
+			<td>
+				{5}
+			</td>
+		</tr>
+	",	$cellClass, $i, UserLink($user), cdate("d-m-y G:i:s", $user['lastactivity']),
+		($user['lastposttime'] ? cdate("d-m-y G:i:s",$user['lastposttime']) : "Never"),
+		$lastUrl);
+		$i++;
+	}
 }
+else
+	$userList = "<tr class=\"cell0\"><td colspan=\"5\">No users</td></tr>";
 
-print "</table>";
-
-print "<table class=\"outline margin\">";
-print "<tr class=\"header1\">";
-print "<th style=\"width: 30px;\">#</th>";
-print "<th>User agent</th>";
-print "<th style=\"width: 140px;\">Last view</th>";
-print "<th>URL</th>";
-print "<th style=\"width: 140px;\">IP</th>";
-print "</tr>";
-print "<tr class=\"header0\">";
-print "<th colspan=\"5\">Guests</th>";
-print "</tr>";
-
+$guestList = "";
 if(NumRows($rGuests))
 {
 	$i = 1;
 	while($guest = Fetch($rGuests))
 	{
 		$cellClass = ($cellClass+1) % 2;
-		print "<tr class=\"cell".$cellClass."\">";
-		print "<td>".$i."</td>";
-		print "<td title=\"".htmlspecialchars($guest['useragent'])."\">".htmlspecialchars(substr($guest['useragent'], 0, 65))."</td>";
-		print "<td>".gmdate("d-m-y G:i:s",$guest['date'])."</td>";
-		print "<td>".($guest['date'] ? "<a href=\"".$guest['lasturl']."\">".str_replace(array("%20","_")," ", $guest['lasturl'])."</a>" : "None")."</td>";
-		print "<td>".$guest['ip'].IP2C($guest['ip'])."</td>";
-		print "</tr>";
+		if($guest['date'])
+			$lastUrl = "<a href=\"".$guest['lasturl']."\">".str_replace(array("%20","_"), " ", $guest['lasturl'])."</a>";
+		else
+			$lastUrl = "None";
+		
+		$guestList .= format(
+"
+		<tr class=\"cell{0}\">
+			<td>{1}</td>
+			<td title=\"{2}\">{3}</td>
+			<td>{4}</td>
+			<td>{5}</td>
+			<td>{6} {7}</td>
+		</tr>
+",	$cellClass, $i, htmlspecialchars($guest['useragent']),
+	htmlspecialchars(substr($guest['useragent'], 0, 65)), cdate("d-m-y G:i:s", $guest['date']),
+	$lastUrl, $guest['ip'], IP2C($guest['ip']));
 		$i++;
 	}
-} else
-	print "<tr class=\"cell0\"><td colspan=\"5\">No guests</td></tr>";
+}
+else
+	$guestList = "<tr class=\"cell0\"><td colspan=\"5\">No guests</td></tr>";
 
-print "<tr class=\"header0\"><th colspan=\"5\">Bots</th></tr>";
-
+$botList = "";
 if(NumRows($rBots))
 {
 	$i = 1;
 	while($bot = Fetch($rBots))
 	{
 		$cellClass = ($cellClass+1) % 2;
-		print "<tr class=\"cell".$cellClass."\">";
-		print "<td>".$i."</td>";
-		print "<td title=\"".htmlspecialchars($bot['useragent'])."\">".htmlspecialchars(substr($bot['useragent'], 0, 65))."</td>";
-		print "<td>".gmdate("d-m-y G:i:s",$bot['date'])."</td>";
-		print "<td>".($bot['date'] ? "<a href=\"".$bot['lasturl']."\">".str_replace(array("%20","_")," ", $bot['lasturl'])."</a>" : "None")."</td>";
-		print "<td>".$bot['ip']."</td>";
-		print "</tr>";
+		if($bot['date'])
+			$lastUrl = "<a href=\"".$bot['lasturl']."\">".str_replace(array("%20","_"), " ", $bot['lasturl'])."</a>";
+		else
+			$lastUrl = "None";
+
+		$botList .= format(
+"
+		<tr class=\"cell{0}\">
+			<td>{1}</td>
+			<td title=\"{2}\">{3}</td>
+			<td>{4}</td>
+			<td>{5}</td>
+			<td>{6}</td>
+		</tr>
+",	$cellClass, $i, htmlspecialchars($bot['useragent']),
+	htmlspecialchars(substr($bot['useragent'], 0, 65)), cdate("d-m-y G:i:s", $bot['date']),
+	$lastUrl, $bot['ip']);
 		$i++;
 	}
 } else
-	print "<tr class=\"cell0\"><td colspan=\"5\">No bots</td></tr>";
+	$botList = "<tr class=\"cell0\"><td colspan=\"5\">No bots</td></tr>";
 
-print "</table>";
+write(
+"
+	<table class=\"outline margin\">
+		<tr class=\"header0\">
+			<th colspan=\"5\">
+				Online users
+			</th>
+		</tr>
+		<tr class=\"header1\">
+			<th style=\"width: 30px;\">
+				#
+			</th>
+			<th>
+				Name
+			</th>
+			<th style=\"width: 140px;\">
+				Last view
+			</th>
+			<th style=\"width: 140px;\">
+				Last post
+			</th>
+			<th>
+				URL
+			</th>
+		</tr>
+		{0}
+	</table>
+	<table class=\"outline margin\">
+		<tr class=\"header1\">
+			<th style=\"width: 30px;\">
+				#
+			</th>
+			<th>
+				User agent
+			</th>
+			<th style=\"width: 140px;\">
+				Last view
+			</th>
+			<th>
+				URL
+			</th>
+			<th style=\"width: 140px;\">
+				IP
+			</th>
+		</tr>
+		<tr class=\"header0\">
+			<th colspan=\"5\">
+				Guests
+			</th>
+		</tr>
+		{1}
+		<tr class=\"header0\">
+			<th colspan=\"5\">
+				Bots
+			</th>
+		</tr>
+		{2}
+	</table>
+", $userList, $guestList, $botList);
 
-doFooter();
 
 function IP2C($ip)
 {
