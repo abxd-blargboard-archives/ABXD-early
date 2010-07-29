@@ -65,7 +65,13 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		$poster['id'] = $post['uid'];
 
 		print "\n<item>\n";
-		print "<title>New reply by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
+		
+		//if($thread['replies'] < 1)
+		//	print "<title>New thread by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
+		//else
+		//	print "<title>New reply by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
+		print "<title>New post by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
+			
 		print "<link>".$boardurl."/thread.php?pid=".$post['id']."#".$post['id']."</link>\n";
 		print "<pubDate>".gmdate(DATE_RFC1123, $post['date'])."</pubDate>\n";
 		print "<description><![CDATA[".CleanUpPost($post['text'], $poster['name'], true)."]]></description>\n";
