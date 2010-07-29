@@ -32,6 +32,7 @@ $qThreads = "select * from threads";
 $rThreads = Query($qThreads);
 while($thread = Fetch($rThreads))
 {
+	$thread['title'] = htmlspecialchars($thread['title']);
 	$cellClass = ($cellClass+1) % 2;
 	print "<tr class=\"cell".$cellClass."\">";
 	print "<td>".$thread['title']."</td>";
@@ -86,7 +87,7 @@ while($forum = Fetch($rForum))
 	$first = 1;
 	while($thread = Fetch($rThread))
 	{
-		print "&raquo; ".$thread['title']."<br/>";
+		print "&raquo; ".htmlspecialchars($thread['title'])."<br/>";
 		$lastPost = Fetch(Query("select * from posts where thread = ".$thread['id']." order by date desc limit 0,1"));
 		print "&raquo; &raquo; Last post ID is ".$lastPost['id']." by user #".$lastPost['user']."<br/>";
 		Query("update threads set lastpostid = ".$lastPost['id'].", lastposter = ".$lastPost['user'].", lastpostdate = ".$lastPost['date']." where id = ".$thread['id']);
@@ -95,9 +96,5 @@ while($forum = Fetch($rForum))
 		$first = 0;
 	}
 }
-
-
-
-doFooter();
 
 ?>
