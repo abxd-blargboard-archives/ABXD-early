@@ -126,6 +126,18 @@ input, textarea, button, select
 	font-family: "Fixedsys", "Courier New", monospace;
 }
 
+input[type="submit"], button
+{
+	background: black;
+	color: cyan;
+}
+input[type="submit"]:hover, button:hover
+{
+	background: black;
+	color: white;
+}
+
+
 .faq
 {
 	background: black;
@@ -242,3 +254,84 @@ a, a span
 	font-style: normal;
 	color: gray;
 }
+
+.pollbarContainer
+{
+	background: black;
+	border: 0px none;
+	margin: 0em;
+	border-radius: 0px;
+	-moz-border-radius: 0px;
+	width: 75%;
+}
+
+.pollbar
+{
+	border: 0px none;
+	border-radius: 0px;
+	-moz-border-radius: 0px;
+	color: white;
+	text-shadow: none;
+	box-shadow: none;
+}
+
+
+.threadTag
+{
+	color: white;
+}
+
+
+.post_about
+{
+	background: navy;
+}
+.post_topbar
+{
+	background: navy;
+}
+.post_content
+{
+	background: black;
+}
+.post_about, .post_topbar, .post_content
+{
+	color: silver;
+	box-shadow: none;
+	border-radius: 0px;
+	-moz-border-radius: 0px;
+	border: 0px none;
+}
+
+table.outline, table.outline td, table.outline th
+{
+	border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+}
+
+.PoRT, .PoRT div
+{
+	border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+	box-shadow: none !important;
+}
+.PoRT .errorc
+{
+	background: black;
+}
+
+
+
+div#tabs button
+{
+	border-radius: 0px;
+	-moz-border-radius: 0px;
+	border: 0px none;
+}
+
+div#tabs button.selected
+{
+	background: teal;
+	color: black;
+}
+
