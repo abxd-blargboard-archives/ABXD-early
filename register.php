@@ -28,52 +28,100 @@ function CheckProxy()
 if(!isset($_POST['action']))
 {
 	include("lib/header.php");
-	print "<form action=\"register.php\" method=\"post\">";
-	print "<table class=\"outline margin width50\">";
-	print "<tr class=\"header0\">";
-	print "<th colspan=\"2\">Register</th>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"un\">User name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"un\" name=\"name\" maxlength=\"25\" style=\"width: 98%;\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"pw\">Password</label></td>";
-	print "<td class=\"cell1\"><input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"13\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"email\">Email address</label></td>";
-	print "<td class=\"cell1\"><input type=\"text\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\" /></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\">Sex</td>";
-	print "<td class=\"cell1\">".MakeOptions("sex",2,$sexes)."</td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"></td>";
-	print "<td class=\"cell0\"><input type=\"checkbox\" id=\"rf\" name=\"readFaq\"></input><label for=\"rf\">I have read the <a href=\"faq.php\">FAQ</a></label></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"tw\">The word</label></td>";
-	print "<td class=\"cell1\"><input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\"></input></td>";
-	print "</tr>";
+	write(
+"
+	<form action=\"register.php\" method=\"post\">
+		<table class=\"outline margin width50\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Register
+				</th>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"un\">User name</label>
+				</td>
+				<td class=\"cell0\">
+					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"25\" style=\"width: 98%;\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"pw\">Password</label>
+				</td>
+				<td class=\"cell1\">
+					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"email\">Email address</label>
+				</td>
+				<td class=\"cell1\">
+					<input type=\"text\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					Sex
+				</td>
+				<td class=\"cell1\">
+					{0}
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\"></td>
+				<td class=\"cell0\">
+					<label>
+						<input type=\"checkbox\" name=\"readFaq\" />
+						I have read the <a href=\"faq.php\">FAQ</a>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"tw\">The word</label>
+				</td>
+				<td class=\"cell1\">
+					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\" />
+				</td>
+			</tr>
+", MakeOptions("sex",2,$sexes));
 
 	if($haveSecurimage)
 	{
-		print "<tr><td class=\"cell2\">Security</td><td class=\"cell1\">";
-		print "<img id=\"captcha\" src=\"captcha.php\" alt=\"CAPTCHA Image\" />";
-		print " <button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">New</button><br />";
-		print "<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" />";
-		print "</td></tr>";
+		write(
+"
+			<tr>
+				<td class=\"cell2\">
+					Security
+				</td>
+				<td class=\"cell1\">
+					<img id=\"captcha\" src=\"captcha.php\" alt=\"CAPTCHA Image\" />
+					<button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">New</button><br />
+					<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" />
+				</td>
+			</tr>
+");
 	}
 
-	print "<tr class=\"cell2\">";
-	print "<td></td>";
-	print "<td><input type=\"submit\" name=\"action\" value=\"Register\"></input> <input type=\"checkbox\" id=\"n\" checked=\"checked\" name=\"autologin\"></input><label for=\"s\">Log in afterwards</label></td>";
-	print "</tr>";
-	print "</table>";
-	print "</form>";
-} elseif($_POST['action'] == "Register")
+	write(
+"
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Register\"/>
+					<label>
+						<input type=\"checkbox\" checked=\"checked\" name=\"autologin\" />
+						Log in afterwards
+					</label>
+				</td>
+			</tr>
+		</table>
+	</form>
+");
+}
+elseif($_POST['action'] == "Register")
 {
 	$name = htmlentities2($_POST['name']);
 	$cname = strtolower($name);
@@ -91,7 +139,7 @@ if(!isset($_POST['action']))
 			break;
 	}
 
-	CheckProxy();
+	//CheckProxy();
 
 	$qIP = "select lastip from users where lastip='".$_SERVER['REMOTE_ADDR']."'";
 	$rIP = Query($qIP);
@@ -124,7 +172,9 @@ if(!isset($_POST['action']))
 		Kill($err);
 	}
 
-	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".justEscape($_POST['name'])."', '".md5($_POST['pass'])."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].")";
+	$sha = hash("sha256", $_POST['pass']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+
+	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".justEscape($_POST['name'])."', '".$sha."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].")";
 	$rUsers = Query($qUsers);
 
 	$uid = mysql_insert_id();
@@ -151,14 +201,15 @@ if(!isset($_POST['action']))
 	}
 }
 
-doFooter();
-
 function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
 	$checks[$checkedIndex] = " checked=\"checked\"";
 	foreach($choicesList as $key=>$val)
-		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
+		$result .= format("
+					<label>
+						<input type=\"radio\" name=\"{1}\" value=\"{0}\"{2} />
+						{3}
+					</label>", $key, $fieldName, $checks[$key], $val);
 	return $result;
 }
-
 ?>
