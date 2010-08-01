@@ -158,6 +158,7 @@ input, select, textarea
 	background: #040;
 	border: 1px solid green;
 	color: white;
+	font-family: "Consolas", "Courier New", monospace;
 }
 
 input[type="submit"], button
@@ -165,6 +166,7 @@ input[type="submit"], button
 	border: 1px solid green;
 	background: #040;
 	color: white;
+	font-family: "Consolas", "Courier New", monospace;
 }
 
 
@@ -190,4 +192,68 @@ input[type="submit"], button
 .geshi .co1
 {
 	color: green;
+}
+
+.threadTag
+{
+	color: white;
+}
+
+.pollbarContainer
+{
+	border: 1px solid #040;
+}
+
+
+.post_about
+{
+	background: #010;
+	border: 1px solid #040;
+}
+.post_topbar
+{
+	background: #010;
+	border: 1px solid #040;
+}
+.post_content
+{
+	background: #010;
+	border: 1px solid #040;
+}
+.post_about, .post_topbar, .post_content
+{
+	box-shadow: none;
+}
+
+
+table.outline
+{
+	border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+	border-collapse: collapse !important;
+}
+table.outline td, table.outline th
+{
+	border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+	border: 1px solid black !important;
+}
+
+.PoRT, .PoRT div
+{
+	border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+	box-shadow: none !important;
+}
+
+div#tabs button
+{
+	border-radius: 0px;
+	-moz-border-radius: 0px;
+	border: 0px none;
+}
+
+div#tabs button.selected
+{
+	border-bottom: 1px solid #040;
 }
