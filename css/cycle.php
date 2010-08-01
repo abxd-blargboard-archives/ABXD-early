@@ -25,7 +25,7 @@ body
 	background: hsl([huesat], 16%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
 }
 
-.cell1, table.post, .faq, .errorc
+.cell1, table.post, .faq, .errorc, .post_content
 {
 	background: hsl([huesat], 20%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
 }
@@ -98,6 +98,7 @@ button, input[type=submit]
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 30%);
 	border-radius: 4px;
+	-moz-border-radius: 4px;
 	box-shadow:
 		inset -1px -10px 5px hsl([huesat], 20%),
 		inset 1px 6px 12px hsl([huesat], 50%),
@@ -111,6 +112,7 @@ input[type=text], input[type=password], textarea, select
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 10%);
 	border-radius: 4px;
+	-moz-border-radius: 4px;
 	box-shadow: inset 1px 6px 12px black;
 	color: white;
 	padding-left: 0.5em;
@@ -127,6 +129,7 @@ input[type=checkbox], input[type=radio]
 input[type=radio]
 {
 	border-radius: 8px;
+	-moz-border-radius: 8px;
 }
 */
 
@@ -137,11 +140,13 @@ button, input[type=submit]
 	color: white;
 	text-shadow: 1px 1px 0px #000;
 	border-radius: 8px;
+	-moz-border-radius: 8px;
 }
 
-input[type=text], input[type=password], textarea, select
+input[type=text], input[type=password], input[type=\"file\"], textarea, select
 {
 	border-radius: 6px;
+	-moz-border-radius: 6px;
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 10%);
 	color: white;
@@ -152,6 +157,54 @@ input[type=checkbox], input[type=radio]
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 10%);
 	color: white;
+}
+input[type=radio]
+{
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+}
+
+.pollbarContainer
+{
+	border: 1px solid hsl([huesat], 30%);
+}
+
+
+.post_about, .post_topbar
+{
+	background: hsl([huesat], 16%) url(../img/themes/cycle/cellgradient.png) repeat-x top;
+}
+.post_about, .post_topbar, .post_content
+{
+	border: 1px solid hsl([huesat], 20%);
+}
+
+table.post
+{
+	border: 1px solid hsl([huesat], 20%);
+}
+
+table.outline
+{
+	border: 1px solid hsl([huesat], 20%);
+}
+
+div#tabs button
+{
+	border-top-left-radius: 8px;
+	border-top-right-radius: 32px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	padding-right: 16px;
+	background: hsl([huesat], 30%);
+}
+
+div#tabs button.selected
+{
+	position: static;
+	z-index: -100;
+	border-bottom: 1px solid hsl([huesat], 20%);
+	background: hsl([huesat], 40%);
 }
 
 ";
