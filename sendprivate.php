@@ -80,11 +80,12 @@ if($_POST['action']=="Send")
 
 		if($_POST['text'])
 		{
+			//$post = justEscape($post);
 			$post = htmlentities2(deSlashMagic($_POST['text']));
 			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 			TidyPost($post);
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
-			$post = justEscape($post);
+			$post = mysql_real_escape_string($post);
 
 			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
 			$rPM = Query($qPM);
@@ -125,43 +126,75 @@ if($_POST['action']=="Preview")
 	}
 }
 
-if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
-if($_POST['title']) $trefill = htmlval(deSlashMagic($_POST['title']));
+//if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
+//if($_POST['title']) $trefill = htmlval(deSlashMagic($_POST['title']));
+if($_POST['text']) $prefill = htmlval($_POST['text']);
+if($_POST['title']) $trefill = htmlval($_POST['title']);
 
 if(!isset($_POST['iconid']))
 	$_POST['iconid'] = 0;
 
+Write(
+"
+	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
+	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+	<table style=\"width: 100%;\">
+		<tr>
+			<td style=\"vertical-align: top; border: none;\">
+				<form action=\"sendprivate.php\" method=\"post\">
+					<table class=\"outline margin width100\">
+						<tr class=\"header1\">
+							<th colspan=\"2\">
+								Send PM
+							</th>
+						</tr>
+						<tr class=\"cell0\">
+							<td>
+								To
+							</td>
+							<td>
+								<input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60\" value=\"{2}\" />
+							</td>
+						</tr>
+						<tr class=\"cell1\">
+							<td>
+								Title
+							</td>
+							<td>
+								<input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{1}\" />
+							</td>
+						<tr class=\"cell0\">
+							<td>
+								Post
+							</td>
+							<td>
+								<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
+							</td>
+						</tr>
+						<tr class=\"cell2\">
+							<td></td>
+							<td>
+								<input type=\"submit\" name=\"action\" value=\"Send\" /> 
+								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+							</td>
+						</tr>
+					</table>
+				</form>
+			</td>
+			<td style=\"width: 200px; vertical-align: top; border: none;\">
+",	$prefill, $trefill, $_POST['to']);
+
 DoSmileyBar();
 DoPostHelp();
 
-print "<form action=\"sendprivate.php\" method=\"post\">";
-print "<table class=\"outline margin width50\">";
-print "<tr class=\"cell0\">";
-print "<td style=\"width: 25%;\">To</td>";
-print "<td><input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60\" value=\"".$_POST['to']."\"></input></td>";
-print "</tr>";
-print "<tr class=\"cell1\">";
-print "<td style=\"width: 25%;\">Title</td>";
-print "<td><input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"".deSlashMagic($trefill)."\"></input></td>";
-print "</tr>";
-print "<tr class=\"cell0\">";
-print "<td>Post</td>";
-print "<td>";
-print "<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">".$prefill."</textarea>";
-print "</td>";
-print "</tr>";
-print "<tr class=\"cell2\">";
-print "<td></td>";
-print "<td>";
-print "<input type=\"submit\" name=\"action\" value=\"Send\"></input>";
-print "<input type=\"submit\" name=\"action\" value=\"Preview\"></input>";
-print "</td>";
-print "</tr>";
-print "</table>";
-print "</form>";
+Write(
+"
+			</td>
+		</tr>
+	</table>
+");
+			
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
-
-doFooter();
 
 ?>
