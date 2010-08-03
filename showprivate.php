@@ -39,26 +39,26 @@ if(!isset($_GET['snooping']))
 {
 	$qPM = "update pmsgs set msgread=1 where id=".$pm['id'];
 	$rPM = Query($qPM);
-} else
+	$links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
+}
+else
 	Alert("You are snooping.");
 
-$links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pm['title']=>""), $links);
+$pmtitle = htmlspecialchars($pm['title']); //sender's custom title overwrites this below, so save it here
 
-$pmtitle = $pm['title']; //sender's custom title overwrites this below, so save it here
+MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pmtitle=>""), $links);
+
 
 $pm['num'] = "---";
 $pm['posts'] = "---";
 $pm['id'] = "???";
 $pm['uid'] = $user['id'];
-$copies = explode(",","title,title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$pm[$toCopy] = $user[$toCopy];
 MakePost($pm, 0, 0, 1);
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", $pmtitle=>""), $links);
-
-doFooter();
 
 ?>
