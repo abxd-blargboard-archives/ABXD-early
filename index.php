@@ -56,50 +56,49 @@ if(count($birthdays))
 
 include("lib/header.php");
 
-?>
+write(
+"
+	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
+	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+	<script type=\"text/javascript\">
+		window.onload = function() { startOnlineUsers(0); startNewMarkers(); };
+	</script>
+	<style type=\"text/css\">
+		.ignored
+		{
+			opacity: 0.5;
+		}
+	</style>
 
-<script type="text/javascript" src="lib/Tween.js"></script>
-<script type="text/javascript" src="lib/OpacityTween.js"></script>
-<script type="text/javascript">
-	window.onload = function() { startOnlineUsers(0); };
-</script>
+	<div class=\"outline margin width100 smallFonts\" style=\"overflow: auto;\">
+		<div class=\"header0 cell2 center\" style=\"overflow: auto;\">
+			<div class=\"center\" style=\"float: left; width: 75%; border-right: 1px solid black;\">
+				{0}
+			</div>
+			{1}
+		</div>
+",	$stats, $last);
 
-<div class="outline margin width100 smallFonts" style="overflow: auto;">
-<div class="header0 cell2 center" style="overflow: auto;">
-<div class="center" style="float: left; width: 75%; border-right: 1px solid black;"><?php print $stats; ?></div>
-<?php print $last; ?>
-</div>
-<?php
 if($birthdaysToday)
 {
-	print "<div class=\"header1 cell2\" style=\"border-top: 0px; text-align: center\">";
-	print "Birthdays today: ".$birthdaysToday;
-	print "</div>"; 
+	write("
+		<div class=\"header1 cell2\" style=\"border-top: 0px; text-align: center\">
+			Birthdays today: {0}
+		</div>", $birthdaysToday);
 }	
-?>
-<div class="header0 cell1 center" style="overflow: auto; border-top: 0px">
-<span id="onlineUsers">
-<?php print $onlineUsers; ?>
-</span>
-</div>
-</div>
-<?php
+
+write(
+"
+		<div class=\"header0 cell1 center\" style=\"overflow: auto; border-top: 0px\">
+			<span id=\"onlineUsers\">
+				{0}
+			</span>
+		</div>
+	</div>
+",	$onlineUsers);
 
 if($loguserid)
 	DoPrivateMessageBar();
-//else
-//	print "<div id=\"pmNotice\" style=\"opacity: 1;\">Please <a href=\"login.php\">log in</a> or <a href=\"register.php\">create an account</a> to post.</div>";
-?>
-
-<table class="outline margin">
-	<tr class="header1">
-		<th style="width: 20px"></th>
-		<th style="width: 75%">Forum title</th>
-		<th>Threads</th>
-		<th>Posts</th>
-		<th style="width: 15%">Last Post</th>
-	</tr>
-	<?php
 
 $rCategories = Query("select name,minpower from categories");
 $category[] = "dummy";
@@ -126,6 +125,15 @@ $rThreadsRead = Query("select id, lastpostdate, forum from threads");
 while($trd = Fetch($rThreadsRead))
 	$threadsRead[$trd['id']] = $trd;
 
+$ignored = array();
+if($loguserid)
+{
+	$rIgnores = Query("select fid from ignoredforums where uid=".$loguserid);
+	while($ignore = Fetch($rIgnores))
+		$ignored[$ignore['fid']] = TRUE;
+}
+
+$theList = "";
 while($forum = Fetch($rFora))
 {
 	if($category[$forum['catid']]['minpower'] > $pl)
@@ -134,19 +142,25 @@ while($forum = Fetch($rFora))
 	if($forum['catid'] > $lastCatID)
 	{
 		$lastCatID = $forum['catid'];
-		?>
-		<tr class="header0">
-			<th colspan="5"><?php print $category[$lastCatID]['name']; ?></th>
+		$theList .= format(
+"
+		<tr class=\"header0\">
+			<th colspan=\"5\">
+				{0}
+			</th>
 		</tr>
-		<?php
+", $category[$lastCatID]['name']);
 	}
+
 	$forum['description'] = str_replace("[trash]","",$forum['description']);
 	$newstuff = 0;
 	$NewIcon = "";
 	$localMods = "";
-	foreach($threadsRead as $trd)
-		if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
-			$newstuff++; //adding counters to the NEW part was easy -- this used to just set it to TRUE.
+	if(!$ignored[$forum['id']])
+		foreach($threadsRead as $trd)
+			if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
+				$newstuff++; //adding counters to the NEW part was easy -- this used to just set it to TRUE.
+	$ignoreClass = $ignored[$forum['id']] ? " class=\"ignored\"" : "";
 
 	if((!$loguserid && $forum['lastpostdate'] > time() - 900) || ($loguserid && $newstuff))
 		$NewIcon = "<img src=\"img/status/new.png\" alt=\"New!\"/>".$newstuff;
@@ -161,48 +175,68 @@ while($forum = Fetch($rFora))
 	if(array_key_exists($forum['id'], $forumsHad))
 		continue;
 
-	?>
-		<tr class="cell1">
-			<td class="cell2 threadIcon"><?php print $NewIcon; ?></td>
-			<td>
-				<h4><a href="forum.php?id=<?php print $forum['id']; ?>"><?php print $forum['title']; ?></a></h4>
+	if($forum['lastpostdate'])
+	{
+		$lastLink = "";
+		if($forum['lastpostid'])
+			$lastLink = "<a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
+		$lastLink = format("{0}<br />by {1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($members[$forum['lastpostuser']]), $lastLink);
+	}
+	else
+		$lastLink = "----";
 
-				<?php print $forum['description']; ?>
-				<?php print $localMods; ?>
 
+	$theList .= format(
+"
+		<tr class=\"cell1\">
+			<td class=\"cell2 threadIcon newMarker\">
+				{0}
 			</td>
-			<td class="center"><?php print $forum['numthreads']; ?></td>
-			<td class="center"><?php print $forum['numposts']; ?></td>
-			<td class="smallFonts center">
-			<?php
-				if($forum['lastpostdate'])
-				{
-					$lastLink = "";
-					if($forum['lastpostid'])
-						$lastLink = " <a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
-					print gmdate($dateformat, $forum['lastpostdate'])."<br />by ".UserLink($members[$forum['lastpostuser']]).$lastLink;
-				}
-				else
-					print "----";
-			?>
-
+			<td>
+				<h4{8}>
+					<a href=\"forum.php?id={1}\">
+						{2}
+					</a>
+				</h4>
+				<span{8}>
+					{3}
+					{4}
+				</span>
+			</td>
+			<td class=\"center\">
+				{5}
+			</td>
+			<td class=\"center\">
+				{6}
+			</td>
+			<td class=\"smallFonts center\">
+				{7}
 			</td>
 		</tr>
-	<?php
+",	$NewIcon, $forum['id'], $forum['title'], $forum['description'], $localMods,
+	$forum['numthreads'], $forum['numposts'], $lastLink, $ignoreClass);
 	$forumsHad[$forum['id']] = $forum['name'];
 }
-print "</table>";
-
-//print "Magic Quotes: ".get_magic_quotes_gpc();
-
-doFooter();
+write(
+"
+<table class=\"outline margin\" id=\"mainTable\">
+	<tr class=\"header1\">
+		<th style=\"width: 20px\"></th>
+		<th style=\"width: 75%\">Forum title</th>
+		<th>Threads</th>
+		<th>Posts</th>
+		<th style=\"width: 15%\">Last Post</th>
+	</tr>
+	{0}
+</table>
+",	$theList);
 
 function readpostread($userid)
 {
-  $postreads = Query("select * from threadsread where id=".$userid);
-  while($read1 = Fetch($postreads))
-  	$postread[$read1['thread']]=$read1['date'];
-  return $postread;
+	$postreads = Query("select * from threadsread where id=".$userid);
+	while($read1 = Fetch($postreads))
+		$postread[$read1['thread']] = $read1['date'];
+	return $postread;
 }
 
 ?>
