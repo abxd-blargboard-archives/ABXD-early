@@ -1,42 +1,15 @@
 <?php
 //  AcmlmBoard XD support - Main hub
 
-//User settings
-$boardname = "ABXD/NikoBoard";
-$logoalt = "Niko's Board";
-$logotitle = "Totally not Kawa's Board";
-//$poratitle = "Points of Required Attention Span&trade;";
-$dateformat = "M jS Y, G:i"; //"Oct 15th 2008, 16:29"
+if(!is_file("lib/database.php"))
+	die("You should <a href=\"install.php\">install</a> the board database first.");
 
-$autoLockMonths = 2; //number of 30-day "months" after which to auto-close threads.
-//If set to 0, disables auto-closing.
-
-//Version 1.1.1 update: this has been replaced with a friendly warning in newreply.php.
-$viewcountInterval = 10000; //how many views until user 1 gets noticed in PM
-
-$overallTidy = 1;
-
-$cynthiaUA = "Cynthetiq 0.24 on Windows 7 <!-- Cynthetiq/0.24 (Windows NT 6.1; U; en; .NET CLR 3.5.30729) -->";
-
-//hack settings:
-//	forcetheme -> theme ID, -1 to disable
-//	themenames -> 0 - disabled
-//				  1 - christmas
-//				  2 - rainbow
-//				  3 - anonymous
-//	postfilter -> 0 - disabled
-//				  1 - pirate
-//				  2 - swedish
-//				  3 - kraut
-//				  4 - jive
-//				  5 - fudd
-//$hacks['forcetheme'] = 1;
-//$hacks['themenames'] = 2;
-//$hacks['postfilter'] = 3;
 include("settings.php");
-
+include("snippets.php");
+if($ajax)
+	$overallTidy = 0;
 //if($overallTidy)
-	ob_start();
+	ob_start("DoFooter");
 
 if(!isset($title))
 	$title = "";
@@ -51,7 +24,6 @@ $thisURL = $_SERVER['SCRIPT_NAME'];
 if($q = $_SERVER['QUERY_STRING'])
 	$thisURL .= "?$q";
 
-include("snippets.php");
 include("loguser.php");
 
 if(!isset($noViewCount))
@@ -164,5 +136,19 @@ function ParseThreadTags(&$title)
 		$tags = " ".$tags;
 	return $tags;
 }
+
+function cdate($format, $date = 0)
+{
+	global $loguser;
+	if($date == 0)
+		$date = gmmktime();
+	$hours = (int)($loguser['timezone']/3600);
+	$minutes = floor(abs($loguser['timezone']/60)%60);
+	$plusOrMinus = $hours < 0 ? "" : "+";
+	$timeOffset = $plusOrMinus.$hours." hours, ".$minutes." minutes";
+	return gmdate($format, strtotime($timeOffset, $date));
+}
+
+include("write.php");
 
 ?>

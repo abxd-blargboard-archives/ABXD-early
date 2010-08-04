@@ -2,7 +2,7 @@
 
 $macros = array
 (
-	//"ofcourse" => "ofcourse.jpg",
+	"ofcourse" => "ofcourse.jpg",
 );
 
 ?>

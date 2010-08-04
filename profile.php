@@ -19,6 +19,12 @@ if(NumRows($rUser))
 else
 	Kill("Unknown user ID.");
 
+
+if($id == $loguserid)
+	Query("update users set newcomments = 0 where id=".$loguserid);
+
+$canDeleteComments = ($id == $loguserid || $loguser['powerlevel'] > 2);
+
 if(isset($_GET['block']) && $loguserid)
 {
 	$block = (int)$_GET['block'];
@@ -85,19 +91,6 @@ if($loguserid)
 	}	
 }
 
-/*
-$karma = 100;
-$karmaWeights = array(5, 10, 10, 15);
-$qKarma = "select powerlevel, up from uservotes left join users on id=voter where uid=".$id." and powerlevel > -1";
-$rKarma = Query($qKarma);
-while($k = Fetch($rKarma))
-{
-	if($k['up'])
-		$karma += $karmaWeights[$k['powerlevel']];
-	else
-		$karma -= $karmaWeights[$k['powerlevel']];
-}
-*/
 $karma = $user['karma'];
 if(!$canVote)
 	$karmaLinks = "";
@@ -116,7 +109,7 @@ $averageThreads = sprintf("%1.02f", $threads / $daysKnown);
 $score = ((int)$daysKnown * 2) + ($posts * 4) + ($threads * 8) + (($karma - 100) * 3);
 
 if($user['minipic'])
-	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle; \" />";
+	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle;\" />";
 
 if($user['rankset'])
 {
@@ -137,193 +130,251 @@ if($user['homepageurl'])
 		$homepage = "<a href=\"".$user['homepageurl']."\">".$user['homepageurl']."</a>";
 }
 
-print "<table><tr><td style=\"width: 60%;\">";
-
-print "<table class=\"outline margin\">";
-
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">General information</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\" style=\"width: 20%;\">Name</td>";
-print "<td class=\"cell1\">".$minipic.$user['name']."</td>";
-print "</tr>";
+write("
+	<table>
+		<tr>
+			<td style=\"width: 60%; border: 0px none; vertical-align: top; padding-right: 1em; padding-bottom: 1em;\">
+				<table class=\"outline margin\">
+					<tr class=\"header0\">
+						<th colspan=\"2\">General information</th>
+					</tr>
+					<tr>
+						<td class=\"cell0\" style=\"width: 20%;\">Name</td>
+						<td class=\"cell1\">{0}{1}</td>
+					</tr>
+",	$minipic, $user['name']
+	);
 if($title)
 {
-	print "<tr>";
-	print "<td class=\"cell0\">Title</td>";
-	print "<td class=\"cell1\">".$title."</td>";
-	print "</tr>";
+	write("
+					<tr>
+						<td class=\"cell0\">Title</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+", $title);
 }
 if($currentRank)
 {
-	print "<tr>";
-	print "<td class=\"cell0\">Rank</td>";
-	print "<td class=\"cell1\">".$currentRank."</td>";
-	print "</tr>";
+	write("
+					<tr>
+						<td class=\"cell0\">Rank</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+", $currentRank);
 }
 if($toNextRank)
 {
-	print "<tr>";
-	print "<td class=\"cell0\">To next rank</td>";
-	print "<td class=\"cell1\">".$toNextRank."</td>";
-	print "</tr>";
+	write("
+					<tr>
+						<td class=\"cell0\">To next rank</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+", $toNextRank);
 }
-print "<tr>";
-print "<td class=\"cell0\">Karma</td>";
-print "<td class=\"cell1\">".$karma.$karmaLinks."</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Total posts</td>";
-print "<td class=\"cell1\">".$posts." (".$averagePosts." per day)</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Total threads</td>";
-print "<td class=\"cell1\">".$threads." (".$averageThreads." per day)</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Registered on</td>";
-print "<td class=\"cell1\">".gmdate($dateformat, $user['regdate'])." (".TimeUnits($daysKnown*86400)." ago)</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Score</td>";
-print "<td class=\"cell1\">".$score." points</td>";
-print "</tr>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Browser</td>";
-print "<td class=\"cell1\">".$user['lastknownbrowser']."</td>";
-print "</tr>";
-
-if($user['badges'])
-{
-	print "<tr>";
-	print "<td class=\"cell0\">Badges</td>";
-	print "<td class=\"cell1\">".GetBadgeList()."</td>";
-	print "</tr>";
-}
-
+write("
+					<tr>
+						<td class=\"cell0\">Karma</td>
+						<td class=\"cell1\">{0}{1}</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Total posts</td>
+						<td class=\"cell1\">{2} ({3} per day)</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Total threads</td>
+						<td class=\"cell1\">{4} ({5} per day)</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Registered on</td>
+						<td class=\"cell1\">{6} ({7} ago)</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Score</td>
+						<td class=\"cell1\">{8}</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Browser</td>
+						<td class=\"cell1\">{9}</td>
+					</tr>
+",	$karma, $karmaLinks, $posts, $averagePosts, $threads, $averageThreads,
+	cdate($dateformat, $user['regdate']), TimeUnits($daysKnown*86400),
+	$score, $user['lastknownbrowser']
+);
 if($groups)
 {
-	print "<tr>";
-	print "<td class=\"cell0\">Groups</td>";
-	print "<td class=\"cell1\">".$groups."</td>";
-	print "</tr>";
+	write("
+					<tr>
+						<td class=\"cell0\">Groups</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+", $groups);
 }
 
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Contact information</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Email address</td>";
-print "<td class=\"cell1\">".CleanUpPost($user['email'])."</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Homepage</td>";
-print "<td class=\"cell1\">".CleanUpPost($homepage)."</td>";
-print "</tr>";
+write("
+					<tr class=\"header0\">
+						<th colspan=\"2\">Contact information</th>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Email address</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Homepage</td>
+						<td class=\"cell1\">{1}</td>
+					</tr>
+",	CleanUpPost($user['email']), CleanUpPost($homepage)
+);
 
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Presentation</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Theme</td>";
-print "<td class=\"cell1\">".$themeNames[$user['scheme']]."</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Items per page</td>";
-print "<td class=\"cell1\">".Plural($user['postsperpage'],"post").", ".Plural($user['threadsperpage'],"thread")."</td>";
-print "</tr>";
+write("
+					<tr class=\"header0\">
+						<th colspan=\"2\">Presentation</th>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Theme</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Items per page</td>
+						<td class=\"cell1\">{1}, {2}</td>
+					</tr>
+",	$themeNames[$user['scheme']],
+	Plural($user['postsperpage'],"post"), Plural($user['threadsperpage'],"thread")
+);
 
-print "<tr class=\"header0\">";
-print "<th colspan=\"2\">Personal information</th>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Real name</td>";
-print "<td class=\"cell1\">".$user['realname']."</td>";
-print "</tr>";
-print "<tr>";
-print "<td class=\"cell0\">Location</td>";
-print "<td class=\"cell1\">".$user['location']."</td>";
-print "</tr>";
+write("
+					<tr class=\"header0\">
+						<th colspan=\"2\">Personal information</th>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Real name</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+					<tr>
+						<td class=\"cell0\">Location</td>
+						<td class=\"cell1\">{1}</td>
+					</tr>
+",	strip_tags($user['realname']), strip_tags($user['location'])
+);
 if($user['birthday'])
 {
-	$bday = gmdate("F j, Y", $user['birthday']);
-	$age = " (".floor((time() - $user['birthday']) / 86400 / 365.2425)." years old)";
-	print "<tr>";
-	print "<td class=\"cell0\">Birthday</td>";
-	print "<td class=\"cell1\">".$bday.$age."</td>";
-	print "</tr>";
+	write("
+					<tr>
+						<td class=\"cell0\">Birthday</td>
+						<td class=\"cell1\">{0} ({1} years old)</td>
+					</tr>
+",	cdate("F j, Y", $user['birthday']),
+	floor((time() - $user['birthday']) / 86400 / 365.2425)
+	);
 }
-print "<tr>";
-print "<td class=\"cell0\">Bio</td>";
-print "<td class=\"cell1\">".CleanUpPost($user['bio'])."</td>";
-print "</tr>";
-print "</table>";
-print "</div>";
+write("
+					<tr>
+						<td class=\"cell0\">Bio</td>
+						<td class=\"cell1\">{0}</td>
+					</tr>
+				</table>
+			</td>
+",	CleanUpPost($user['bio']));
 
-print "</td><td style=\"vertical-align: top;\">";
+if($canDeleteComments && $_GET['action'] == "delete")
+{
+	Query("delete from usercomments where uid=".$id." and id=".(int)$_GET['cid']);
+}
 
-print "<div class=\"outline margin faq\" style=\"padding: 0px;\">";
-$qComments = "select * from usercomments where uid=".$id." order by id desc limit 0,10";
+$qComments = "select users.name, users.powerlevel, users.sex, usercomments.id, usercomments.cid, usercomments.text from usercomments left join users on users.id = usercomments.cid where uid=".$id." order by usercomments.id desc limit 0,10";
 $rComments = Query($qComments);
-print "<table>";
-print "<tr class=\"header1\"><th colspan=\"2\">Comments about ".UserLink($user)."</th></tr>";
+$commentList = "";
+$commentField = "";
 if(NumRows($rComments))
 {
 	while($comment = Fetch($rComments))
 	{
+		if($canDeleteComments)
+			$deleteLink = "<small style=\"float: right; margin: 0px 4px;\">[<a  href=\"profile.php?id=".$id."&amp;action=delete&amp;cid=".$comment['id']."\" title=\"Delete comment\">d</a>]</small>";
 		$cellClass = ($cellClass+1) % 2;
-		$qPoster = "select * from users where id=".$comment['cid'];
-		$rPoster = Query($qPoster);
-		$poster = Fetch($rPoster);
-		$c = "<tr>";
-		$c .= "<td class=\"cell2 width25\">".UserLink($poster)."</td>";
-		$c .= "<td class=\"cell".$cellClass."\">";
-		$c .= CleanUpPost($comment['text']);
-		$c .= "</td>";
-		$c .= "</tr>";
-		$f = $c . $f;
-		if(!isset($lastCommenter))
-			$lastCommenter = $poster;
+		$thisComment = format(
+"
+						<tr>
+							<td class=\"cell2 width25\">
+								{0}
+							</td>
+							<td class=\"cell{1}\">
+								{3}{2}
+							</td>
+						</tr>
+",	UserLink($comment, "cid"), $cellClass, CleanUpPost($comment['text']), $deleteLink);
+		$commentList = $thisComment . $commentList;
+		if(!isset($lastCID))
+			$lastCID = $comment['cid'];
 	}
 }
 else
-	$f = "<tr><td class=\"cell0\" colspan=\"2\">No comments.</td></tr>";
-if($_POST['action'] == "Post" && strip_tags($_POST['text']) != "" && $loguserid && ($loguserid != $lastCommenter['id']))
+	$commentList = $thisComment = format(
+"
+						<tr>
+							<td class=\"cell0\" colspan=\"2\">
+								No comments.
+							</td>
+						</tr>
+");
+
+if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $loguserid && $loguserid != $lastCID)
 {
 	$_POST['text'] = strip_tags($_POST['text']);
 	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
 	$rComment = Query($qComment);
-	$lastCommenter['id'] = $loguserid;
-	$c = "<tr>";
-	$c .= "<td class=\"cell2 width25\">".UserLink($loguser)."</td>";
-	$c .= "<td class=\"cell2\">";
-	$c .= CleanUpPost(deSlashMagic($_POST['text']));
-	$c .= "</td>";
-	$c .= "</tr>";
-	$f = $f . $c;
+	Query("update users set newcomments = 1 where id=".$id);
+	$lastCID = $loguserid;
+	$thisComment = format(
+"
+						<tr>
+							<td class=\"cell2 width25\">
+								{0}
+							</td>
+							<td class=\"cell{1}\">
+								{2}
+							</td>
+						</tr>
+",	UserLink($loguser), 2, CleanUpPost(deSlashMagic($_POST['text'])));
+	$commentList .= $thisComment;
 }
-print $f;
+
+//print "lastCID: ".$lastCID;
+
 if($loguserid)
 {
-	print "<tr><td class=\"cell2 smallFonts\" colspan=\"2\">";
-	if($lastCommenter['id'] == $loguserid)
-		print "You already have the last word.";
-	else
-	{
-		print "<form method=\"post\" action=\"profile.php\">";
-		print "<input type=\"hidden\" name=\"id\" value=\"".$id."\"></input>";
-		print "<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\"></input> ";
-		print "<input type=\"submit\" name=\"action\" value=\"Post\"></input>";
-		print "</form>";
-	}
-	print "</td></tr>";
+	$commentField = format(
+"
+								<form method=\"post\" action=\"profile.php\">
+									<input type=\"hidden\" name=\"id\" value=\"{0}\" />
+									<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\" />
+									<input type=\"submit\" name=\"action\" value=\"Post\" />
+								</form>
+", $id);
+	if($lastCID == $loguserid)
+		$commentField = "You already have the last word.";
 }
-print "</table>";
-print "</div>";
 
-print "</td></tr></table>";
+write(
+"
+			<td style=\"vertical-align: top; border: 0px none;\">
+				<table class=\"outline margin\">
+					<tr class=\"header1\">
+						<th colspan=\"2\">
+							Comments about {0}
+						</th>
+					</tr>
+					{1}
+					<tr>
+						<td colspan=\"2\" class=\"cell2\">
+							{2}
+						</td>
+					</tr>
+				</table>
+				{3}
+			</td>
+		</tr>
+	</table>
+",	UserLink($user), $commentList, $commentField, $rpgStuff);
 
 /*
 //Randomized previews
@@ -338,18 +389,13 @@ $previewPost['text'] = $previews[array_rand($previews)];
 //</randompreviews>
 */
 //Fixed preview
-$preview =
-	"This is a sample post. It demonstrates various kinds of [i]markup[/i] and quotes and such.
-	This has to be one of the [b]longest[/b] preview messages ever seen in an AcmlmBoard.[quote=Barack Obama]I am Barack Obama and I approve this preview message.[quote=some guy]This is a nested quote. See what you get.[/quote][/quote]Well, what more could you [url=http://en.wikipedia.org]want to know[/url]? Perhaps how to do the classic infinite loop?
-	[source=qbasic]10 PRINT \"Hello World!\"
-20 GOTO 10[/source]HEEEEY MACARONI! :D";
-$previewPost['text'] = $preview;
+$previewPost['text'] = $profilePreviewText;
 //</fixedpreview>
 
 $previewPost['num'] = "???";
 $previewPost['id'] = "???";
 $previewPost['uid'] = $id;
-$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,rankset,signature,posts,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,rankset,signature,signsep,posts,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$previewPost[$toCopy] = $user[$toCopy];
 
@@ -364,10 +410,18 @@ if($loguserid)
 $links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
 $links .= $blockLayoutLink;
 $links = substr($links, 0, strlen($links) - 2);
-print "<div class=\"smallFonts outline margin cell1\">".$links."</div>";
+write("
+	<div class=\"smallFonts outline margin cell1\">
+		{0}
+	</div>
+", $links);
 
 $title = "Profile for ".$user['name'];
 
-doFooter();
+function IsReallyEmpty($subject)
+{
+	$trimmed = trim(preg_replace("/&.*;/", "", $subject));
+	return strlen($trimmed) != 0;
+}
 
 ?>
