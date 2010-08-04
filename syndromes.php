@@ -6,14 +6,13 @@ $aff = "Affected by ";
 
 $syndromes = array
 (
-
 /*
-	//The small set from ABXD
+	//The small set from ABXD/Nikoboard
 	10 => array("Actually active", "#53C373"),
 	20 => array("$aff'Activity Syndrome'", "#69D989"),
 	30 => array("$aff'Activity Syndrome' +", "#83F3A3"),
 	
-	75 => array("$aff'Mountain Dew Voltage' Syndrome", "#8E83EE"),
+	50 => array("$aff'Mountain Dew Voltage' Syndrome", "#8E83EE"),
 
 	9001 => array("$aff'Goku Syndrome'", "#FF5353"),
 */
@@ -33,9 +32,6 @@ $syndromes = array
 	600 => array("$aff'Anya Syndrome'!!!", "#C762F2"),
 	800 => array("$aff'Something higher than Anya Syndrome' +++++!!", "#D06030"),
 
-*/
-
-/*
 	//And here's the Neritic Net set, as of May 15th 2010:
 	25 => array("$aff'Posting Syndrome'", "#53C373"),
 	50 => array("$aff'Posting Syndrome' +", "#69D989"),

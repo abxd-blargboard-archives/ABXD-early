@@ -2,23 +2,106 @@
 include("lib/common.php");
 $title = "Last known browsers";
 $isMod = $loguser['powerlevel'] > 0;
-$peeps = Query("SELECT `id`, `name`, `lastip`, `lastknownbrowser`, `sex`, `powerlevel` FROM `users` ORDER BY `id` ASC LIMIT 0, 30");
-print "<table class=\"outline margin\">\n";
-print "<tr class=\"header1\"><th>ID</th><th>Name</th><th>&nbsp;</th>";
+$sort = "id asc";
+if(isset($_GET['byua']))
+	$sort = "lastknownbrowser asc";
+
+
+$peeps = Query("select id, name, lastip, lastknownbrowser, sex, powerlevel from users where powerlevel < 5 order by ".$sort." limit 0, 30");
+
 if($isMod)
-	print "<th>IP</th>";
-print "<th>Last known browser</th></tr>\n";
+	$format = "
+		<tr class=\"cell{0}\">
+			<td>
+				{1}
+			</td>
+			<td>
+				{2}
+			</td>
+			<td>
+				{3}
+			</td>
+			<td>
+				{4}
+			</td>
+			<td>
+				{5}
+			</td>
+		</tr>
+	";
+else
+	$format = "
+		<tr class=\"cell{0}\">
+			<td>
+				{1}
+			</td>
+			<td>
+				{2}
+			</td>
+			<td>
+				{3}
+			</td>
+			<td>
+				{5}
+			</td>
+		</tr>
+	";
+
+$items = "";
 while($peep = Fetch($peeps))
 {
-	$cellClass = ($cellClass+1) % 2;
-	print "<tr class=\"cell".$cellClass."\"><td>".$peep['id']."</td><td>".UserLink($peep)."</td><td>".IP2C($peep['lastip'])."</td>";
-	if($isMod)
-		print "<td>".$peep['lastip']."</td>";
-	print "<td>".str_replace("-->", "", str_replace("<!--", " --", $peep['lastknownbrowser']))."</td></tr>\n";
-}
-print "</table>";
-doFooter();
+	$lip = $peep['lastip'];
+	$lkb = $peep['lastknownbrowser'];
+	if(isset($_GET['showfull']))
+		$lkb = str_replace("-->", "", str_replace("<!--", " &mdash;", $lkb));
 
+	$cellClass = ($cellClass+1) % 2;
+	$items .= format($format, $cellClass, $peep['id'], UserLink($peep), IP2C($lip), $lip, $lkb);
+}
+
+if($isMod)
+	write("
+	<table class=\"outline margin\">
+		<tr class=\"header1\">
+			<th>
+				ID
+			</th>
+			<th>
+				Name
+			</th>
+			<th>
+				&nbsp;
+			</th>
+			<th>
+				IP
+			</th>
+			<th>
+				Last known browser
+			</th>
+		</tr>
+		{0}
+	</table>
+", $items);
+else
+	write("
+	<table class=\"outline margin\">
+		<tr class=\"header1\">
+			<th>
+				ID
+			</th>
+			<th>
+				Name
+			</th>
+			<th>
+				&nbsp;
+			</th>
+			<th>
+				Last known browser
+			</th>
+		</tr>
+		{0}
+	</table>
+", $items);
 
 function IP2C($ip)
 {
