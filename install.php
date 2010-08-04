@@ -1,78 +1,104 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-  <head>
-    <title>
-      AcmlmBoard XD - Installation
-    </title>
-    <meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=8" />
-    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
-    <link rel="stylesheet" type="text/css" href="css/common.css" />
-    <link rel="stylesheet" type="text/css" href="css/default.css" />
-  </head>
-  <body style="font-size: 80%;">
-    <div class="outline margin width100">
-      <table>
-        <tr>
-          <td colspan="3" class="cell0">
-            <!-- Board header goes here -->
-            <table>
-              <tr>
-                <td style="border: 0px none;">
-                  <img src="img/themes/default/logo.png" alt="" />
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </div>
 <?php
+$noViewCount = TRUE;
+$noOnlineUsers = TRUE;
+$noFooter = TRUE;
+function cdate($format, $date = 0)
+{
+	global $loguser;
+	if($date == 0)
+		$date = gmmktime();
+	$hours = (int)($loguser['timezone']/3600);
+	$minutes = floor(abs($loguser['timezone']/60)%60);
+	$plusOrMinus = $hours < 0 ? "" : "+";
+	$timeOffset = $plusOrMinus.$hours." hours, ".$minutes." minutes";
+	return gmdate($format, strtotime($timeOffset, $date));
+}
+$loguser['fontsize'] = 80;
+$themeFile = "default.css";
 include("lib/snippets.php");
+include("lib/settings.php");
+$logopic = "img/themes/default/logo.png";
+$overallTidy = 0;
+$misc['poratitle'] = "Installing&hellip;";
+$misc['porabox'] = "Hold onto your hat.";
+$title = "Installation";
+ob_start("DoFooter");
 $timeStart = usectime();
 include("lib/feedback.php");
+include("lib/header.php");
+include("lib/write.php");
 
 if(isset($_GET['delete']))
 {
+	include("lib/common.php");
 	unlink("install.php") or Kill("Could not delete installation script.");
 	Redirect("Installation file removed.","./","the main page");
 }
 
 if(!isset($_POST['action']))
 {
-	print "<form action=\"install.php\" method=\"post\">";
-	print "<table class=\"outline margin width50\">";
-	print "<tr class=\"header0\">";
-	print "<th colspan=\"2\">Installation options</th>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"dbs\">Database server</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" value=\"localhost\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"dbn\">Database name</label></td>";
-	print "<td class=\"cell0\"><input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"dun\">Database user name</label></td>";
-	print "<td class=\"cell1\"><input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\"><label for=\"dpw\">Database user password</label></td>";
-	print "<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\"></input></td>";
-	print "</tr>";
-	print "<tr>";
-	print "<td class=\"cell2\">Options</td>";
-	print "<td class=\"cell1\"><input type=\"checkbox\" id=\"b\" name=\"addbase\"></input><label for=\"b\">Add starting forums and the usual Super Mario rankset</label></td>";
-	print "</tr>";
-	print "<tr class=\"cell2\">";
-	print "<td></td>";
-	print "<td><input type=\"submit\" name=\"action\" value=\"Install\"></input></td>";
-	print "</tr>";
-	print "</table>";
-	print "</form>";
-} else if($_POST['action'] == "Install")
+	write(
+"
+	<form action=\"install.php\" method=\"post\">
+		<table class=\"outline margin width50\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Installation options
+				</th>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"dbs\">Database server</label>
+				</td>
+				<td class=\"cell0\">
+					<input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" value=\"localhost\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"dbn\">Database name</label>
+				</td>
+				<td class=\"cell0\">
+					<input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"dun\">Database user name</label>
+				</td>
+				<td class=\"cell1\">
+					<input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell2\"><label for=\"dpw\">Database user password</label></td>
+				<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\"></input></td>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					Options
+				</td>
+				<td class=\"cell1\">
+					<label>
+						<input type=\"checkbox\" id=\"b\" name=\"addbase\" />
+						Add starting forums and the usual Super Mario rankset
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell2\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Install\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+");
+
+}
+else if($_POST['action'] == "Install")
 {
+
 	print "<div class=\"outline faq\">";
 	print "Trying to connect to database&hellip;<br />";
 	$dbserv = $_POST['dbserv'];
@@ -81,6 +107,7 @@ if(!isset($_POST['action']))
 	$dbname = $_POST['dbname'];
 	mysql_connect($dbserv, $dbuser, $dbpass) or Kill("Could not connect to database.");
 	mysql_select_db($dbname) or Kill("Could not select database.");
+
 	print "Writing database configuration file&hellip;<br />";
 	$dbcfg = fopen("lib/database.php", "w+") or Kill("Could not open \"lib/database.php\" for writing.");
 	fwrite($dbcfg, "<?php\n");
@@ -91,6 +118,50 @@ if(!isset($_POST['action']))
 	fwrite($dbcfg, "\$dbname = \"".$dbname."\";\n");
 	fwrite($dbcfg, "\n?>");
 	fclose($dbcfg);
+
+	print "Detecting Tidy support&hellip; ";
+	$tidy = (int)function_exists('tidy_repair_string');
+	if($tidy)
+	{
+		print "available.<br />";
+		print "Writing board configuration file&hellip;<br />";
+		include("lib/settings.php");
+		$hax = fopen("lib/settings.php", "w");
+		fputs($hax, "<?php\n");
+		fputs($hax, "//Generated and parsed by the Board Settings admin panel.\n");
+		fputs($hax, "\n");
+		fputs($hax, "//Settings\n");
+		fputs($hax, "\$boardname = \"".prepare($boardname)."\";\n");
+		fputs($hax, "\$logoalt = \"".prepare($logoalt)."\";\n");
+		fputs($hax, "\$logotitle = \"".prepare($logotitle)."\";\n");
+		fputs($hax, "\$dateformat = \"".prepare($dateformat)."\";\n");
+		fputs($hax, "\$autoLockMonths = ".(int)$autoLockMonths.";\n");
+		fputs($hax, "\$warnMonths = ".(int)$warnMonths.";\n");
+		fputs($hax, "\$customTitleThreshold = ".(int)$customTitleThreshold.";\n");
+		fputs($hax, "\$viewcountInterval = ".(int)$viewcountInterval.";\n");
+		fputs($hax, "\$overallTidy = ".(int)$tidy.";\n");
+		fputs($hax, "\$theWord = \"".prepare($theWord)."\";\n");
+		fputs($hax, "\$systemUser = ".(int)$systemUser.";\n");
+		fputs($hax, "\n");
+		fputs($hax, "//Hacks\n");
+		fputs($hax, "\$hacks['forcetheme'] = ".(int)$hacks['forcetheme'].";\n");
+		fputs($hax, "\$hacks['themenames'] = ".(int)$hacks['themenames'].";\n");
+		fputs($hax, "\$hacks['postfilter'] = ".(int)$hacks['postfilter'].";\n");
+		fputs($hax, "\n");
+		fputs($hax, "//Profile Preview Post\n");
+		fputs($hax, "\$profilePreviewText = \"".prepare($profilePreviewText, "\\\"")."\";\n");
+		fputs($hax, "\n");
+		fputs($hax, "//Meta\n");
+		fputs($hax, "\$metaDescription = \"The owner of this ABXD board was too lazy to edit the description field. Kill him.\";\n");
+		fputs($hax, "\$metaKeywords = \"abxd,acmlmboard\";\n");
+		fputs($hax, "?>");
+		fclose($hax);
+	}
+	else
+	{
+		print "not available.<br />";
+	}
+
 	include("lib/mysql.php");
 	print "Creating tables&hellip;<br />";
 
@@ -112,8 +183,6 @@ if(!isset($_POST['action']))
 
 	print "</div>";
 }
-
-DoFooter();
 
 //SQL importer based on KusabaX installer
 function Import($sqlFile)
@@ -145,4 +214,17 @@ function Import($sqlFile)
 	}
 }
 
+
+function prepare($text, $quot = "&quot;")
+{
+	$s = str_replace("\"", $quot, deSlashMagic($text));
+	return $s;
+}
+function deSlashMagic($text)
+{
+	if(get_magic_quotes_gpc())
+		return stripslashes($text);
+	else
+		return $text;
+}
 ?>
