@@ -1,6 +1,8 @@
 <?php
 //  AcmlmBoard XD support - Handy snippets
 
+include_once("write.php");
+
 function usectime()
 {
 	$t=gettimeofday();
@@ -20,38 +22,50 @@ function Plural($i, $s)
 	return $i." ".$s;
 }
 
-function DoFooter()
+function DoFooter($buffer)
 {
-	global $timeStart, $queries, $overallTidy, $boardname, $title;
-	print "<div class=\"footer\">";
-	print "AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 1.3.1<br />";
-	print "AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>";
-	print "Page rendered in ".sprintf("%1.3f",usectime()-$timeStart)." seconds with ".Plural($queries, "MySQL query").".<br />";
+	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title;
+	
+	if(!$noFooter)
+		$footer = format(
+"
+		<div class=\"footer\">
+			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0<br />
+			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>
+			Page rendered in {0} seconds with {1}.<br />
 
-	print "<a href=\"http://validator.w3.org/check?uri=referer\"><img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" /></a>";
-	print "<a href=\"http://jigsaw.w3.org/css-validator/\"><img src=\"img/css.png\" alt=\"Valid CSS!\" /></a>";
+			<a href=\"http://validator.w3.org/check?uri=referer\">
+				<img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" />
+			</a>
+			<a href=\"http://jigsaw.w3.org/css-validator/\">
+				<img src=\"img/css.png\" alt=\"Valid CSS!\" />
+			</a>
+			<a href=\"rss2.php\">
+				<img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" />
+			</a>
+			<a href=\"http://opera.com\">
+				<img src=\"img/opera.png\" alt=\"Opera!\" />
+			</a>
+			<a href=\"http://acmlm.kafuka.org/board/\">
+				<img src=\"img/board2.png\" alt=\"We're a spin-off from here!\" />
+			</a>
 
-	print "<a href=\"rss2.php\"><img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" /></a>";
-	print "<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\"><img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" /></a>";
-	print "<a href=\"http://opera.com\"><img src=\"img/opera.png\" alt=\"Opera!\" /></a>";
-
-	print "</div>";
-	print "</div>";
-	print "</body>";
-	print "</html>";
+		</div>
+	</div>
+</body>
+</html>
+",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"));
 	
 	$boardTitle = $boardname;
 	if($title != "")
 		$boardTitle .= " &raquo; ".$title;
 	
-	$raw = ob_get_contents();
+	$raw = $buffer . $footer;
 	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
-	ob_end_clean();
 
 	if(!$overallTidy)
 	{
-	print $raw;
-		return;
+		return $raw;
 	}
 		
 	$tidyConfig = array
@@ -71,15 +85,15 @@ function DoFooter()
 		"new-blocklevel-tags"=>"video",
 	);
 
-	$raw = OptimizeLayouts($raw);
+	if(function_exists(OptimizeLayouts))
+		$raw = OptimizeLayouts($raw);
 	$clean = tidy_repair_string($raw, $tidyConfig);
 		
 	$textareaFixed = str_replace("\r", "", $clean);
 	$textareaFixed = str_replace(" </text", "</text", $textareaFixed);
 	$textareaFixed = str_replace("\n</text", "</text", $textareaFixed);
 	//$textareaFixed = str_replace("\n</text", "</text", $textareaFixed);
-	print $textareaFixed;
-	exit();	
+	return $textareaFixed;
 }
 
 function GetRainbowColor()
@@ -192,8 +206,6 @@ function CanMod($userid, $fid)
 
 function MakeCrumbs($path, $links)
 {
-	//print "\n<table class=\"breadcrumbs\">\n";
-	//print "\t<tr>\n\t\t<td>\n";
 	foreach($path as $text=>$link)
 	{
 		$link = str_replace("&","&amp;",$link);
@@ -203,12 +215,18 @@ function MakeCrumbs($path, $links)
 			$crumbs .= $text. " &raquo; ";
 	}
 	$crumbs = substr($crumbs, 0, strlen($crumbs) - 8);
-	//print "\t\t</td>\n\t\t<td class=\"right\">\n\t\t\t".$links."\n\t\t</td>\n\t</tr>\n";
-	//print "</table>\n";
-	print "<div class=\"margin\">\n";
-	print "<div style=\"float: right;\"><ul class=\"pipemenu smallFonts\">".$links."</ul></div>\n";
-	print $crumbs;
-	print "</div>\n\n";
+	
+	write(
+"
+<div class=\"margin outline cell2\">
+	<div style=\"float: right;\">
+		<ul class=\"pipemenu smallFonts\">
+			{0}
+		</ul>
+	</div>
+	{1}
+</div>
+", $links, $crumbs);
 }
 
 
@@ -228,7 +246,7 @@ function DoPrivateMessageBar()
 	{
 		$qUnread = "select count(*) from pmsgs where userto = ".$loguserid." and msgread=0";
 		$unread= FetchResult($qUnread);
-
+		$content = "";
 		if($unread)
 		{
 			$pmNotice = $loguser['usebanners'] ? "id=\"pmNotice\" " : "";
@@ -238,12 +256,28 @@ function DoPrivateMessageBar()
 			$qUser = "select * from users where id = ".$last['userfrom'];
 			$rUser = Query($qUser);
 			$user = Fetch($rUser);
-			print "<div ".$pmNotice."class=\"outline margin cell1 smallFonts\">";
-			//print "<img src=\"img/status/new.png\" alt=\"NEW\" /> ";
-			print "You have ".Plural($unread, "new <a href=\"private.php\">private message")."</a>. ";
-			print "<a href=\"showprivate.php?id=".$last['id']."\">Last message</a> from ".UserLink($user)." on ".gmdate($dateformat, $last['date']).".";
-			print "</div>";
+			$content .= format(
+"
+		You have {0}</a>. 
+		<a href=\"showprivate.php?id={1}\">Last message</a> from {2} on {3}.
+",	Plural($unread, "new <a href=\"private.php\">private message"), $last['id'],
+	UserLink($user), cdate($dateformat, $last['date']));
 		}
+		
+		if($loguser['newcomments'])
+		{
+			$content .= format(
+"
+		You {0} have new comments in your <a href=\"profile.php?id={1}\">profile</a>.
+",	$content != "" ? "also" : "", $loguserid);		
+		}
+
+		write(
+"
+	<div {0} class=\"outline margin cell1 smallFonts\">
+		{1}
+	</div>
+", $pmNotice, $content);
 	}
 }
 
@@ -251,31 +285,39 @@ function DoSmileyBar($taname = "text")
 {
 	global $smilies;
 	$expandAt = 26;
-	LoadSmilies();
-	print "<div class=\"outline PoRT margin\" style=\"width: 180px;\">";
-	print "<div class=\"errort\"><strong>Smilies</strong></div>";
-	print "<div class=\"errorc cell0\" id=\"smiliesContainer\">";
+	LoadSmilies(TRUE);
+	
+	write(
+"
+	<div class=\"PoRT margin\" style=\"width: 180px;\">
+		<div class=\"errort\">
+			<strong>Smilies</strong>
+		</div>
+		<div class=\"errorc cell0\" id=\"smiliesContainer\">
+");
 	if(count($smilies) > $expandAt)
-		print "<button class=\"expander\" id=\"smiliesExpand\" onclick=\"expandSmilies();\">&#x25BC;</button>"; 
+		write("<button class=\"expander\" id=\"smiliesExpand\" onclick=\"expandSmilies();\">&#x25BC;</button>"); 
 	print "<div class=\"smilies\" id=\"commonSet\">";
 	for($i = 0; $i < count($smilies) - 1; $i++)
 	{
 		if($i == $expandAt)
 			print "</div><div class=\"smilies\" id=\"expandedSet\">";
 		$s = $smilies[$i];
-		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".$s['code']."\" title=\"".$s['code']."\" onclick=\"insertSmiley(' ".$s['code']." ');\" />";
+		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".htmlentities($s['code'])."\" title=\"".htmlentities($s['code'])."\" onclick=\"insertSmiley(' ".str_replace("'", "\'", $s['code'])." ');\" />";
 	}
-	print "</div>";
-	print "</div>";
-	print "</div>";
+	write("
+			</div>
+		</div>
+	</div>
+");
 }
 
 function DoPostHelp()
 {
 ?>
-	<div class="outline cell0 PoRT margin" style="width: 180px;">
+	<div class="PoRT margin" style="width: 180px;">
 		<div class="errort"><strong>Post help</strong></div>
-		<div class="errorc left">
+		<div class="errorc left cell0">
 			<button class="expander" id="postHelpExpand" onclick="expandPostHelp();">&#x25BC;</button>
 			<div id="commonHelp">
 				<h4>Presentation</h4>
