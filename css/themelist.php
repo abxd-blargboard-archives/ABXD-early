@@ -9,5 +9,7 @@ $themes = array(
 	"grayscale"=>"Grayscale",
 	"monogreen"=>"Mono Green",
 	"dos"=>"DOS-like",
+	"defaultold"=>"ABXD Classic",
 );
+
 ?>
