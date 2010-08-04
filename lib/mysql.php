@@ -1,10 +1,7 @@
 <?php
 //  AcmlmBoard XD support - MySQL database wrapper functions
 
-if(is_file("lib/database.php"))
-	include("database.php");
-else
-	die("You should <a href=\"install.php\">install</a> the board database first.");
+include("database.php");
 
 $queries = 0;
 
@@ -15,7 +12,7 @@ unset($dbpass);
 function Query($query)
 {
 	global $queries, $loguser, $thisURL;
-	$res = mysql_query($query) or Kill(mysql_error()."<br />Query was: <code>".$query."</code>");
+	$res = mysql_query($query) or Kill(mysql_error());
 	$queries++;
 	return $res;
 }
