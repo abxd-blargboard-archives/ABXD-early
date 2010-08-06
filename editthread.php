@@ -213,7 +213,6 @@ if($canMod)
 					<input type=\"radio\" {0}\" name=\"iconid\" value=\"{1}\" />
 					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" /
 				</label>
-				&nbsp;
 ", $check, $i);
 		$i++;
 	}
@@ -229,7 +228,7 @@ if($canMod)
 	write(
 "
 	<form action=\"editthread.php\" method=\"post\">
-		<table class=\"outline margin width75\">
+		<table class=\"outline margin width100\">
 			<tr class=\"header1\">
 				<th colspan=\"2\">
 					Edit Thread
@@ -247,19 +246,18 @@ if($canMod)
 				<td>
 					Icon
 				</td>
-				<td>
+				<td class=\"threadIcons\">
+					<label>
+						<input type=\"radio\" {2} name=\"iconid\" value=\"0\" /> 
+						<span>None</span>
+					</label> 
 					{1}
-
-					<br/>
+					<br />
 					<label>
-						<input type=\"radio\" {2} id=\"noicon\" name=\"iconid\" value=\"0\">
-						None
-					</label>
-					<label>
-						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" />
-						Custom:
-						<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"{4}\" />
-					</label>
+						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" /> 
+						<span>Custom</span>
+					</label> 
+					<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 50%;\" maxlength=\"100\" value=\"{4}\" />
 				</td>
 			</tr>
 			<tr class=\"cell2\">
