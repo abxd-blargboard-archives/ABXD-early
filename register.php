@@ -123,7 +123,7 @@ if(!isset($_POST['action']))
 }
 elseif($_POST['action'] == "Register")
 {
-	$name = htmlentities2($_POST['name']);
+	$name = htmlspecialchars($_POST['name']);
 	$cname = strtolower($name);
 	$cname = str_replace(" ","",$cname);
 	$cname = str_replace(" ","",$cname);
