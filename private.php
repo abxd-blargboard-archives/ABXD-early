@@ -118,7 +118,7 @@ if(NumRows($rPM))
 			</td>
 			{7}
 		</tr>
-",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<td><a href=\"private.php?del=".$pm['id']."\">del</a>" : "");
+",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<td><a href=\"private.php?del=".$pm['id'].$showSent."\">del</a>" : "");
 	}
 }
 else
