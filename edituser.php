@@ -7,8 +7,10 @@ include("lib/common.php");
 //if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
 //	if($_POST['id'] != $loguserid)
 //		Kill("You're not allowed to edit other users' profiles.");
-if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
-	if((isset($_POST['id']) && $_POST['id'] != $loguserid) || (isset($_GET['id']) && $_GET['id'] != $loguserid))
+//if($loguser['powerlevel'] < 3 && (isset($_POST['id']) || isset($_GET['id'])))
+//	if((isset($_POST['id']) && $_POST['id'] != $loguserid) || (isset($_GET['id']) && $_GET['id'] != $loguserid))
+//		Kill("You're not allowed to edit other users' profiles.");
+if($loguser['powerlevel'] < 3)
 		Kill("You're not allowed to edit other users' profiles.");
 
 if(isset($_POST['id']) && !isset($_GET['id']))
