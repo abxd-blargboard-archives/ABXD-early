@@ -123,7 +123,7 @@ if ($SearchAtAll)
 				
 	if ($Mode == 0)
 	{
-		$query = 'SELECT threads.id AS tid, threads.user, threads.title AS ttitle,
+		$query = 'SELECT threads.id AS thread, threads.user, threads.title AS threadname,
 					posts.id, posts.date, posts.num, posts.options, posts.mood, posts.ip,
 					posts_text.text, posts_text.revision, 
 					users.id AS uid, users.name, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, 
@@ -352,7 +352,7 @@ if ($SearchAtAll)
 					}
 				}
 				
-				MakePost($post, array('id'=>$post['tid'], 'title'=>$post['ttitle']), -1);
+				MakePost($post, array('id'=>$post['thread'], 'title'=>$post['threadname']), -2);
 				
 				$i++;
 				if (($i % $ppp) == 0)
@@ -400,7 +400,7 @@ if ($SearchAtAll)
 					$NewIcon = '<img src="img/status/'.$NewIcon.'.png" alt=""/>';
 
 				if($thread['icon'])
-					$ThreadIcon = '<img src="'.$thread['icon'].'" alt=""/>';
+					$ThreadIcon = '<img src="'.htmlspecialchars($thread['icon']).'" alt=""/>';
 				else
 					$ThreadIcon = '';
 
@@ -448,7 +448,7 @@ if ($SearchAtAll)
 				write('<td class="cell2" style="width: 17px;">{0}</td>', $NewIcon);
 				write('<td><a href="forum.php?id={0}">{1}</a></td>', $thread['fid'], $thread['ftitle']);
 				write('<td style="width: 17px;">{0}</td>', $ThreadIcon);
-				write('<td>{0}<a href="thread.php?id={1}">{2}</a>{3}</td>', $poll, $thread['id'], $thread['title'], $pl);
+				write('<td>{0}<a href="thread.php?id={1}">{2}</a>{3}</td>', $poll, $thread['id'], htmlspecialchars($thread['title']), $pl);
 				write('<td>{0}</td>', UserLink($starter));
 				write('<td class="center">{0}</td>', $thread['replies']);
 				write('<td class="center">{0}</td>', $thread['views']);
