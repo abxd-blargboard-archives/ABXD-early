@@ -209,7 +209,7 @@ if($_GET['link'])
 }
 else if($_GET['quote'])
 {
-	$qQuote = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".$_GET['quote'];
+	$qQuote = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".(int)$_GET['quote'];
 	$rQuote = Query($qQuote);
 	
 	if(NumRows($rQuote))

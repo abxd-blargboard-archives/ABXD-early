@@ -158,7 +158,7 @@ if(NumRows($rThreads))
 			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
 
 		if($thread['icon'])
-			$ThreadIcon = "<img src=\"".$thread['icon']."\" width=\"15\" alt=\"\"/>";
+			$ThreadIcon = "<img src=\"".htmlspecialchars($thread['icon'])."\" width=\"15\" alt=\"\"/>";
 		else
 			$ThreadIcon = "";
 
