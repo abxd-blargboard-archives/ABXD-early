@@ -18,7 +18,7 @@ $sort = $_GET['sort'];
 $sex = $_GET['sex'];
 if(isset($_GET['pow']) && $_GET['pow'] != "")
 	$pow = (int)$_GET['pow'];
-if(isset($_GET['letter']))
+if(isset($_GET['letter']) && is_string($_GET['letter']))
 	$letter = $_GET['letter'][0];
 else
 	$letter = "";
