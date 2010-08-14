@@ -65,6 +65,12 @@ if($_POST['to'])
 		if($_POST['action']=="Send")
 			Kill("Unknown user.");
 	}
+	if($to == $loguserid)
+	{
+		if($_POST['action'] == "Send")
+			$_POST['action'] = "Preview";
+		Alert("You can't send private messages to yourself.", "What?");
+	}
 } else
 {
 	if($_POST['action'] == "Send")
