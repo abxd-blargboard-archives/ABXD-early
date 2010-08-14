@@ -20,6 +20,13 @@ else
 	Kill("Unknown user ID.");
 
 
+//RPG stuff
+$rpgStuff = ""; //easier to dummy out this way.
+//if(FetchResult("select count(*) from users_rpg where id = ".$id." and state != 'notin'", 0, 0) > 0)
+//	$rpgStuff = format("<img src=\"rpgstatcard.php?id={0}\" alt=\"{1}'s stats\" style=\"margin: 1em 0em; padding: 2px;\" class=\"outline cell2\" />", $id, $user['name']);
+//</rpg>
+
+
 if($id == $loguserid)
 	Query("update users set newcomments = 0 where id=".$loguserid);
 
