@@ -35,13 +35,13 @@ if(NumRows($rUser))
 else
 	Kill("Unknown user.");
 
-if(!isset($_GET['snooping']))
+if(!isset($_GET['snooping']) && $pm['userto'] == $loguserid)
 {
 	$qPM = "update pmsgs set msgread=1 where id=".$pm['id'];
 	$rPM = Query($qPM);
 	$links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
 }
-else
+else if(isset($_GET['snooping']))
 	Alert("You are snooping.");
 
 
