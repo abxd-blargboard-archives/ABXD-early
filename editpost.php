@@ -30,12 +30,15 @@ if(NumRows($rPost))
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
 if(NumRows($rThread))
-{
 	$thread = Fetch($rThread);
-} else
-{
+else
 	Kill("Unknown thread ID.");
-}
+
+//-- Mark as New if last post is edited --
+//print $thread['lastpostdate']."<br/>";
+//print $post['date']."<br/>";
+$wasLastPost = ($thread['lastpostdate'] == $post['date']);
+//print (int)$wasLastPost;
 
 $thread['title'] = htmlspecialchars($thread['title']);
 $fid = $thread['forum'];
@@ -110,6 +113,15 @@ if($_POST['action']=="Edit")
 
 		$qPosts = "update posts set options='".$options."', mood=".$_POST['mood'].", currentrevision = currentrevision + 1 where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
+
+		//Update thread lastpostdate if we edited the last post
+		if($wasLastPost)
+		{
+			$qThreads = "update threads set lastpostdate=".time()." where id=".$tid." limit 1";
+			$qPosts = "update posts set date=".time()." where id=".$pid." limit 1";
+			$rThreads = Query($qThreads);
+			$rPosts = Query($qPosts);
+		}
 
 		Redirect("Edited!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
