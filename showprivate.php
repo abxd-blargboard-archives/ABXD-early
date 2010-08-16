@@ -54,7 +54,7 @@ $pm['num'] = "---";
 $pm['posts'] = "---";
 $pm['id'] = "???";
 $pm['uid'] = $user['id'];
-$copies = explode(",","title,title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$pm[$toCopy] = $user[$toCopy];
 MakePost($pm, 0, 0, 1);
