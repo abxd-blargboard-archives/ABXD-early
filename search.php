@@ -126,7 +126,7 @@ if ($SearchAtAll)
 		$query = 'SELECT threads.id AS thread, threads.user, threads.title AS threadname,
 					posts.id, posts.date, posts.num, posts.options, posts.mood, posts.ip,
 					posts_text.text, posts_text.revision, 
-					users.id AS uid, users.name, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, 
+					users.id AS uid, users.name, users.displayname, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, 
 					users.postheader, users.signature, users.globalblock, users.lastposttime, users.lastactivity, users.regdate
 				FROM threads,posts,posts_text,users
 				WHERE ';
@@ -136,7 +136,7 @@ if ($SearchAtAll)
 	{
 		$query = 'SELECT threads.*,
 					forums.id AS fid, forums.title AS ftitle,
-					su.id AS sid, su.name AS sname, su.powerlevel AS spower, su.sex AS ssex,
+					su.id AS sid, su.name AS sname, su AS dsname, su.powerlevel AS spower, su.sex AS ssex,
 					lu.id AS lid, lu.name AS lname, lu.powerlevel AS lpower, lu.sex AS lsex
 				FROM threads,forums,users su,users lu
 				WHERE ';
