@@ -30,7 +30,7 @@ function DoFooter($buffer)
 		$footer = format(
 "
 		<div class=\"footer\">
-			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0<br />
+			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0.1<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>
 			Page rendered in {0} seconds with {1}.<br />
 
