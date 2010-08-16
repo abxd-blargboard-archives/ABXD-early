@@ -22,7 +22,7 @@ if(!isset($_GET['action']))
 		$rMods = Query($qMods);
 		while($mods = Fetch($rMods))
 		{
-			$qMod = "select name, id, powerlevel, sex from users where id=".$mods['user'];
+			$qMod = "select name, displayname, id, powerlevel, sex from users where id=".$mods['user'];
 			$rMod = Query($qMod);
 			$mod = Fetch($rMod);
 			$modList .= format(
