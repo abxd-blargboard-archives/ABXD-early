@@ -68,15 +68,18 @@ if(NumRows($rUsers))
 			<td>
 				{5}
 			</td>
+			<td>
+				{6} {7}
+			</td>
 		</tr>
 	",	$cellClass, $i, UserLink($user), cdate("d-m-y G:i:s", $user['lastactivity']),
 		($user['lastposttime'] ? cdate("d-m-y G:i:s",$user['lastposttime']) : "Never"),
-		$lastUrl);
+		$lastUrl, $user['lastip'], IP2C($user['lastip']));
 		$i++;
 	}
 }
 else
-	$userList = "<tr class=\"cell0\"><td colspan=\"5\">No users</td></tr>";
+	$userList = "<tr class=\"cell0\"><td colspan=\"6\">No users</td></tr>";
 
 $guestList = "";
 if(NumRows($rGuests))
@@ -141,7 +144,7 @@ write(
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"5\">
+			<th colspan=\"6\">
 				Online users
 			</th>
 		</tr>
@@ -160,6 +163,9 @@ write(
 			</th>
 			<th>
 				URL
+			</th>
+			<th style=\"width: 140px;\">
+				IP
 			</th>
 		</tr>
 		{0}
