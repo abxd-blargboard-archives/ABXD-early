@@ -24,4 +24,10 @@ input[type="checkbox"], input[type="radio"]
 	color: white;
 }
 
+div#tabs
+{
+	position: relative;
+	left: 8px;
+	top: 8px;
+}
 
