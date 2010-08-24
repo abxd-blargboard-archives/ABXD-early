@@ -3,11 +3,42 @@ include("lib/common.php");
 $title = "Last known browsers";
 $isMod = $loguser['powerlevel'] > 0;
 $sort = "id asc";
+$ual = "?";
 if(isset($_GET['byua']))
+{
 	$sort = "lastknownbrowser asc";
+	$ual .= "byua&amp;";
+}
 
+$numUsers = FetchResult("select count(*) from users", 0, 0);
 
-$peeps = Query("select id, name, lastip, lastknownbrowser, sex, powerlevel from users where powerlevel < 5 order by ".$sort." limit 0, 30");
+$ppp = $loguser['postsperpage'];
+if($ppp<1) $ppp=50;
+
+if(isset($_GET['from']))
+	$from = (int)$_GET['from'];
+else
+	$from = 0;
+
+$peeps = Query("select id, name, displayname, lastip, lastknownbrowser, sex, powerlevel from users where powerlevel < 5 order by ".$sort." limit ".$from.", ".$ppp);
+
+$numonpage = NumRows($peeps);
+for($i = $ppp; $i < $numUsers; $i+=$ppp)
+{
+	if($i == $from)
+		$pagelinks .= " ".(($i/$ppp)+1);
+	else
+		$pagelinks .= " <a href=\"lastknownbrowsers.php".$ual."from=".$i."\">".(($i/$ppp)+1)."</a>";
+}
+if($pagelinks)
+{
+	if($from == 0)
+		$pagelinks = "1".$pagelinks;
+	else
+		$pagelinks = "<a href=\"lastknownbrowsers.php".$ual."\">1</a>".$pagelinks;
+	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+}
+
 
 if($isMod)
 	$format = "
