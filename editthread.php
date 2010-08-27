@@ -59,16 +59,25 @@ if($canMod)
 	}
 	elseif($_POST['action']=="Move")
 	{
+		$moveto = (int)$_POST['moveTo'];
+		
 		//Tweak forum counters
 		$qForum = "update forums set numthreads=numthreads-1, numposts=numposts-".($thread['replies']+1)." where id=".$thread['forum'];
 		$rForum = Query($qForum);
-		$qForum = "update forums set numthreads=numthreads+1, numposts=numposts+".($thread['replies']+1)." where id=".$_POST['moveTo'];
+		$qForum = "update forums set numthreads=numthreads+1, numposts=numposts+".($thread['replies']+1)." where id=".$moveto;
 		$rForum = Query($qForum);
 
 
 		$qThread = "update threads set forum=".(int)$_POST['moveTo']." where id=".$tid;
 		$rThread = Query($qThread);
-		Redirect("Thread moved.","forum.php?id=".(int)$_POST['moveTo'],"the new forum");
+		
+		// Tweak forum counters #2
+		Query("	UPDATE forums LEFT JOIN threads
+				ON forums.id=threads.forum AND threads.lastpostdate=(SELECT MAX(nt.lastpostdate) FROM threads nt WHERE nt.forum=forums.id)
+				SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
+				WHERE forums.id=".$thread['forum']." OR forums.id=".$moveto);
+		
+		Redirect("Thread moved.","forum.php?id=".$moveto,"the new forum");
 	}
 	elseif($_GET['action']=="delete")
 	{
@@ -100,6 +109,12 @@ if($canMod)
 		//Decrease forum threadcount
 		$qForum = "update forums set numthreads = numthreads - 1 where id=".$thread['forum'];
 		$rForum = Query($qForum);
+		
+		// Update the forum's lastpost stuff
+		Query("	UPDATE forums LEFT JOIN threads
+				ON forums.id=threads.forum AND threads.lastpostdate=(SELECT MAX(nt.lastpostdate) FROM threads nt WHERE nt.forum=forums.id)
+				SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
+				WHERE forums.id=".$thread['forum']);
 
 		if($thread['poll'])
 		{
@@ -116,19 +131,24 @@ if($canMod)
 	}
 	elseif($_GET['action'] == "trash")
 	{
-		$qForum = "select id, title from forums where description like '%[trash]%' limit 1";
-		$rForum = Query($qForum);
-		if(NumRows($rForum))
+		$qForum = "select id from forums where description like '%[trash]%' limit 1";
+		$trashid = FetchResult($qForum);
+		if($trashid > 0)
 		{
-			$forum = Fetch($rForum);
-			$qThread = "update threads set forum=".$forum['id'].", closed=1 where id=".$tid." limit 1";
+			$qThread = "update threads set forum=".$trashid.", closed=1 where id=".$tid." limit 1";
 			$rThread = Query($qThread);
 
 			//Tweak forum counters
 			$qForum = "update forums set numthreads=numthreads-1, numposts=numposts-".($thread['replies']+1)." where id=".$thread['forum'];
 			$rForum = Query($qForum);
-			$qForum = "update forums set numthreads=numthreads+1, numposts=numposts+".($thread['replies']+1)." where id=".$forum['id'];
+			$qForum = "update forums set numthreads=numthreads+1, numposts=numposts+".($thread['replies']+1)." where id=".$trashid;
 			$rForum = Query($qForum);
+			
+			// Tweak forum counters #2
+			Query("	UPDATE forums LEFT JOIN threads
+					ON forums.id=threads.forum AND threads.lastpostdate=(SELECT MAX(nt.lastpostdate) FROM threads nt WHERE nt.forum=forums.id)
+					SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
+					WHERE forums.id=".$thread['forum']." OR forums.id=".$trashid);
 
 			Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
 		}
@@ -213,6 +233,7 @@ if($canMod)
 					<input type=\"radio\" {0}\" name=\"iconid\" value=\"{1}\" />
 					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" /
 				</label>
+				&nbsp;
 ", $check, $i);
 		$i++;
 	}
@@ -228,7 +249,7 @@ if($canMod)
 	write(
 "
 	<form action=\"editthread.php\" method=\"post\">
-		<table class=\"outline margin width100\">
+		<table class=\"outline margin width75\">
 			<tr class=\"header1\">
 				<th colspan=\"2\">
 					Edit Thread
@@ -246,18 +267,19 @@ if($canMod)
 				<td>
 					Icon
 				</td>
-				<td class=\"threadIcons\">
-					<label>
-						<input type=\"radio\" {2} name=\"iconid\" value=\"0\" /> 
-						<span>None</span>
-					</label> 
+				<td>
 					{1}
-					<br />
+
+					<br/>
 					<label>
-						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" /> 
-						<span>Custom</span>
-					</label> 
-					<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 50%;\" maxlength=\"100\" value=\"{4}\" />
+						<input type=\"radio\" {2} id=\"noicon\" name=\"iconid\" value=\"0\">
+						None
+					</label>
+					<label>
+						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" />
+						Custom:
+						<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"{4}\" />
+					</label>
 				</td>
 			</tr>
 			<tr class=\"cell2\">
