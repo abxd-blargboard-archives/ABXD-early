@@ -2,7 +2,7 @@
 include("lib/common.php");
 $title = "Ranks";
 $users = array();
-$rUsers = Query("select id, name, powerlevel, sex, posts from users order by id asc");
+$rUsers = Query("select id, name, displayname, powerlevel, sex, posts from users order by id asc");
 while($user = Fetch($rUsers))
 	$users[$user['id']] = $user;
 $rankset = isset($_POST['rankset']) ? (int)$_POST['rankset'] : 1;
@@ -80,7 +80,7 @@ write(
 			Rank
 		</th>
 		<th>
-			To get
+			To&nbsp;get
 		</th>
 		<th>
 			&nbsp;
