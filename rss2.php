@@ -30,7 +30,7 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	//$qPosts = "select * from posts order by date desc limit 0, ".($maxPosts * 2);
 	$qPosts = "select ";
 	$qPosts .=
-	"posts.id, posts.thread, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.sex, users.posts";
+	"posts.id, posts.thread, posts.date, posts.num, posts.deleted, posts.options, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname";
 	$qPosts .= 
 	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
 	$qPosts .= " where deleted=0 order by date desc limit 0, ".($maxPosts * 2);
@@ -70,7 +70,9 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		//	print "<title>New thread by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
 		//else
 		//	print "<title>New reply by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
-		print "<title>New post by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
+		$reply = ($post['revision'] > 0) ? "Post edited" : "New post";
+
+		print "<title>".$reply." by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
 			
 		print "<link>".$boardurl."/thread.php?pid=".$post['id']."#".$post['id']."</link>\n";
 		print "<pubDate>".gmdate(DATE_RFC1123, $post['date'])."</pubDate>\n";
