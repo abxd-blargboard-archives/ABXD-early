@@ -159,6 +159,8 @@ if($_POST['action']=="Post")
 
 		$qFora = "update forums set numthreads=".($forum['numthreads']+1).", numposts=".($forum['numposts']+1).", lastpostdate=".time().", lastpostuser=".$loguserid.", lastpostid=".$pid." where id=".$fid." limit 1";
 		$rFora = Query($qFora);
+		
+		Query("update threads set lastpostid = ".$pid." where id = ".$tid);
 
 		Redirect("Posted!","thread.php?id=".$tid,"the thread");
 		exit();
@@ -263,7 +265,7 @@ if($_POST['action']=="Preview")
 		if($_POST['nosm']) $previewPost['options'] |= 2;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		$previewPost['uid'] = $loguserid;
-		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $loguser[$toCopy];
 		MakePost($previewPost, 0, $fid);
@@ -433,7 +435,7 @@ if(CanMod($loguserid, $forum['id']))
 if(!$_POST['poll'] || $_POST['pollOptions'])
 	$postButton = "<input type=\"submit\" name=\"action\" value=\"Post\" /> ";
 if($_POST['poll'])
-	$vote = "<label><input type=\"checkbox\" ".($_POST['multivote'] ? "checked=\"checked\"" : "")." name=\"multivote\" />&nbsp;Multivote</label>";
+	$multivote = "<label><input type=\"checkbox\" ".($_POST['multivote'] ? "checked=\"checked\"" : "")." name=\"multivote\" />&nbsp;Multivote</label>";
 
 write(
 "
