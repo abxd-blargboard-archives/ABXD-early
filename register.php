@@ -42,7 +42,7 @@ if(!isset($_POST['action']))
 					<label for=\"un\">User name</label>
 				</td>
 				<td class=\"cell0\">
-					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"25\" style=\"width: 98%;\" />
+					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"20\" style=\"width: 98%;\" />
 				</td>
 			</tr>
 			<tr>
@@ -124,17 +124,16 @@ if(!isset($_POST['action']))
 elseif($_POST['action'] == "Register")
 {
 	$name = htmlspecialchars($_POST['name']);
-	$cname = strtolower($name);
-	$cname = str_replace(" ","",$cname);
-	$cname = str_replace(" ","",$cname);
+	$cname = trim(str_replace(" ","", strtolower($name)));
 
-	$qUsers = "select name from users";
+	$qUsers = "select name, displayname from users";
 	$rUsers = Query($qUsers);
 	while($user = Fetch($rUsers))
 	{
-		$uname = strtolower($user['name']);
-		$uname = str_replace(" ","",$uname);
-		$uname = str_replace(" ","",$uname);
+		$uname = trim(str_replace(" ", "", strtolower($user['name'])));
+		if($uname == $cname)
+			break;
+		$uname = trim(str_replace(" ", "", strtolower($user['displayname'])));
 		if($uname == $cname)
 			break;
 	}
@@ -186,8 +185,9 @@ elseif($_POST['action'] == "Register")
 		$qUser = "select * from users where name='".justEscape($_POST['name'])."' and password='".md5($_POST['pass'])."'";
 		$rUser = Query($qUser);
 		$user = Fetch($rUser);
+
 		$logdata['loguserid'] = $user['id'];
-		$logdata['loguserpw'] = $user['password'];
+		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$_SERVER['REMOTE_ADDR']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
 		$logdata_s = base64_encode(serialize($logdata));
 
 		setcookie("logdata", $logdata_s, 2147483647);

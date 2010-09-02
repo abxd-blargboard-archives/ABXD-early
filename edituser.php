@@ -42,6 +42,26 @@ if(isset($_POST['realname']))
 if(isset($_POST['location']))
 	$_POST['location'] = htmlentities2($_POST['location']);
 
+if(isset($_POST['displayname']))
+{
+	if(!IsReallyEmpty($_POST['displayname']) || $_POST['displayname'] == $user['name'])
+	{
+		$_POST['displayname'] = "";
+	}
+	else
+	{
+		$_POST['displayname'] = htmlspecialchars($_POST['displayname']);
+		$dispCheck = FetchResult("select count(*) from users where id != ".$user['id']." and (name = '".justEscape($_POST['displayname'])."' or displayname = '".justEscape($_POST['displayname'])."')", 0, 0);
+		if($dispCheck > 0)
+		{
+			Alert("The display name you entered is already taken.");
+			$_POST['displayname'] = "";
+			$user['displayname'] = "";
+			$_POST['action'] = "";
+		}
+	}
+}
+
 $editVerb = "Edit user";
 if($id == $loguserid)
 	$editVerb = "Edit profile";
@@ -65,6 +85,20 @@ if($_POST['action'] == $editVerb)
 	{
 		Alert("To change your password, you must type it twice without error.");
 		$_POST['action'] = "Not yet.";
+	}
+}
+
+if($_POST['action'] == "Tempban")
+{
+	$timeStamp = strtotime($_POST['until']);
+	if($timeStamp === FALSE)
+	{
+		Alert("Invalid time given. Try again.");
+	}
+	else
+	{
+		Query("update users set tempbanpl = ".$user['powerlevel'].", tempbantime = ".$timeStamp.", powerlevel = -1 where id = ".$id);
+		Redirect("User has been banned for ".TimeUnits($timeStamp - time()).".", "profile.php?id=".$id,"that user's profile");
 	}
 }
 
@@ -222,6 +256,7 @@ if($_POST['action'] == $editVerb)
 
 	$qUser = "update users set ";
 	$qUser.= "name = '".justEscape($_POST['name'])."', ";
+	$qUser.= "displayname = '".justEscape($_POST['displayname'])."', ";
 	if($sha)
 		$qUser.= "password='".$sha."', ";
 	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
@@ -303,6 +338,33 @@ else
 
 write(
 "
+	<form action=\"edituser.php\" method=\"post\">
+		<table class=\"outline margin width25\" style=\"float: right;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Quick-E Ban&trade;
+				</th>
+			</tr>
+			<tr>
+				<td class=\"cell2\">
+					<label for=\"until\">Target time</label>
+				</td>
+				<td class=\"cell0\">
+					<input id=\"until\" name=\"until\" type=\"text\" />
+				</td>
+			</tr>
+			<tr>
+				<td class=\"cell1\" colspan=\"2\">
+					<input type=\"submit\" name=\"action\" value=\"Tempban\" />
+					<input type=\"hidden\" name=\"id\" value=\"{0}\" />
+				</td>
+			</tr>
+		</table>
+	</form>
+", $id);
+
+write(
+"
 	<form action=\"edituser.php\" method=\"post\" enctype=\"multipart/form-data\">
 		<table class=\"outline margin width50\">
 
@@ -316,7 +378,7 @@ write(
 					<label for=\"un\">User name</label>
 				</td>
 				<td>
-					<input type=\"text\" id=\"un\" name=\"name\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"60\" />
+					<input type=\"text\" id=\"un\" name=\"name\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"20\" />
 				</td>
 			</tr>
 			<tr class=\"cell1\">
@@ -337,19 +399,26 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
+					<label for=\"displayname\">Display name</label>
+					<sup title=\"Leave empty to use login name\">[?]</sup>
+				</td>
+				<td>
+					<input type=\"text\" id=\"displayname\" name=\"displayname\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"20\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
 					<label for=\"rankset\">Rank set</label>
 				</td>
 				<td>
-					{1}
+					{2}
 				</td>
 			</tr>
-",	htmlval($user['name']), MakeSelect("rankset",$user['rankset'],$ranksets));
+",	htmlval($user['name']), $user['displayname'], MakeSelect("rankset",$user['rankset'],$ranksets));
 
-if(TitleCheck())
-{
-	write(
+write(
 "
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"tit\">Title</label>
 				</td>
@@ -358,11 +427,10 @@ if(TitleCheck())
 				</td>
 			</tr>
 ", htmlval($user['title']));
-}
 
 write(
 "
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"pic\">Picture</label>
 				</td>
@@ -374,7 +442,7 @@ write(
 					</label>
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"mpic\">Minipic</label>
 				</td>
@@ -597,8 +665,8 @@ write(
 			</tr>
 		</table>
 		<div class=\"margin right width50\" id=\"button\">
-			<input type=\"submit\" name=\"action\" value=\"{22}\"></input>
-			<input type=\"hidden\" name=\"id\" value=\"{26}\"></input>
+			<input type=\"submit\" name=\"action\" value=\"{22}\" />
+			<input type=\"hidden\" name=\"id\" value=\"{26}\" />
 		</div>
 	</form>
 ",	MakeSelect("level",$user['powerlevel'],$levels), ($user['globalblock'] ? " checked=\"checked\"" : ""),
@@ -619,7 +687,7 @@ function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
 	$checks[$checkedIndex] = " checked=\"checked\"";
 	foreach($choicesList as $key=>$val)
-		$result .= "<input type=\"radio\" id=\"o".$key."\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]."></input><label for=\"o".$key."\">".$val."</label> ";
+		$result .= "<label><input type=\"radio\" name=\"".$fieldName."\" value=\"".$key."\"".$checks[$key]." />&nbsp;".$val."</label> ";
 	return $result;
 }
 
@@ -638,6 +706,12 @@ function TitleCheck()
 	global $user;
 	if($user['title'] || $user['posts'] >= $customTitleThreshold || $user['powerlevel'] > 0) return 1;
 	return 0;
+}
+
+function IsReallyEmpty($subject)
+{
+	$trimmed = trim(preg_replace("/&.*;/", "", $subject));
+	return strlen($trimmed) != 0;
 }
 
 ?>
