@@ -1,8 +1,11 @@
 <?php
 //  AcmlmBoard XD - Report/content mismatch fixing utility
-//  Access: all
+//  Access: staff
 
 include("lib/common.php");
+
+if($loguser['powerlevel'] < 1)
+		Kill("Staff only, please.");
 
 print "<table class=\"outline margin width50\">";
 
