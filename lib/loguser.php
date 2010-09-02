@@ -60,6 +60,10 @@ if($qRecords)
 $qGuests = "delete from guests where ip='".$_SERVER['REMOTE_ADDR']."' or date < ".(time()-300);
 $rGuests = Query($qGuests);
 
+//Lift dated Tempbans
+$qTempban = "update users set powerlevel = tempbanpl, tempbantime = 0 where tempbantime != 0 and tempbantime < ".time();
+$rTempban = Query($qTempban);
+
 //Lift dated IP Bans
 $qIPBan = "delete from ipbans where date != 0 and date < ".time();
 $rIPBan = Query($qIPBan);
@@ -74,6 +78,8 @@ if(NumRows($rIPBan))
 	exit();
 }
 
+if(FetchResult("select count(*) from proxybans where instr('".$_SERVER['REMOTE_ADDR']."', ip)=1"))
+	die("No.");
 
 
 // User/Guest lastforum handling
