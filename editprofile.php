@@ -20,12 +20,30 @@ else
 
 $title = "Edit profile";
 
-if(isset($_POST['name']))
-	$_POST['name'] = htmlentities2($_POST['name']);
 if(isset($_POST['realname']))
 	$_POST['realname'] = htmlentities2($_POST['realname']);
 if(isset($_POST['location']))
 	$_POST['location'] = htmlentities2($_POST['location']);
+
+if(isset($_POST['displayname']))
+{
+	if(!IsReallyEmpty($_POST['displayname']) || $_POST['displayname'] == $user['name'])
+	{
+		$_POST['displayname'] = "";
+	}
+	else
+	{
+		$_POST['displayname'] = htmlspecialchars($_POST['displayname']);
+		$dispCheck = FetchResult("select count(*) from users where id != ".$user['id']." and (name = '".justEscape($_POST['displayname'])."' or displayname = '".justEscape($_POST['displayname'])."')", 0, 0);
+		if($dispCheck > 0)
+		{
+			Alert("The display name you entered is already taken.");
+			$_POST['displayname'] = "";
+			$user['displayname'] = "";
+			$_POST['action'] = "";
+		}
+	}
+}
 
 $newMD5 = md5($_POST['newPW']);
 if($_POST['action'] == "Edit profile")
@@ -132,7 +150,7 @@ if($_POST['action'] == "Edit profile")
 
 		$dimx = 16;
 		$dimy = 16;
-		$size = 200000;
+		$size = 100 * 1024;
 
 		$validext = false;
 		if($fext == ".png")
@@ -206,6 +224,7 @@ if($_POST['action'] == "Edit profile")
 		$qUser.= "title = '".justEscape(CleanUpPost($_POST['title'], "", true))."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
+	$qUser.= "displayname = '".justEscape($_POST['displayname'])."', ";
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
 	$qUser.= "realname = '".justEscape(CleanUpPost($_POST['realname']))."', ";
 	$qUser.= "location = '".justEscape(CleanUpPost($_POST['location']))."', ";
@@ -242,11 +261,47 @@ while($rankset = Fetch($rRanksets))
 	$ranksets[] = $rankset['name'];
 
 //Iterate through the themes, appending the number of users with that scheme...
-for($i = 0; $i < count($themes); $i++)
+$themeList = "";
+
+$themeKeys = array_keys($themes);
+for($ii = 0; $ii < count($themes); $ii++)
+	$themeKeys[$themeKeys[$ii]] = $ii;
+
+for($ii = 0; $ii < count($themes); $ii++)
 {
+	$i = $themeKeys[$themeOrder[$ii]];
+
 	$qCount = "select count(*) from users where scheme=".$i;
-	$c = FetchResult($qCount);
-	$themes[$themeFiles[$i]] .= " (".$c.")";
+	$numUsers = FetchResult($qCount);
+	
+	$preview = "img/themes/".$themeFiles[$i]."/preview.png";
+	if(is_file($preview))
+		$preview = "<img src=\"".$preview."\" alt=\"".$themeNames[$i]."\" style=\"float: left; margin-bottom: 0.5em;\" />";
+	else
+		$preview = "<span style=\"float: left; width: 260px; height: 80px;\">&nbsp;</span>";
+	
+	if(array_key_exists($themeFiles[$i], $themeBylines))
+		$byline = "<br />".$themeBylines[$themeFiles[$i]];
+	else
+		$byline = "";
+	
+	if($i == $loguser['scheme'])
+		$selected = " checked=\"checked\"";
+	else
+		$selected = "";
+	
+	$themeList .= format(
+"
+	<label style=\"display: block; clear: left; padding: 0.5em; {6}\">
+		<input type=\"radio\" name=\"theme\" value=\"{3}\"{4} onchange=\"ChangeTheme(this.value);\" />
+			{2}
+			<strong>{0}</strong>
+			{1}<br />
+			<br />
+			{5}.
+	</label>
+",	$themeNames[$i], $byline, $preview, $themeFiles[$i], $selected, Plural($numUsers, "user"),
+	($ii > 0 ? "border-top: 1px solid black;" : "") );
 }
 
 $datelist['dummy'] = "[select]";
@@ -273,6 +328,7 @@ write(
 		<button id=\"avatarButton\" onclick=\"showEditProfilePart('avatar');\">Avatar</button>
 		<button id=\"personalButton\" onclick=\"showEditProfilePart('personal');\">Personal</button>
 		<button id=\"postlayoutButton\" onclick=\"showEditProfilePart('postlayout');\">Post Layout</button>
+		<button id=\"themeButton\" onclick=\"showEditProfilePart('theme');\">Theme</button>
 	</div>
 
 	<form action=\"editprofile.php\" method=\"post\" enctype=\"multipart/form-data\">
@@ -286,19 +342,28 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
+					<label for=\"displayname\">Display name</label>
+					<sup title=\"Leave empty to use login name\">[?]</sup>
+				</td>
+				<td>
+					<input type=\"text\" id=\"displayname\" name=\"displayname\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"20\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
 					<label for=\"rankset\">Rank set</label>
 				</td>
 				<td>
-					{0}
+					{1}
 				</td>
 			</tr>
-", MakeSelect("rankset",$user['rankset'],$ranksets));
+", $user['displayname'], MakeSelect("rankset",$user['rankset'],$ranksets));
 
 if(TitleCheck())
 {
 	write(
 	"
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"tit\">Title</label>
 				</td>
@@ -313,14 +378,6 @@ write(
 "
 			<tr class=\"header0\">
 				<th colspan=\"2\">Presentation</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"theme\">Theme</label>
-				</td>
-				<td>
-					{0}
-				</td>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
@@ -383,7 +440,7 @@ write(
 			</tr>
 		</table>
 ",
-	MakeSelect("theme",$themeFiles[$user['scheme']],$themes, "onchange=\"ChangeTheme(this.value);\""),
+	0,
 	$user['threadsperpage'], $user['postsperpage'], $user['dateformat'],
 	MakeSelect("presetdate", -1, $datelist), $user['timeformat'],
 	MakeSelect("presettime", -1, $timelist), $user['fontsize'],
@@ -581,14 +638,33 @@ write(
 				</td>
 			</tr>
 		</table>
+",	htmlval($user['postheader']), htmlval($user['signature']), ($user['signsep'] ? "" : "checked=\"checked\""));
 
+write(
+"
+		<table class=\"outline margin width50\" id=\"theme\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th>
+					Theme
+				</th>
+			</tr>
+			<tr>
+				<td class=\"cell0 threadIcons\">
+					{0}
+				</td>
+			</tr>
+		</table>
+",	$themeList);
+
+write(
+"
 		<div class=\"margin right width50\" id=\"button\">
-			<input type=\"submit\" name=\"action\" value=\"Edit profile\"></input>
-			<input type=\"hidden\" name=\"id\" value=\"{3}\"></input>
+			<input type=\"submit\" name=\"action\" value=\"Edit profile\" />
+			<input type=\"hidden\" name=\"id\" value=\"{0}\" />
 		</div>
 
 	</form>
-",	htmlval($user['postheader']), htmlval($user['signature']), ($user['signsep'] ? "" : "checked=\"checked\""), $id);
+", $id);
 
 function MakeOptions($fieldName, $checkedIndex, $choicesList)
 {
@@ -621,6 +697,12 @@ function TitleCheck()
 	global $user, $adminmode, $customTitleThreshold;
 	if($adminmode || $user['title'] || $user['posts'] >= $customTitleThreshold || $user['powerlevel'] > 0) return 1;
 	return 0;
+}
+
+function IsReallyEmpty($subject)
+{
+	$trimmed = trim(preg_replace("/&.*;/", "", $subject));
+	return strlen($trimmed) != 0;
 }
 
 ?>
