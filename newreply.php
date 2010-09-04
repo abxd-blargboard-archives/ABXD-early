@@ -71,7 +71,7 @@ if($_POST['text'] && $_POST['action'] != "Preview")
 {
 	$words = explode(" ", $_POST['text']);
 	$wordCount = count($words);
-	if($wordCount < 2)
+	if($wordCount < $minWords)
 	{
 		$_POST['action'] = "";
 		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
@@ -88,7 +88,7 @@ if($_POST['action'] && isset($_POST['ninja']) && $_POST['ninja'] != $ninja)
 if($_POST['text'] && $_POST['action'] == "Post")
 {
 	$lastPost = time() - $loguser['lastposttime'];
-	if($lastPost < 30)
+	if($lastPost < $minSeconds)
 	{
 		$_POST['action'] = "";
 		Alert("You're going too damn fast! Slow down a little.", "Hold your horses.");
@@ -109,6 +109,12 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 		$postingAsUser = Fetch($rUser);
 		$postingAs = $postingAsUser['id'];
 		$postingAsUser['uid'] = $postingAs;
+		if($postingAsUser['powerlevel'] == -1)
+		{
+			Alert("Nope, still banned.");
+			$_POST['action'] = "";
+			$_POST['password'] = "";
+		}
 	}
 	else
 	{
@@ -185,7 +191,7 @@ if($_POST['action']=="Preview")
 		$previewPost['posts'] = $postingAsUser['posts']+1;
 		$previewPost['id'] = "???";
 		$previewPost['uid'] = $postingAs;
-		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $postingAsUser[$toCopy];
 		$previewPost['mood'] = (int)$_POST['mood'];
@@ -344,7 +350,7 @@ write("
 
 $qPosts = "select ";
 $qPosts .=
-	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.sex, users.posts";
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname, users.rankset, users.powerlevel, users.sex, users.posts";
 $qPosts .= 
 	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
 $qPosts .= " where thread=".$tid." and deleted=0 order by date desc limit 0, 20";
