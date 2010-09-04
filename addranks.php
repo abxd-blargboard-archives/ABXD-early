@@ -14,7 +14,7 @@ write("<div>Ranksets cleared for refill.</div>");
 
 include("ranksets.php");
 
-$bads = array(" ","-",".",",");
+$bads = array(" ","-",".",",", "'", '"');
 
 write(
 "
@@ -63,7 +63,7 @@ foreach($ranks as $rankset)
 
 	foreach($rankset['ranks'] as $val => $text)
 	{
-		$img = "<img src=\"img/ranks/".$rankset['directory']."/".str_replace($bads,"",(!$rankset['notolower']?strtolower($text):$text)).".gif\" alt=\"".$text."\" /> ".($rankset['splitlines'] ? "<br />" : "").$text;
+		$img = "<img src=\"img/ranks/".$rankset['directory']."/".str_replace($bads,"",(!$rankset['notolower']?strtolower($text):$text)).".png\" alt=\"".$text."\" /> ".($rankset['splitlines'] ? "<br />" : "").$text;
 		if($val < 10 || $rankset['noimages'])
 			$img = $text;
 			write(
@@ -77,7 +77,7 @@ foreach($ranks as $rankset)
 			</td>
 		</tr>
 ", $val, $img);
-		Query("insert into ranks (rset, num, text) values (".$index.", ".$val.", '".$img."')");
+		Query("insert into ranks (rset, num, text) values (".$index.", ".$val.", '".justEscape($img)."')");
 	}
 }
 
