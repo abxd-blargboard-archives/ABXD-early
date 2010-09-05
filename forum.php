@@ -106,7 +106,7 @@ $postread = readpostread($loguserid);
 $qThreads = "select * from threads where forum=".$fid." order by sticky desc, lastpostdate desc limit ".$from.", ".$tpp;
 $rThreads = Query($qThreads);
 
-$rMembers = Query("select name, id, powerlevel, sex from users");
+$rMembers = Query("select name, displayname, id, powerlevel, sex from users");
 while($mem = Fetch($rMembers))
 	$members[$mem['id']] = $mem;
 
@@ -247,12 +247,25 @@ if($pagelinks)
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
+ForumJump();
+
 function readpostread($userid)
 {
 	$postreads = Query("select * from threadsread where id=".$userid);
 	while($read1 = Fetch($postreads))
 		$postread[$read1['thread']] = $read1['date'];
 	return $postread;
+}
+
+function ForumJump()
+{
+	global $fid, $loguser;
+	$fora = Query("select id, title from forums where minpower <= ".$loguser['powerlevel'] . " order by catid asc, forder asc");
+	$jump = "<select onchange=\"document.location='forum.php?id=' + this.options[this.selectedIndex].value;\">";
+	while($forum = Fetch($fora))
+		$jump .= format("<option value=\"{0}\"{2}>{1}</option>", $forum['id'], $forum['title'], ($forum['id'] == $fid ? " selected=\"selected\"" : ""));
+	$jump .= "</select>";
+	print $jump;
 }
 
 ?>
