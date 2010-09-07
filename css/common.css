@@ -485,7 +485,7 @@ input[type="text"], input[type="password"], input[type="file"], select, textarea
 {
 	color: #488;
 }
-.geshi .co1
+.geshi .co1, .geshi .coMULTI
 {
 	font-style: italic;
 	color: #884;
@@ -786,7 +786,7 @@ div#tabs
 {
 	position: relative;
 	left: 8px;
-	top: 5px;
+	top: 8px;
 }
 
 div#tabs button
@@ -854,6 +854,26 @@ td.threadIcons label > input:checked ~ *
 	-webkit-transform: scale(1.05);
 }
 
+
+
+
+
+
+
+
+
+
+
+#goomba
+{
+	background: url("../img/goomba.png") no-repeat 0px 0px;
+	width: 16px;
+	height: 16px;
+	position: fixed;
+	bottom: 0px;
+	left: -32px;
+	z-index: 100;
+}
 
 
 /* RPG stuff */
