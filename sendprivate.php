@@ -54,7 +54,8 @@ $title = "Private messages";
 
 if($_POST['to'])
 {
-	$qUser = "select id from users where name='".$_POST['to']."'";
+	$_POST['to'] = htmlentities($_POST['to']);
+	$qUser = "select id from users where name='".$_POST['to']."' or displayname='".$_POST['to']."'";
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
 	{
@@ -88,6 +89,7 @@ if($_POST['action']=="Send")
 		{
 			//$post = justEscape($post);
 			$post = htmlentities2(deSlashMagic($_POST['text']));
+			$post = preg_replace("'/me '","[b]* ".$loguser['name']."[/b] ", $post); //to prevent identity confusion
 			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 			TidyPost($post);
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
@@ -124,11 +126,14 @@ if($_POST['action']=="Preview")
 		$_POST['posts'] = "---";
 		$_POST['id'] = "???";
 		$_POST['uid'] = $loguserid;
-		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
 			$_POST[$toCopy] = $loguser[$toCopy];
+		$realtext = $_POST['text'];
+		$_POST['text'] = preg_replace("'/me '","[b]* ".$loguser['name']."[/b] ", $_POST['text']); //to prevent identity confusion
 		MakePost($_POST, 0, 0);
 		$_POST['title'] = $_POST['realtitle']; //and put it back for the form.
+		$_POST['text'] = $realtext;
 	}
 }
 
