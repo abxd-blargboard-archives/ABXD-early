@@ -11,6 +11,12 @@ if($loguser['powerlevel'] < 3)
 
 if($_POST['action'] == "Edit")
 {
+	if((float)$_POST['uploaderCap'] <= 0)
+	{
+		print "foo!";
+		$_POST['uploaderCap'] = "0.25";
+	}
+
 	$hax = fopen("lib/settings.php", "w");
 	fputs($hax, "<?php\n");
 	fputs($hax, "//Generated and parsed by the Board Settings admin panel.\n");
@@ -27,6 +33,10 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "\$overallTidy = ".($_POST['overallTidy'] != "" ? 1 : 0).";\n");
 	fputs($hax, "\$theWord = \"".prepare($_POST['theWord'])."\";\n");
 	fputs($hax, "\$systemUser = ".(int)$_POST['systemUser'].";\n");
+	fputs($hax, "\$minWords = ".(int)$_POST['minWords'].";\n");	
+	fputs($hax, "\$minSeconds = ".(int)$_POST['minSeconds'].";\n");	
+	fputs($hax, "\$uploaderCap = ".(float)$_POST['uploaderCap'].";\n");
+	fputs($hax, "\$uploaderWhitelist = \"".prepare($_POST['uploaderWhitelist'])."\";\n");
 	fputs($hax, "\n");
 	fputs($hax, "//Hacks\n");
 	fputs($hax, "\$hacks['forcetheme'] = ".(int)$_POST['theme'].";\n");
@@ -61,18 +71,23 @@ if(!function_exists('tidy_repair_string'))
 write(
 "
 	<form action=\"editsettings.php\" method=\"post\">
-		<table class=\"outline margin width50\">
+		<table class=\"outline margin width75\">
 
 			<tr class=\"header1\">
 				<th colspan=\"2\">
 					Settings
 				</th>
 			</tr>
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Various
+				</th>
+			</tr>
 			<tr class=\"cell0\">
 				<td>
 					<label for=\"boardname\">Board name</label>
 				</td>
-				<td>
+				<td class=\"width75\">
 					<input type=\"text\" id=\"boardname\" name=\"boardname\" value=\"{0}\" class=\"width75\" />
 				</td>
 			</tr>
@@ -159,8 +174,41 @@ write(
 					<input type=\"text\" id=\"systemUser\" name=\"systemUser\" value=\"{10}\" />
 				</td>
 			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"minWords\">Minimal word count</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"minWords\" name=\"minWords\" value=\"{18}\" />
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"minSeconds\">Minimal seconds between posts</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"minSeconds\" name=\"minSeconds\" value=\"{19}\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"uploaderCap\">Uploader size cap</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"uploaderCap\" name=\"uploaderCap\" value=\"{20}\" />
+					MiB
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"uploaderWhitelist\">Uploader whitelist</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"uploaderWhitelist\" name=\"uploaderWhitelist\" value=\"{21}\" class=\"width75\" />
+				</td>
+			</tr>
 
-			<tr class=\"header1\">
+			<tr class=\"header0\">
 				<th colspan=\"2\">
 					Hacks
 				</th>
@@ -235,7 +283,8 @@ write(
 	($overallTidy ? "checked=\"checked\"" : ""), htmlval($theWord), $systemUser,
 	MakeSelect("theme",$forcetheme,$themelist), MakeSelect("names",$themenames,$names),
 	MakeSelect("filters",$postfilter,$filters), $tidyAvailable, $profilePreviewText,
-	htmlval($metaDescription), htmlval($metaKeywords)
+	htmlval($metaDescription), htmlval($metaKeywords), $minWords, $minSeconds, $uploaderCap,
+	$uploaderWhitelist
 );
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
@@ -255,6 +304,29 @@ function prepare($text, $quot = "&quot;")
 {
 	$s = str_replace("\"", $quot, deSlashMagic($text));
 	return $s;
+}
+
+//From the PHP Manual User Comments
+function foldersize($path)
+{
+	$total_size = 0;
+	$files = scandir($path);
+	$files = array_slice($files, 2);
+	foreach($files as $t)
+	{
+		if(is_dir($t))
+		{
+			//Recurse here
+			$size = foldersize($path . "/" . $t);
+			$total_size += $size;
+		}
+		else
+		{
+			$size = filesize($path . "/" . $t);
+			$total_size += $size;
+		}
+	}
+	return $total_size;
 }
 
 ?>

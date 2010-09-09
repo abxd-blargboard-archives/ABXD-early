@@ -71,8 +71,12 @@ if(!isset($_POST['action']))
 				</td>
 			</tr>
 			<tr>
-				<td class=\"cell2\"><label for=\"dpw\">Database user password</label></td>
-				<td class=\"cell1\"><input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\"></input></td>
+				<td class=\"cell2\">
+					<label for=\"dpw\">Database user password</label>
+				</td>
+				<td class=\"cell1\">
+					<input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\">
+				</td>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
@@ -142,6 +146,10 @@ else if($_POST['action'] == "Install")
 		fputs($hax, "\$overallTidy = ".(int)$tidy.";\n");
 		fputs($hax, "\$theWord = \"".prepare($theWord)."\";\n");
 		fputs($hax, "\$systemUser = ".(int)$systemUser.";\n");
+		fputs($hax, "\$minWords = ".(int)$minWords.";\n");
+		fputs($hax, "\$minSeconds = ".(int)$minSeconds.";\n");
+		fputs($hax, "\$uploaderCap = ".(int)$uploaderCap.";\n");
+		fputs($hax, "\$uploaderWhitelist = \"".prepare($uploaderWhitelist)."\";\n");
 		fputs($hax, "\n");
 		fputs($hax, "//Hacks\n");
 		fputs($hax, "\$hacks['forcetheme'] = ".(int)$hacks['forcetheme'].";\n");
