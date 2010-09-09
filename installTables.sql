@@ -1,13 +1,13 @@
 DROP TABLE IF EXISTS `blockedlayouts`;
 CREATE TABLE `blockedlayouts` (
-  `user` int(10) unsigned NOT NULL DEFAULT '0',
-  `blockee` int(10) unsigned NOT NULL DEFAULT '0',
+  `user` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `blockee` smallint(5) unsigned NOT NULL DEFAULT '0',
   KEY `user` (`user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `minpower` tinyint(4) DEFAULT '0',
   PRIMARY KEY (`id`)
@@ -15,25 +15,25 @@ CREATE TABLE `categories` (
 
 DROP TABLE IF EXISTS `forummods`;
 CREATE TABLE `forummods` (
-  `forum` int(10) NOT NULL DEFAULT '0',
-  `user` int(10) NOT NULL DEFAULT '0'
+  `forum` smallint(5) NOT NULL DEFAULT '0',
+  `user` mediumint(8) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `forums`;
 CREATE TABLE `forums` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(250) DEFAULT NULL,
   `description` text,
-  `catid` int(10) unsigned NOT NULL DEFAULT '0',
+  `catid` smallint(5) unsigned NOT NULL DEFAULT '0',
   `minpower` tinyint(2) NOT NULL DEFAULT '0',
   `minpowerthread` tinyint(2) NOT NULL DEFAULT '0',
   `minpowerreply` tinyint(2) NOT NULL DEFAULT '0',
-  `numthreads` int(10) unsigned NOT NULL DEFAULT '0',
-  `numposts` int(10) unsigned NOT NULL DEFAULT '0',
+  `numthreads` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `numposts` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `lastpostdate` int(11) NOT NULL DEFAULT '0',
-  `lastpostid` int(11) NOT NULL DEFAULT '0',
   `lastpostuser` int(11) unsigned NOT NULL DEFAULT '0',
-  `forder` int(10) NOT NULL DEFAULT '0',
+  `lastpostid` int(11) NOT NULL DEFAULT '0',
+  `forder` smallint(5) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `catid` (`catid`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
@@ -57,12 +57,12 @@ CREATE TABLE `groups` (
 
 DROP TABLE IF EXISTS `guests`;
 CREATE TABLE `guests` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `ip` varchar(32) NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0',
-  `lasturl` varchar(256) NOT NULL DEFAULT '',
-  `lastforum` int(11) unsigned NOT NULL DEFAULT '0',
-  `useragent` varchar(256) NOT NULL DEFAULT '',
+  `lasturl` varchar(100) NOT NULL DEFAULT '',
+  `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `useragent` varchar(100) NOT NULL DEFAULT '',
   `bot` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
@@ -98,7 +98,7 @@ CREATE TABLE `lastsearches` (
 DROP TABLE IF EXISTS `misc`;
 CREATE TABLE `misc` (
   `views` int(11) unsigned NOT NULL DEFAULT '0',
-  `hotcount` int(10) unsigned DEFAULT '30',
+  `hotcount` smallint(5) unsigned DEFAULT '30',
   `porabox` text NOT NULL,
   `poratitle` text NOT NULL,
   `maxusers` int(11) NOT NULL DEFAULT '0',
@@ -124,9 +124,9 @@ CREATE TABLE `moodavatars` (
 
 DROP TABLE IF EXISTS `pmsgs`;
 CREATE TABLE `pmsgs` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `userto` int(10) unsigned NOT NULL DEFAULT '0',
-  `userfrom` int(10) unsigned NOT NULL DEFAULT '0',
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `userto` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `userfrom` smallint(5) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
   `ip` char(15) NOT NULL DEFAULT '',
   `msgread` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -139,7 +139,7 @@ CREATE TABLE `pmsgs` (
 
 DROP TABLE IF EXISTS `pmsgs_text`;
 CREATE TABLE `pmsgs_text` (
-  `pid` int(10) unsigned NOT NULL DEFAULT '0',
+  `pid` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `title` varchar(255) NOT NULL DEFAULT '',
   `text` mediumtext NOT NULL,
   PRIMARY KEY (`pid`)
@@ -153,7 +153,7 @@ CREATE TABLE `poll` (
   `closed` tinyint(1) NOT NULL DEFAULT '0',
   `doublevote` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `pollvotes`;
 CREATE TABLE `pollvotes` (
@@ -169,16 +169,16 @@ CREATE TABLE `poll_choices` (
   `choice` varchar(255) NOT NULL DEFAULT '',
   `color` varchar(25) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `posts`;
 CREATE TABLE `posts` (
-  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `id` mediumint(8) NOT NULL AUTO_INCREMENT,
   `thread` int(10) unsigned NOT NULL DEFAULT '0',
   `user` int(10) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
   `ip` char(15) NOT NULL DEFAULT '0.0.0.0',
-  `num` int(10) NOT NULL DEFAULT '0',
+  `num` mediumint(8) NOT NULL DEFAULT '0',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `options` tinyint(4) NOT NULL DEFAULT '0',
   `mood` int(11) NOT NULL DEFAULT '0',
@@ -192,7 +192,7 @@ CREATE TABLE `posts` (
 
 DROP TABLE IF EXISTS `posts_text`;
 CREATE TABLE `posts_text` (
-  `pid` int(10) unsigned NOT NULL DEFAULT '0',
+  `pid` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `text` mediumtext,
   `revision` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -201,6 +201,21 @@ DROP TABLE IF EXISTS `ranks`;
 CREATE TABLE `ranks` (
   `rset` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `num` int(10) NOT NULL DEFAULT '0',
+  `text` varchar(255) NOT NULL DEFAULT '',
+  KEY `count` (`num`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS `proxybans`;
+CREATE TABLE `proxybans` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ip` varchar(32) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS `ranks`;
+CREATE TABLE `ranks` (
+  `rset` tinyint(3) unsigned NOT NULL DEFAULT '1',
+  `num` mediumint(8) NOT NULL DEFAULT '0',
   `text` varchar(255) NOT NULL DEFAULT '',
   KEY `count` (`num`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -216,59 +231,60 @@ DROP TABLE IF EXISTS `smilies`;
 CREATE TABLE `smilies` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` char(8) NOT NULL DEFAULT '',
-  `image` char(16) NOT NULL DEFAULT '',
+  `image` char(32) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
-INSERT INTO `smilies` (`code`, `image`) VALUES
-(':)', 'smile.png'),
-('SEMICOLON)', 'wink.png'),
-(':D', 'biggrin.png'),
-('o_o', 'blank.png'),
-(':awsum:', 'awsum.png'),
-('-_-', 'annoyed.png'),
-('o_O', 'bigeyes.png'),
-(':LOL:', 'lol.png'),
-(':O', 'jawdrop.png'),
-(':(', 'frown.png'),
-('SEMICOLON_SEMICOLON', 'cry.png'),
-('>:', 'mad.png'),
-('O_O', 'eek.png'),
-('8-)', 'glasses.png'),
-('^_^', 'cute.png'),
-('^^SEMICOLONSEMICOLONSEMICOLON', 'cute2.png'),
-('>_<', 'yuck.png'),
-('¬_¬', 'eyeshift.png'),
-('<_<', 'shiftleft.png'),
-('>_>', 'shiftright.png'),
-('@_@', 'dizzy.png'),
-('^~^', 'angel.png'),
-('>:)', 'evil.png'),
-('x_x', 'sick.png'),
-(':P', 'tongue.png'),
-(':S', 'wobbly.png'),
-(':[', 'vamp.png'),
-('~:o', 'baby.png'),
-(':YES:', 'yes.png'),
-(':NO:', 'no.png'),
-('<3', 'heart.png'),
-(':3', 'colonthree.png'),
-(':up:', 'approve.png'),
-(':down:', 'deny.png'),
-(':durr:', 'durrr.png'),
-('^^SEMICOLON', 'embarras.png'),
-(':barf:', 'barf.png'),
-('._.', 'ashamed.png'),
-('''.''', 'umm.png'),
-('''_''', 'downcast.png'),
-(':big:', 'teeth.png'),
-(':lawl:', 'lawl.png'),
-(':ninja:', 'ninja.png'),
-(':pirate:', 'pirate.png'),
-('D:', 'outrage.png'),
-(':sob:', 'sob.png'),
-(':XD:', 'xd.png'),
-(':yum:', 'yum.png');
+INSERT INTO `smilies` (`id`, `code`, `image`) VALUES
+(1, ':)', 'smile.png'),
+(2, 'SEMICOLON)', 'wink.png'),
+(3, ':D', 'biggrin.png'),
+(4, 'o_o', 'blank.png'),
+(5, ':awsum:', 'awsum.png'),
+(6, '-_-', 'annoyed.png'),
+(7, 'o_O', 'bigeyes.png'),
+(8, ':LOL:', 'lol.png'),
+(9, ':O', 'jawdrop.png'),
+(10, ':(', 'frown.png'),
+(11, 'SEMICOLON_SEMICOLON', 'cry.png'),
+(12, '>:(', 'mad.png'),
+(13, 'O_O', 'eek.png'),
+(14, '8-)', 'glasses.png'),
+(15, '^_^', 'cute.png'),
+(16, '^^SEMICOLON', 'embarras.png'),
+(17, '^^SEMICOLONSEMICOLONSEMICOLON', 'cute2.png'),
+(18, '>_<', 'yuck.png'),
+(19, '¬_¬', 'eyeshift.png'),
+(20, '<_<', 'shiftleft.png'),
+(21, '>_>', 'shiftright.png'),
+(22, '@_@', 'dizzy.png'),
+(23, '^~^', 'angel.png'),
+(24, '>:)', 'evil.png'),
+(25, 'x_x', 'sick.png'),
+(26, ':P', 'tongue.png'),
+(27, ':S', 'wobbly.png'),
+(28, ':[', 'vamp.png'),
+(29, '~:o', 'baby.png'),
+(30, ':YES:', 'yes.png'),
+(31, ':NO:', 'no.png'),
+(32, '<3', 'heart.png'),
+(33, ':3', 'colonthree.png'),
+(34, ':up:', 'approve.png'),
+(35, ':down:', 'deny.png'),
+(36, ':durr:', 'durrr.png'),
+(37, ':barf:', 'barf.png'),
+(38, '._.', 'ashamed.png'),
+(39, '''.''', 'umm.png'),
+(40, '''_''', 'downcast.png'),
+(41, ':big:', 'teeth.png'),
+(42, ':lawl:', 'lawl.png'),
+(43, ':ninja:', 'ninja.png'),
+(44, ':pirate:', 'pirate.png'),
+(45, 'D:', 'outrage.png'),
+(46, ':sob:', 'sob.png'),
+(47, ':XD:', 'xd.png'),
+(48, ':yum:', 'yum.png'),
+(49, ':wafl:', 'wafl.png');
 
 DROP TABLE IF EXISTS `threads`;
 CREATE TABLE `threads` (
@@ -284,7 +300,7 @@ CREATE TABLE `threads` (
   `lastposter` int(10) unsigned NOT NULL DEFAULT '0',
   `lastpostid` int(11) NOT NULL DEFAULT '0',
   `sticky` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `poll` int(10) unsigned NOT NULL DEFAULT '0',
+  `poll` smallint(5) unsigned NOT NULL DEFAULT '0',
   `locked` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `forum` (`forum`),
@@ -296,8 +312,8 @@ CREATE TABLE `threads` (
 
 DROP TABLE IF EXISTS `threadsread`;
 CREATE TABLE `threadsread` (
-  `id` int(10) NOT NULL DEFAULT '0',
-  `thread` int(10) NOT NULL DEFAULT '0',
+  `id` smallint(5) NOT NULL DEFAULT '0',
+  `thread` int(11) NOT NULL DEFAULT '0',
   `date` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -312,7 +328,7 @@ CREATE TABLE `uploader` (
 
 DROP TABLE IF EXISTS `usercomments`;
 CREATE TABLE `usercomments` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `uid` int(11) NOT NULL DEFAULT '0',
   `cid` int(11) NOT NULL DEFAULT '0',
   `text` text NOT NULL,
@@ -321,10 +337,11 @@ CREATE TABLE `usercomments` (
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `posts` mediumint(9) NOT NULL DEFAULT '0',
   `regdate` int(11) NOT NULL DEFAULT '0',
-  `name` varchar(25) NOT NULL DEFAULT '',
+  `name` varchar(20) NOT NULL,
+  `displayname` varchar(20) NOT NULL,
   `password` varchar(256) NOT NULL DEFAULT '',
   `minipic` varchar(100) NOT NULL DEFAULT '',
   `picture` varchar(100) NOT NULL DEFAULT '',
@@ -345,7 +362,7 @@ CREATE TABLE `users` (
   `lastactivity` int(10) unsigned NOT NULL DEFAULT '0',
   `lastip` varchar(15) NOT NULL DEFAULT '',
   `lasturl` varchar(100) NOT NULL DEFAULT '',
-  `lastforum` int(11) unsigned NOT NULL DEFAULT '0',
+  `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `postsperpage` smallint(4) unsigned NOT NULL DEFAULT '20',
   `threadsperpage` smallint(4) unsigned NOT NULL DEFAULT '50',
   `timezone` float NOT NULL DEFAULT '0',
@@ -359,7 +376,9 @@ CREATE TABLE `users` (
   `globalblock` tinyint(1) NOT NULL DEFAULT '0',
   `usebanners` tinyint(1) NOT NULL DEFAULT '1',
   `lastknownbrowser` varchar(255) NOT NULL DEFAULT '',
-  `newcomments` tinyint(1) NOT NULL DEFAULT '0',
+  `newcomments` tinyint(1) NOT NULL,
+  `tempbantime` int(11) NOT NULL DEFAULT '0',
+  `tempbanpl` tinyint(2) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `posts` (`posts`),
   KEY `name` (`name`),
