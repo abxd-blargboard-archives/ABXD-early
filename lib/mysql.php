@@ -12,7 +12,8 @@ unset($dbpass);
 function Query($query)
 {
 	global $queries, $loguser, $thisURL;
-	$res = mysql_query($query) or Kill(mysql_error());
+	//write("#{0} - {1}<br/>", $queries, $query);
+	$res = mysql_query($query) or Kill(mysql_error()."<br />Query was: <code>".$query."</code>");
 	$queries++;
 	return $res;
 }
