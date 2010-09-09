@@ -7,7 +7,7 @@ $aff = "Affected by ";
 $syndromes = array
 (
 /*
-	//The small set from ABXD/Nikoboard
+	//This is the set from ABXD/NikoBoard:
 	10 => array("Actually active", "#53C373"),
 	20 => array("$aff'Activity Syndrome'", "#69D989"),
 	30 => array("$aff'Activity Syndrome' +", "#83F3A3"),
