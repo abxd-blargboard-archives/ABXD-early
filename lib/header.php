@@ -53,6 +53,7 @@
 						<li><a href="memberlist.php">Member list</a></li>
 						<li><a href="groups.php">Groups</a></li>
 						<li><a href="ranks.php">Ranks</a></li>
+						<li><a href="calendar.php">Calendar</a></li>
 						<li><a href="avatarlibrary.php">Avatars</a></li>
 						<li><a href="online.php">Online users</a></li>
 						<li><a href="search.php">Search</a></li>
