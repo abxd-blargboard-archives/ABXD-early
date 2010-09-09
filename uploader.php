@@ -1,20 +1,22 @@
 <?php
 
-$mb = 16;
-$userdir = "uploader";
-$goodfiles = array("png", "gif", "jpg", "txt", "zip", "rar", "7z", "jpeg", "mid", "spc", "mod", "s3m", "xm", "it");
-
 include("lib/common.php");
+
+$userdir = "uploader";
+//$goodfiles = array("png", "gif", "jpg", "txt", "zip", "rar", "7z", "jpeg", "mid", "spc", "nsf", "sid", "mod", "s3m", "xm", "it", "css", "ogg", "mp3", "ips", "ups");
+
+if($uploaderWhitelist)
+	$goodfiles = explode(" ", $uploaderWhitelist);
 
 if(isset($_POST['action']))
 	$_GET['action'] = $_POST['action'];
 if(isset($_POST['fid']))
 	$_GET['fid'] = $_POST['fid'];
 
-$quota = $mb * 1024 * 1024;
+$quota = $uploaderCap * 1024 * 1024;
 $totalsize = foldersize($userdir);
 
-$entries = Query("select uploader.*, users.name, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
+$entries = Query("select uploader.*, users.name, users.displayname, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
 
 if($_GET['action'] == "Upload")
 {
@@ -41,7 +43,7 @@ if($_GET['action'] == "Upload")
 				{
 					Alert("Uploading \"".$fname."\" would break the disk space quota.");
 				}
-				else if(!in_array($extension, $goodfiles))
+				else if(is_array($goodfiles) && !in_array(strtolower($extension), $goodfiles))
 				{
 					Alert("Forbidden file type.");
 				}
@@ -53,7 +55,7 @@ if($_GET['action'] == "Upload")
 					Alert("File \"".$fname."\" has been uploaded.", "Okay");
 
 					//Requery to see the changes
-					$entries = Query("select uploader.*, users.name, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
+					$entries = Query("select uploader.*, users.name, users.displayname, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
 				}
 			}
 		}
@@ -81,7 +83,7 @@ if($_GET['action'] == "delete")
 		Alert("Deleted \"".$filename."\".", "Okay");
 
 		//Requery to see the changes
-		$entries = Query("select uploader.*, users.name, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
+		$entries = Query("select uploader.*, users.name, users.displayname, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
 	}
 	else
 	{
@@ -166,11 +168,11 @@ if($totalsize > 0)
 
 write(
 "
-<div class=\"border faq\">
-	Disk space usage: {0} of {1}
+<div class=\"\">
 	<div class=\"pollbarContainer\" style=\"float: right; width: 50%;\">
 			{4}
 	</div>
+	Disk space usage: {0} of {1}
 </div>
 
 <form action=\"uploader.php\" method=\"post\" enctype=\"multipart/form-data\">
