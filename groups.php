@@ -4,13 +4,13 @@ include("lib/common.php");
 $title = "User groups";
 
 $groups = array();
-$rGroups = Query("select * from groups order by id asc");
+$rGroups = Query("select * from groups order by name asc");
 if(NumRows($rGroups))
 {
 	while($group = Fetch($rGroups))
 		$groups[$group['id']] = array('id' => $group['id'], 'name' => $group['name'], 'leader' => $group['leader'], 'members' => array() );
 
-	$rAffils = Query("select name, gid, uid, powerlevel, sex, status from groupaffiliations left join users on users.id = uid order by gid asc");
+	$rAffils = Query("select name, displayname, gid, uid, powerlevel, sex, status from groupaffiliations left join users on users.id = uid order by gid asc, name asc");
 	while($affil = Fetch($rAffils))
 	{
 		$gid = $affil['gid'];
@@ -102,6 +102,27 @@ else if($_GET['action'] == "join")
 		}
 	}
 }
+else if($_GET['action'] == "leave")
+{
+	$gid = (int)$_GET['gid'];
+	if($gid == 0 || !array_key_exists($gid, $groups))
+		Alert("Invalid group.");
+	else
+	{
+		$uid = $loguserid; //(int)$_GET['uid'];
+		//if($uid == 0)
+		//	Alert("Invalid user.");
+		//else
+		{
+			$group = $groups[$gid];
+			//if($group['leader'] == $loguserid || $loguser['powerlevel'] >=3)
+			{
+				Query("delete from groupaffiliations where uid=".$uid." and gid=".$gid);
+				$groups[$gid]['members'][$uid]['status'] = 3;
+			}
+		}
+	}
+}
 else if($_GET['action'] == "request" && $loguserid)
 {
 	$gid = (int)$_GET['gid'];
@@ -162,14 +183,16 @@ else
 			$links = " ";
 			if($member['status'] == 0)
 			{
+				$links = "<sup>";
+				if ($member['id'] == $loguserid)
+					$links .= "[<a href=\"groups.php?action=leave&amp;gid=".$group['id']."\" title=\"Leave\">l</a>]";
 				if($leader && $member['id'] != $group['leader'])
 				{
-					$links = "<sup>";
 					$links .= "[<a href=\"groups.php?action=pass&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Pass leadership\">p</a>]";
 					$links .= "[<a href=\"groups.php?action=kick&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Kick out\">k</a>]";
 					$links .= "[<a href=\"groups.php?action=ban&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Ban\" onclick=\"if(!confirm('Are you sure you want to just up and ban ".$member['name']."? This is quite permanent.') || !confirm('Seriously?')) return false;\">b</a>]";
-					$links .= "</sup> ";
 				}
+				$links .= "</sup> ";
 				$members .= UserLink($member).$links;
 			}
 			else if($member['status'] == 1)
