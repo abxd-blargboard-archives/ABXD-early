@@ -6,31 +6,88 @@ include_once("write.php");
 
 function LoadSmilies($byOrder = FALSE)
 {
-	global $smilies;
-	//if(isset($smilies))
-	//	return;
-	$qSmilies = "select * from smilies";
+	global $smilies, $smiliesOrdered;
 	if($byOrder)
-		$qSmilies .= " order by id asc";
+	{
+		if(isset($smiliesOrdered))
+			return;
+		$rSmilies = Query("select * from smilies order by id asc");
+		$smiliesOrdered = array();
+		while($smiliesOrdered[] = Fetch($rSmilies));
+	}
 	else
-		$qSmilies .= " order by length(code) desc";
-	$rSmilies = Query($qSmilies);
-	$smilies = array();
-	while($smilies[] = Fetch($rSmilies));
+	{
+		if(isset($smilies))
+			return;
+		$rSmilies = Query("select * from smilies order by length(code) desc");
+		$smilies = array();
+		while($smilies[] = Fetch($rSmilies));
+	}
+}
+
+function LoadBlocklayouts()
+{
+	global $blocklayouts, $loguserid;
+	if(isset($blocklayouts))
+		return;
+	$rBlocks = Query("select * from blockedlayouts where blockee = ".$loguserid);
+	while($block = Fetch($rBlocks))
+		$blocklayouts[$block['user']] = 1;
+	//$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
+	//$rBlock = Query($qBlock);
+
+}
+
+function LoadRanks($rankset)
+{
+	global $ranks;	
+	if(isset($ranks[$rankset]))
+		return;
+	$ranks[$poster['rankset']] = array();
+	$rRanks = Query("select * from ranks where rset=".$rankset." order by num");
+	while($rank = Fetch($rRanks))
+		$ranks[$rankset][$rank['num']] = $rank['text'];
 }
 
 function GetRank($poster)
 {
+	global $ranks;
 	if($poster['rankset'] == 0)
 		return "";
+	LoadRanks($poster['rankset']);
+	$thisSet = $ranks[$poster['rankset']];
+	$ret = "";
+	foreach($thisSet as $num => $text)
+	{
+		if($num > $poster['posts'])
+			return $ret;
+		$ret = $text;
+	}
+
+	/*
 	$qRank = "select text from ranks where rset=".$poster['rankset']." and num<=".$poster['posts']." order by num desc limit 1";
 	$rRank = Query($qRank);
 	$rank = Fetch($rRank);
 	return $rank['text'];
+	*/
 }
 
 function GetToNextRank($poster)
 {
+	global $ranks;
+	if($poster['rankset'] == 0)
+		return "";
+	LoadRanks($poster['rankset']);
+	$thisSet = $ranks[$poster['rankset']];
+	$ret = 0;
+	foreach($thisSet as $num => $text)
+	{
+		$ret = $num - $poster['posts'];
+		if($num > $poster['posts'])
+			return $ret;
+	}	
+	
+	/*
 	if($poster['rankset'] == 0)
 		return 0;
 	$qRank = "select num from ranks where rset=".$poster['rankset']." and num > ".$poster['posts']." limit 1";
@@ -41,6 +98,7 @@ function GetToNextRank($poster)
 		return $rank['num'] - $poster['posts'];
 	}
 	return 0;
+	*/
 }
 
 /*
@@ -133,13 +191,24 @@ function MakeUserLink($matches)
 	$id = (int)$matches[1];
 	if(!isset($members[$id]))
 	{
-		$rUser = Query("select id, name, powerlevel, sex from users where id=".$id);
+		$rUser = Query("select id, name, displayname, powerlevel, sex from users where id=".$id);
 		if(NumRows($rUser))
 			$members[$id] = Fetch($rUser);
 		else
 			return UserLink(array('id' => 0, 'name' => "Unknown User", 'sex' => 0, 'powerlevel' => -1));
 	}
 	return UserLink($members[$id]);
+}
+
+function ApplyNetiquetteToLinks($match)
+{
+	if (substr($match[1], 0, 7) != 'http://')
+		return $match[0];
+
+	if (stripos($match[1], 'http://'.$_SERVER['SERVER_NAME']) === 0)
+		return $match[0];
+
+	return $match[0].' target="_blank"';
 }
 
 function FilterJS($match)
@@ -258,6 +327,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	$s = preg_replace("'javascript:'si","javascript<em></em>:>", $s);
 
 	$s = str_replace("[spoiler]","<div class=\"spoiler\"><button onclick=\"toggleSpoiler(this.parentNode);\">Show spoiler</button><div class=\"spoiled hidden\">", $s);
+	$s = preg_replace("'\[spoiler=(.*?)\]'si","<div class=\"spoiler\"><button onclick=\"toggleSpoiler(this.parentNode);\" class=\"named\">\\1</button><div class=\"spoiled hidden\">", $s);
 	$s = str_replace("[/spoiler]","</div></div>", $s);
 
 	$s = preg_replace("'\[url\](.*?)\[/url\]'si","<a href=\"\\1\">\\1</a>", $s);
@@ -306,6 +376,10 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 		}
 	}
 	
+	$s = preg_replace_callback("@<a[^>]+href\s*=\s*\"(.*?)\"@si", 'ApplyNetiquetteToLinks', $s);
+	$s = preg_replace_callback("@<a[^>]+href\s*=\s*'(.*?)'@si", 'ApplyNetiquetteToLinks', $s);
+	$s = preg_replace_callback("@<a[^>]+href\s*=\s*([^\"'][^\s>]*)@si", 'ApplyNetiquetteToLinks', $s);	
+
 	include("macros.php");
 	foreach($macros as $macro => $img)
 		$s = str_replace(":".$macro.":", "<img src=\"img/macros/".$img."\" alt=\":".$macro.":\" />", $s);
@@ -323,11 +397,12 @@ function ApplyTags($text, $tags)
 
 function MakePost($post, $thread, $forum, $ispm=0)
 {
-	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot;
+	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts;
 
-	$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
-	$rBlock = Query($qBlock);
-	$isBlocked = NumRows($rBlock) | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
+	//$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
+	//$rBlock = Query($qBlock);
+	LoadBlockLayouts();
+	$isBlocked = $blocklayouts[$post['uid']] /* NumRows($rBlock) */ | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
 	$noSmilies = $post['options'] & 2;
 
 	if($post['deleted'])
@@ -386,7 +461,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$meta = (!$ispm ? "Posted on " : 'Sent on ').cdate($dateformat,$post['date']);
 		//Threadlinks for listpost.php
 		if($forum == -2)
-			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".$post['threadname']."</a>";
+			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".htmlspecialchars($post['threadname'])."</a>";
 		//Revisions
 		if($post['revision'])
 			$meta .= " (revision ".($post['revision']+1).")";
