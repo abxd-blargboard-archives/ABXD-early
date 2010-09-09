@@ -1,5 +1,4 @@
 <?php
-
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
@@ -12,7 +11,7 @@ $newLastHour = FetchResult("select count(*) from posts where date > ".(time() - 
 $stats .= "<br />".Plural($newToday,"new post")." today, ".$newLastHour." last hour";
 
 $numUsers = FetchResult("select count(*) from users");
-$rLastUser = Query("select id,name,powerlevel,sex from users order by regdate desc limit 1");
+$rLastUser = Query("select id,name,displayname,powerlevel,sex from users order by regdate desc limit 1");
 $lastUser = Fetch($rLastUser);
 $last = Plural($numUsers,"registered user")."<br />Newest: ".UserLink($lastUser);
 
@@ -40,7 +39,7 @@ if($loguserid && ($_GET['action'] == "markallread" || $_GET['action'] == "markas
 	header('Location: index.php');
 }
 
-$rBirthdays = Query("select birthday, id, name, powerlevel, sex from users where birthday > 0 order by name");
+$rBirthdays = Query("select birthday, id, name, displayname, powerlevel, sex from users where birthday > 0 order by name");
 $birthdays = array();
 while($user = Fetch($rBirthdays))
 {
@@ -111,7 +110,7 @@ $forumsHad = array();
 $rFora = Query("select * from forums order by catid, forder");
 $postread = readpostread($loguserid);
 
-$rMembers = Query("select name, id, powerlevel, sex from users");
+$rMembers = Query("select name, displayname, id, powerlevel, sex from users");
 while($mem = Fetch($rMembers))
 	$members[$mem['id']] = $mem;
 
@@ -138,7 +137,7 @@ while($forum = Fetch($rFora))
 {
 	if($category[$forum['catid']]['minpower'] > $pl)
 		continue;
-
+		
 	if($forum['catid'] > $lastCatID)
 	{
 		$lastCatID = $forum['catid'];
