@@ -19,14 +19,6 @@ if(NumRows($rUser))
 else
 	Kill("Unknown user ID.");
 
-
-//RPG stuff
-$rpgStuff = ""; //easier to dummy out this way.
-//if(FetchResult("select count(*) from users_rpg where id = ".$id." and state != 'notin'", 0, 0) > 0)
-//	$rpgStuff = format("<img src=\"rpgstatcard.php?id={0}\" alt=\"{1}'s stats\" style=\"margin: 1em 0em; padding: 2px;\" class=\"outline cell2\" />", $id, $user['name']);
-//</rpg>
-
-
 if($id == $loguserid)
 	Query("update users set newcomments = 0 where id=".$loguserid);
 
@@ -137,6 +129,18 @@ if($user['homepageurl'])
 		$homepage = "<a href=\"".$user['homepageurl']."\">".$user['homepageurl']."</a>";
 }
 
+if($user['tempbantime'])
+{
+
+	write(
+"
+	<div class=\"outline margin cell1 smallFonts\">
+		This user has been temporarily banned until {0} (GMT). That's {1} left.
+	</div>
+",	gmdate("M jS Y, G:i:s",$user['tempbantime']), TimeUnits($user['tempbantime'] - time())
+	);
+}
+
 write("
 	<table>
 		<tr>
@@ -147,10 +151,11 @@ write("
 					</tr>
 					<tr>
 						<td class=\"cell0\" style=\"width: 20%;\">Name</td>
-						<td class=\"cell1\">{0}{1}</td>
+						<td class=\"cell1\">{0}{1}{2}</td>
 					</tr>
-",	$minipic, $user['name']
-	);
+",	$minipic, ($user['displayname'] ? $user['displayname'] : $user['name']),
+	($user['displayname'] ? " (".$user['name'].")" : "")
+);
 if($title)
 {
 	write("
@@ -215,6 +220,15 @@ if($groups)
 						<td class=\"cell1\">{0}</td>
 					</tr>
 ", $groups);
+}
+if($loguser['powerlevel'] > 0)
+{
+	write("
+					<tr>
+						<td class=\"cell0\">Last known IP</td>
+						<td class=\"cell1\">{1} {0}</td>
+					</tr>
+", $user['lastip'], IP2C($user['lastip']));
 }
 
 write("
@@ -287,7 +301,7 @@ if($canDeleteComments && $_GET['action'] == "delete")
 	Query("delete from usercomments where uid=".$id." and id=".(int)$_GET['cid']);
 }
 
-$qComments = "select users.name, users.powerlevel, users.sex, usercomments.id, usercomments.cid, usercomments.text from usercomments left join users on users.id = usercomments.cid where uid=".$id." order by usercomments.id desc limit 0,10";
+$qComments = "select users.name, users.displayname, users.powerlevel, users.sex, usercomments.id, usercomments.cid, usercomments.text from usercomments left join users on users.id = usercomments.cid where uid=".$id." order by usercomments.id desc limit 0,10";
 $rComments = Query($qComments);
 $commentList = "";
 $commentField = "";
@@ -377,11 +391,10 @@ write(
 						</td>
 					</tr>
 				</table>
-				{3}
 			</td>
 		</tr>
 	</table>
-",	UserLink($user), $commentList, $commentField, $rpgStuff);
+",	UserLink($user), $commentList, $commentField);
 
 /*
 //Randomized previews
@@ -402,7 +415,7 @@ $previewPost['text'] = $profilePreviewText;
 $previewPost['num'] = "???";
 $previewPost['id'] = "???";
 $previewPost['uid'] = $id;
-$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,rankset,signature,signsep,posts,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,rankset,signature,signsep,posts,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$previewPost[$toCopy] = $user[$toCopy];
 
@@ -429,6 +442,14 @@ function IsReallyEmpty($subject)
 {
 	$trimmed = trim(preg_replace("/&.*;/", "", $subject));
 	return strlen($trimmed) != 0;
+}
+
+function IP2C($ip)
+{
+	$q = @mysql_query("select cc from ip2c where ip_from <= inet_aton('".$ip."') and ip_to >= inet_aton('".$ip."')") or $r['cc'] = "";
+	if($q) $r = @mysql_fetch_array($q);
+	if($r['cc'])
+		return " <img src=\"img/flags/".strtolower($r['cc']).".png\" alt=\"".$r['cc']."\" title=\"".$r['cc']."\" />";
 }
 
 ?>
