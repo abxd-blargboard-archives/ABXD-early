@@ -27,10 +27,11 @@ function DoFooter($buffer)
 	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title;
 	
 	if(!$noFooter)
+	{
 		$footer = format(
 "
 		<div class=\"footer\">
-			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0.1<br />
+			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0.2<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>
 			Page rendered in {0} seconds with {1}.<br />
 
@@ -43,11 +44,14 @@ function DoFooter($buffer)
 			<a href=\"rss2.php\">
 				<img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" />
 			</a>
+			<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\">
+				<img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" />
+			</a>
 			<a href=\"http://opera.com\">
 				<img src=\"img/opera.png\" alt=\"Opera!\" />
 			</a>
-			<a href=\"http://acmlm.kafuka.org/board/\">
-				<img src=\"img/board2.png\" alt=\"We're a spin-off from here!\" />
+			<a href=\"get\">
+				<img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" />
 			</a>
 
 		</div>
@@ -55,6 +59,7 @@ function DoFooter($buffer)
 </body>
 </html>
 ",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"));
+	}
 	
 	$boardTitle = $boardname;
 	if($title != "")
@@ -145,7 +150,7 @@ function UserLink($user, $field = "id")
 
 	$fpow = $user['powerlevel'];
 	$fsex = $user['sex'];
-	$fname = $user['name'];
+	$fname = ($user['displayname'] ? $user['displayname'] : $user['name']);
 
 	if($hacks['alwayssamepower'])
 		$fpow = $hacks['alwayssamepower'] - 1;
@@ -283,7 +288,7 @@ function DoPrivateMessageBar()
 
 function DoSmileyBar($taname = "text")
 {
-	global $smilies;
+	global $smiliesOrdered;
 	$expandAt = 26;
 	LoadSmilies(TRUE);
 	
@@ -295,14 +300,14 @@ function DoSmileyBar($taname = "text")
 		</div>
 		<div class=\"errorc cell0\" id=\"smiliesContainer\">
 ");
-	if(count($smilies) > $expandAt)
+	if(count($smiliesOrdered) > $expandAt)
 		write("<button class=\"expander\" id=\"smiliesExpand\" onclick=\"expandSmilies();\">&#x25BC;</button>"); 
 	print "<div class=\"smilies\" id=\"commonSet\">";
-	for($i = 0; $i < count($smilies) - 1; $i++)
+	for($i = 0; $i < count($smiliesOrdered) - 1; $i++)
 	{
 		if($i == $expandAt)
 			print "</div><div class=\"smilies\" id=\"expandedSet\">";
-		$s = $smilies[$i];
+		$s = $smiliesOrdered[$i];
 		print "<img src=\"img/smilies/".$s['image']."\" alt=\"".htmlentities($s['code'])."\" title=\"".htmlentities($s['code'])."\" onclick=\"insertSmiley(' ".str_replace("'", "\'", $s['code'])." ');\" />";
 	}
 	write("
@@ -329,8 +334,9 @@ function DoPostHelp()
 			<div id="expandedHelp">
 				[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
 				[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
+				[spoiler=&hellip;]&hellip;[/spoiler] <br />
 				[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
-				[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
+				[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, irc, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
 				<br />
 				<h4>Links</h4>
 				[img]http://&hellip;[/img] &mdash; insert image <br />
@@ -373,7 +379,7 @@ function OnlineUsers($forum = 0)
 		$browseLocation = " browsing ".$forumName;
 	}
        
-	$rOnlineUsers = Query("select id,name,sex,powerlevel,lastactivity,lastposttime,minipic from users where (lastactivity > ".(time()-300)." or lastposttime > ".(time()-300).")".$forumClause." order by name");
+	$rOnlineUsers = Query("select id,name,displayname,sex,powerlevel,lastactivity,lastposttime,minipic from users where (lastactivity > ".(time()-300)." or lastposttime > ".(time()-300).")".$forumClause." order by name");
 	$onlineUsers = "";
 	$onlineUserCt = 0;
 	while($onlineUser = Fetch($rOnlineUsers))
