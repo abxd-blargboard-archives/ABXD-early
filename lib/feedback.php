@@ -55,12 +55,14 @@ function Redirect($s,$t,$n)
 			}
 		}
 		
-		window.onload = function()
+		function startBar()
 		{
 			theBar = document.getElementById(\"theBar\");
 			theBar.parentNode.style['display'] = \"block\";
 			doBar();
 		}
+		
+		window.addEventListener(\"load\",  startBar, false);
 	</script>
 ",	$s, $t, $n);
 	exit();
