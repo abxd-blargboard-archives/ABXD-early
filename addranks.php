@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("addRanks");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to import ranksets.");
 

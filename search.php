@@ -4,6 +4,8 @@
 
 include('lib/common.php');
 
+AssertForbidden("search");
+
 $pl = $loguser['powerlevel'];
 if ($pl == -1) $pl = 0;
 

@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("recalculate");
+
 if($loguser['powerlevel'] < 1)
 		Kill("Staff only, please.");
 
