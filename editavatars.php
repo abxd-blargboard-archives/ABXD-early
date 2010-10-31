@@ -1,10 +1,12 @@
 <?php
 include("lib/common.php");
 
+$title = "Mood avatars";
+
+AssertForbidden("editMoods");
+
 if(!$loguserid) //Not logged in?
 	Kill("You must be logged in to edit your avatars.");
-
-$title = "Mood avatars";
 
 if(isset($_POST['action']))
 {

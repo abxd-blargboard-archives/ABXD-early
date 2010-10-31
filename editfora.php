@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("editForum");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the forum list.");
 
@@ -61,7 +63,7 @@ if(NumRows($rCategories))
 		{
 			while($forum = Fetch($rFora))
 			{
-				$localMods = "No mods";
+				$localMods = "";
 				$qMods = "select * from forummods where forum=".(int)$forum['id'];
 				$rMods = Query($qMods);
 				if(NumRows($rMods))
@@ -75,6 +77,8 @@ if(NumRows($rCategories))
 					}
 					$localMods = "Moderated by: ".substr($localMods,0,strlen($localMods)-2);
 				}
+				else
+					$localMods = "No mods";
 
 				$thelist .= format(
 "
