@@ -7,6 +7,8 @@ include("lib/common.php");
 
 $title = "Manage localmod assignments";
 
+AssertForbidden("editMods");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You're not an admin.");
 
