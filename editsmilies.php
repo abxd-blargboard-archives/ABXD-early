@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("editSmilies");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the smiley table.");
 
