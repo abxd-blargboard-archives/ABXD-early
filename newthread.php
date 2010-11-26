@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("makeThread");
+
 if(!$loguserid) //Not logged in?
 	Kill("You must be logged in to post.");
 
@@ -41,12 +43,22 @@ write(
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
-		window.onload = function() { startOnlineUsers({0}); };
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
+");
+if(!$noAjax)
+	write(
+"
+	<script type=\"text/javascript\">
+		onlineFID = {0};
+		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
 	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		&nbsp;
 		<span id=\"onlineUsers\">
 			{1}
 		</span>
+		&nbsp;
 	</div>
 ", $fid, $onlineUsers);
 
@@ -101,6 +113,7 @@ if($_POST['action']=="Post")
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
 		if($_POST['nosm']) $options |= 2;
+		if($_POST['nobr']) $options |= 4;
 
 		if($_POST['iconid'])
 		{
@@ -122,11 +135,12 @@ if($_POST['action']=="Post")
 			else if($_POST['unstick'])
 				$mod.= ", sticky = 0";
 		}
-
+		
 		//	Guess who forgot to make sure not every thread was a poll? XD -- Arbe
 		if($_POST['poll'])
 		{
-			$qPoll = "insert into poll (question) values ('".justEscape($_POST['pollQuestion'])."')";
+			$doubleVote = ($_POST['multivote']) ? 1 : 0;
+			$qPoll = "insert into poll (question, doublevote) values ('".justEscape($_POST['pollQuestion'])."', ".$doubleVote.")";
 			$rPoll = Query($qPoll);
 			$pod = mysql_insert_id();
 			for($pops = 0; $pops < $_POST['pollOptions']; $pops++)
@@ -162,6 +176,8 @@ if($_POST['action']=="Post")
 		
 		Query("update threads set lastpostid = ".$pid." where id = ".$tid);
 
+		if($forum['minpower'] < 1)
+			Report("New ".($_POST['poll'] ? "poll" : "thread")." by [b]".$loguser['name']."[/]: [b]".$_POST['title']."[/] (".$forum['title'].") -> [g]#HERE#?tid=".$tid);
 		Redirect("Posted!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
@@ -263,6 +279,7 @@ if($_POST['action']=="Preview")
 		$previewPost['options'] = 0;
 		if($_POST['nopl']) $previewPost['options'] |= 1;
 		if($_POST['nosm']) $previewPost['options'] |= 2;
+		if($_POST['nobr']) $previewPost['options'] |= 4;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		$previewPost['uid'] = $loguserid;
 		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
@@ -291,6 +308,8 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 if($_POST['nosm'])
 	$nosm = "checked=\"checked\"";
+if($_POST['nobr'])
+	$nobr = "checked=\"checked\"";
 
 $iconNoneChecked = ($_POST['iconid'] == 0) ? "checked=\"checked\"" : "";
 $iconCustomChecked = ($_POST['iconid'] == 255) ? "checked=\"checked\"" : "";
@@ -461,7 +480,10 @@ write(
 									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;Disable&nbsp;post&nbsp;layout
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nosm\" {4} /> <label for=\"ns\">&nbsp;Disable&nbsp;smilies
+									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;Disable&nbsp;smilies
+								</label>
+								<label>
+									<input type=\"checkbox\" name=\"nobr\" {8} />&nbsp;Disable&nbsp;auto-&lt;br>
 								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{5}\" />
 								<input type=\"hidden\" name=\"poll\" value=\"{6}\" />
@@ -472,7 +494,7 @@ write(
 				</form>
 			</td>
 			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$prefill, $postButton, $moodOptions, $nopl, $nosm, $fid, stripslashes($_POST['poll']), $multivote);
+",	$prefill, $postButton, $moodOptions, $nopl, $nosm, $fid, stripslashes($_POST['poll']), $multivote, $nobr);
 
 DoSmileyBar();
 DoPostHelp();
