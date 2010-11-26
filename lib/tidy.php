@@ -24,7 +24,7 @@ if(function_exists('tidy_repair_string'))
 	(
 		"show-body-only"=>1,
 		"output-xhtml"=>1,
-		"doctype"=>"strict",
+		"doctype"=>"transitional",
 		"logical-emphasis"=>1,
 		"alt-text"=>"",
 		"drop-proprietary-attributes"=>1,
