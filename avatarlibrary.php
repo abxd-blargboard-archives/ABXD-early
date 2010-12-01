@@ -6,6 +6,8 @@ include("lib/common.php");
 
 $title = "Avatar library";
 
+AssertForbidden("viewAvatars");
+
 if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null value we care about.
 {
 	//Prepare file tree...
@@ -76,7 +78,8 @@ if($_GET['action'] == "set")
 
 				//Set your profile
 				Query("update users set picture='img/avatars/".$loguserid."' where id=".$loguserid." limit 1");
-
+				
+				Report("[b]".$loguser['name']."[/] switched avatars to [b]\"".$avalib[$fid]['content'][$_GET['img']]."\"[/] -> [g]#HERE#?uid=".$loguserid, 1);
 				Redirect("Your avatar has been set to \"".$avalib[$fid]['content'][$_GET['img']]."\".","profile.php?id=".$loguserid, "your profile");
 			}
 }
