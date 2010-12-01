@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("editThread");
+
 if(!$loguserid) //Not logged in?
 	Kill("You must be logged in to post.");
 
@@ -23,7 +25,7 @@ else
 	Kill("Unknown thread ID.");
 $thread['title'] = htmlspecialchars($thread['title']);
 
-$canMod = CanMod($loguserid,$thread['forum']);
+$canMod = CanMod($loguserid, $thread['forum']);
 
 if(!$canMod && $thread['user'] != $loguserid)
 	Kill("You are not allowed to edit threads.");
@@ -37,24 +39,28 @@ if($canMod)
 	{
 		$qThread = "update threads set closed=1 where id=".$tid;
 		$rThread = Query($qThread);
+		Report("[b]".$loguser['name']."[/] closed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 		Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="open")
 	{
 		$qThread = "update threads set closed=0 where id=".$tid;
 		$rThread = Query($qThread);
+		Report("[b]".$loguser['name']."[/] opened thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 		Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="stick")
 	{
 		$qThread = "update threads set sticky=1 where id=".$tid;
 		$rThread = Query($qThread);
+		Report("[b]".$loguser['name']."[/] stickied thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 		Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="unstick")
 	{
 		$qThread = "update threads set sticky=0 where id=".$tid;
 		$rThread = Query($qThread);
+		Report("[b]".$loguser['name']."[/] unstuck thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 		Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_POST['action']=="Move")
@@ -77,6 +83,7 @@ if($canMod)
 				SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
 				WHERE forums.id=".$thread['forum']." OR forums.id=".$moveto);
 		
+		Report("[b]".$loguser['name']."[/] moved thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 		Redirect("Thread moved.","forum.php?id=".$moveto,"the new forum");
 	}
 	elseif($_GET['action']=="delete")
@@ -127,6 +134,7 @@ if($canMod)
 			$rPollChoices = Query($qPollChoices);
 		}
 
+		Report("[b]".$loguser['name']."[/] deleted thread [b]".$thread['title']."[/]");
 		Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action'] == "trash")
@@ -150,6 +158,7 @@ if($canMod)
 					SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
 					WHERE forums.id=".$thread['forum']." OR forums.id=".$trashid);
 
+			Report("[b]".$loguser['name']."[/] thrashed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 			Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
 		}
 		else
@@ -175,6 +184,7 @@ if($canMod)
 			$qThreads = "update threads set title='".justEscape($_POST['title'])."', icon='".$iconurl."', closed=".$isClosed.", sticky=".$isSticky." where id=".$tid." limit 1";
 			$rThreads = Query($qThreads);
 
+			Report("[b]".$loguser['name']."[/] edited thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
 		}
@@ -191,6 +201,7 @@ else
 			$qThreads = "update threads set title='".justEscape($_POST['title'])."' where id=".$tid." limit 1";
 			$rThreads = Query($qThreads);
 
+			Report("[b]".$loguser['name']."[/] renamed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
 		}
@@ -233,7 +244,6 @@ if($canMod)
 					<input type=\"radio\" {0}\" name=\"iconid\" value=\"{1}\" />
 					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" /
 				</label>
-				&nbsp;
 ", $check, $i);
 		$i++;
 	}
@@ -249,7 +259,7 @@ if($canMod)
 	write(
 "
 	<form action=\"editthread.php\" method=\"post\">
-		<table class=\"outline margin width75\">
+		<table class=\"outline margin\" style=\"width: 100%;\">
 			<tr class=\"header1\">
 				<th colspan=\"2\">
 					Edit Thread
@@ -267,19 +277,18 @@ if($canMod)
 				<td>
 					Icon
 				</td>
-				<td>
-					{1}
-
-					<br/>
+				<td class=\"threadIcons\">
 					<label>
 						<input type=\"radio\" {2} id=\"noicon\" name=\"iconid\" value=\"0\">
 						None
 					</label>
+					{1}
+					<br/>
 					<label>
 						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" />
-						Custom:
-						<input type=\"text\" name=\"iconurl\" style=\"width: 98%;\" maxlength=\"100\" value=\"{4}\" />
+						<span>Custom</span>
 					</label>
+					<input type=\"text\" name=\"iconurl\" style=\"width: 50%;\" maxlength=\"100\" value=\"{4}\" />
 				</td>
 			</tr>
 			<tr class=\"cell2\">
