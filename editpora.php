@@ -6,6 +6,8 @@ include("lib/common.php");
 
 $title = "Points of Required Attention";
 
+AssertForbidden("editPoRA");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the Points of Required Attention.");
 
@@ -14,6 +16,7 @@ if($_POST['action'] == "Edit")
 	//TidyPost($_POST['text']);
 	$qPora = "update misc set porabox = '".justEscape($_POST['text'])."', poratitle = '".justEscape($_POST['title'])."'";
 	$rPora = Query($qPora);
+	Report("[b]".$loguser['name']."[/] edited the PoRA.", 1);
 	Redirect("Edited!","./","the main page");
 }
 
@@ -62,10 +65,7 @@ write(
 		</table>
 	</form>
 	<script type=\"text/javascript\">
-		window.onload = function()
-		{
-			startPoraUpdate();
-		}
+		window.addEventListener(\"load\",  startPoraUpdate, false);
 	</script>
 ",	$misc['poratitle'], $misc['porabox'], htmlval($misc['poratitle']), htmlval($misc['porabox']));
 ?>
