@@ -27,10 +27,13 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	By registering a user account, you will be able to post on the board as well as use several features only accessible through registering, such as the ability to mark forums as read and private messaging. Unregistered users have guest access to the board, meaning they can view threads but not reply to them. They can also only see the board in whatever theme is the default.
 </p>
 
+<!-- ROOT NOTICE: Change the ID for the "new members thread" listed here, then uncomment this block. -->
+<!--
 <h3>I'm new, where should I start?</h3>
 <p>
 	The best place for newcomers to start is the <a href="thread.php?id=103">New Members thread</a> where you can introduce yourself to the board. If you have any questions not addressed by The Rules, feel free to ask them in the proper forum.
 </p>
+-->
 
 <h3>Why are there name and password fields in the New Reply form?</h3>
 <p>
@@ -54,12 +57,12 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	<li>Follow the rules the local moderators proclaim in their forums.</li>
 	<li>Listen to the administrators when they warn you.</li>
 	<li>Enjoy yourself, and post frequently &mdash; while obeying the rules.</li>
-	<li>Use proper grammar and avoid 1337speak and AOL speak. It’s a good way to gain respect.</li>
+	<li>Use proper grammar and avoid 1337speak and AOL speak. It's a good way to gain respect.</li>
 	<li><strong>Exercise common sense when posting.</strong></li>
 	<li>Exercise caution when posting threads about sensitive topics such as religion.</li>
 	<li>Add a "[18]" or "[NSFW]" or some other warning to threads about adult stuff.</li>
 	<li>Post something worth reading. Try to post more than a word or two at a time. Note that quoting another user's post does not count.</li>
-	<li>Proofread your post. It’s very annoying (and rather wasteful) to have a single post with 10+ revisions just because you keep finding new spelling errors to correct.</li>
+	<li>Proofread your post. It's very annoying (and rather wasteful) to have a single post with 10+ revisions just because you keep finding new spelling errors to correct.</li>
 
 </ul>
 <h4>Don't</h4>
@@ -71,7 +74,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	<li>Create multiple accounts unless explicitly authorized to do so by an administrator. Creation of secondary accounts to evade bans will result in a permanent banishment from the board.</li>
 	<li>Ask any questions that could be answered using The Rules or easily and commonly available sources.</li>
 	<li>Post threads regarding layout testing. You can preview your layout in your user profile, or check the "Disable post layout" box on the new reply page, code up your layout in that post and make furious use of the Preview button. Do not actually press the Post button.</li>
-	<li>Stick around if you hate the board. Nobody’s forcing you to.</li>
+	<li>Stick around if you hate the board. Nobody's forcing you to.</li>
 	<li>Act like the board is a chat room (post messages like "I agree", "What's up?", or any messages directed to individuals). This is what the private message function is for.</li>
 	<li><strong>Flame</strong> or otherwise purposefully try to be an ass to people.</li>
 	<li>Expect this board to be a utopia. People won't respect you if you act stupid or act as if you're better than everyone else.</li>
@@ -117,7 +120,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	First off, don't complain on the board about a thread being closed or deleted, and don't single out a certain mod or admin as being responsible. This will result in a ban. Learn from your mistakes and move on.
 </p>
 <p>
-	If you feel you need clarification on why the thread was closed, or if you feel a mistake was made, contact a staff member, preferably a local moderator who’s in charge of the relevant forum, and politely explain the problem.
+	If you feel you need clarification on why the thread was closed, or if you feel a mistake was made, contact a staff member, preferably a local moderator who's in charge of the relevant forum, and politely explain the problem.
 </p>
 
 <h3>Help! I've been banned! What do I do now?</h3>
@@ -137,7 +140,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 <?php
 	//This is where we embed a bit of PHP code to generate a nice table.
 	$sexes = array(0=>"Male",1=>"Female",2=>"N/A");
-	$powerlevels = array("x"=>"Banned user",0=>"Normal user",1=>"Local Moderator",2=>"Full Moderator",3=>"Administrator");
+	$powerlevels = array(0=>"Normal user",1=>"Local Moderator",2=>"Full Moderator",3=>"Administrator",4=>"Root");
 	$headers = "";
 	$colors = "";
 	foreach($sexes as $ss)
@@ -155,7 +158,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 			$items .= format(
 "
 		<td class=\"center\">
-			<a href=\"#\"><span class=\"nc{0}{1}\" style=\"font-weight: bold;\">
+			<a href=\"javascript:void()\"><span class=\"nc{0}{1}\" style=\"font-weight: bold;\">
 				{2}
 			</span></a>
 		</td>
@@ -173,6 +176,13 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 <table class=\"width50 outline\" style=\"margin-left: 25%; margin-right: auto\">
 	<tr class=\"header1\">
 		{0}
+	</tr>
+	<tr class=\"cell0\">
+		<td class=\"center\" colspan=\"3\">
+			<a href=\"javascript:void()\"><span class=\"nc0x\" style=\"font-weight: bold;\">
+				Banned user
+			</span></a>
+		</td>
 	</tr>
 	{1}
 </table>
@@ -199,7 +209,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 
 <h3>How do I add my EXP and post counters to my signature or post?</h3>
 <p>
-	You don’t &mdash; this board software does not <em>have</em> things like Levels, experience or item shops, unlike the AcmlmBoard software it is based on.
+	You don't &mdash; this board software does not <em>have</em> things like Levels, experience or item shops, unlike the AcmlmBoard software it is based on.
 </p>
 
 <h3>What are the user rankings?</h3>
@@ -211,13 +221,18 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 <p>
 	You can get one by being on staff and/or having at least 200 posts. There may be a few rare exceptions, but asking for a custom title before having the requirements for it usually won't get you one.
 </p>
+<?php
+if($theWord != "")
+	write(
+"
 <p>
-	The word required for registration is <strong><?php print $theWord; ?></strong>.
+	The word required for registration is <strong>{0}</strong>.
 </p>
-
+", $theWord);
+?>
 <h3>How do I edit a poll I made?</h3>
 <p>
-	You don’t. Poll editing is rather difficult to correctly implement and carries a risk of gross abuse. Imagine if you will, that you make a poll about something, and you don’t like the results. With poll editing, you could then go and switch the answers around. If you <em>really</em> need to edit a poll, ask an admin with database access (for example, <?php print $admin; ?>) to edit it for you.
+	You don't. Poll editing is rather difficult to correctly implement and carries a risk of gross abuse. Imagine if you will, that you make a poll about something, and you don't like the results. With poll editing, you could then go and switch the answers around. If you <em>really</em> need to edit a poll, ask an admin with database access (for example, <?php print $admin; ?>) to edit it for you.
 </p>
 
 <h3>Are there any rules for post layouts?</h3>
@@ -231,7 +246,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	<li>No broken tables or divs. If you're working with tables and feel that you might be messing up, check your post in your user profile. If the profile seems to be messed up, then the layout is as well. Broken tables can wreak havoc with threads.</li>
 	<li>The board is designed to be fairly dark. Suddenly looking at a relatively bright post layout can make your eyes hurt, so don't do that &mdash; keep the brightness subdued.</li>
 	<li>Bad color contrast in general, for basically the same reason as above.</li>
-	<li>CSS special effects may look good, but don’t go too far or things will go laggy.</li>
+	<li>CSS special effects may look good, but don't go too far or things will go laggy.</li>
 </ul>
 <p>
 	If your layout is spotted or reported as breaking any of these rules, it will be deleted and you will be notified of what was wrong by private message, possibly with suggestions. If the problem is not related to images but perhaps just badly chosen color values we may try to fix it for you and inform you later by PM. Anything else is out of our hands, so yeah.
@@ -274,9 +289,9 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	<!-- Research by Kiyoshi. -->
 </p>
 
-<h3>I tried to join a User Group but I’ve been waiting for approval for weeks. What gives?</h3>
+<h3>I tried to join a User Group but I've been waiting for approval for weeks. What gives?</h3>
 <p>
-	The group leader just hasn’t been paying attention to the waiting list. Did you try sending a PM? Mind you, you really shouldn’t send a PM right after submitting a join request.
+	The group leader just hasn't been paying attention to the waiting list. Did you try sending a PM? Mind you, you really shouldn't send a PM right after submitting a join request.
 </p>
 
 <h3>I accidentally my avatar while browsing the Avatar Library. How can I get it back?</h3>
@@ -291,7 +306,7 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 
 <h3>How can I get a copy of this board software?</h3>
 <p>
-	You can get the latest stable version <a href="http://helmet.kafuka.org/nikoboard/get/">here</a>. Keep in mind that you’ll need some place to run it on, and that place must support PHP and MySQL. Having basic skills in PHP and MySQL database management can be very useful.
+	You can get the latest stable version <a href="http://helmet.kafuka.org/thepile/ABXD">here</a>. Keep in mind that you'll need some place to run it on, and that place must support PHP and MySQL. Having basic skills in PHP and MySQL database management can be very useful.
 </p>
 
 </div>
