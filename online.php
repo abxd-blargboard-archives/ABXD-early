@@ -6,6 +6,8 @@ include("lib/common.php");
 
 $title = "Online users";
 
+AssertForbidden("viewOnline");
+
 $time = (int)$_GET['time'];
 if(!$time) $time = 300;
 
@@ -68,9 +70,11 @@ if(NumRows($rUsers))
 			<td>
 				{5}
 			</td>
+".($loguser['powerlevel'] > 0 ? "
 			<td>
 				{6} {7}
 			</td>
+" : "")."
 		</tr>
 	",	$cellClass, $i, UserLink($user), cdate("d-m-y G:i:s", $user['lastactivity']),
 		($user['lastposttime'] ? cdate("d-m-y G:i:s",$user['lastposttime']) : "Never"),
@@ -164,9 +168,11 @@ write(
 			<th>
 				URL
 			</th>
+".($loguser['powerlevel'] > 0 ? "
 			<th style=\"width: 140px;\">
 				IP
 			</th>
+" : "")."
 		</tr>
 		{0}
 	</table>
