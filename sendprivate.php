@@ -6,6 +6,8 @@ include("lib/common.php");
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
 
+AssertForbidden("sendPM");
+
 if(!$loguserid) //Not logged in?
 	Kill("You must be logged in to send private messages.");
 
@@ -23,7 +25,7 @@ if($pid)
 			$user = Fetch($rUser);
 		else
 			Kill("Unknown user.");
-		$prefill = "[reply=\"".$user['name']."\"]".$sauce['text']."[/quote]";
+		$prefill = "[reply=\"".$user['name']."\"]".htmlval($sauce['text'])."[/quote]";
 		$trefill = "Re: ".$sauce['title'];
 		if(!isset($_POST['to']))
 			$_POST['to'] = $user['name'];
@@ -52,6 +54,14 @@ if($loguser['powerlevel'] == -1)
 
 $title = "Private messages";
 
+write(
+"
+	<script type=\"text/javascript\">
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
+");
+
+
 if($_POST['to'])
 {
 	$_POST['to'] = htmlentities($_POST['to']);
@@ -79,7 +89,7 @@ if($_POST['to'])
 	$_POST['action'] = "";
 }
 
-if($_POST['action']=="Send")
+if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
 {
 	if($_POST['title'])
 	{
@@ -87,6 +97,8 @@ if($_POST['action']=="Send")
 
 		if($_POST['text'])
 		{
+			$wantDraft = (int)($_POST['action'] == "Save as Draft");
+
 			//$post = justEscape($post);
 			$post = htmlentities2(deSlashMagic($_POST['text']));
 			$post = preg_replace("'/me '","[b]* ".$loguser['name']."[/b] ", $post); //to prevent identity confusion
@@ -95,7 +107,7 @@ if($_POST['action']=="Send")
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
 			$post = mysql_real_escape_string($post);
 
-			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0)";
+			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread, drafting) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0, ".$wantDraft.")";
 			$rPM = Query($qPM);
 			$pid = mysql_insert_id();
 
@@ -187,6 +199,7 @@ Write(
 							<td>
 								<input type=\"submit\" name=\"action\" value=\"Send\" /> 
 								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+								<input type=\"submit\" name=\"action\" value=\"Save as Draft\" /> 
 							</td>
 						</tr>
 					</table>
