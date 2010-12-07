@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("viewRecords");
+
 $df = "l, F jS Y, G:i:s";
 
 write(
@@ -55,6 +57,7 @@ while($stat = Fetch($rStats))
 	$tables[$stat['Name']] = $stat;
 
 $tablelist = "";
+$rows = $avg = $datlen = $idx = $datfree = 0;
 foreach($tables as $table)
 {
 	$cellClass = ($cellClass+1) % 2;
@@ -84,6 +87,11 @@ foreach($tables as $table)
 ",	$cellClass, $table['Name'], $table['Rows'], sp($table['Avg_row_length']),
 	sp($table['Data_length']), sp($table['Index_length']), sp($table['Data_free']),
 	sp($table['Data_length'] + $table['Index_length']));
+	$rows += $table['Rows'];
+	$avg += $table['Avg_row_length'];
+	$datlen += $table['Data_length'];
+	$idx += $table['Index_length'];
+	$datfree += $table['Data_free'];
 }
 
 write(
@@ -118,8 +126,34 @@ write(
 		</th>
 	</tr>
 	{0}
+	<tr class=\"header1\">
+		<th colspan=\"7\" style=\"height: 8px;\"></th>
+	</tr>
+	<tr class=\"cell2\">
+		<td style=\"font-weight: bold;\">
+			Total
+		</td>
+		<td>
+			{1}
+		</td>
+		<td>
+			{2}
+		</td>
+		<td>
+			{3}
+		</td>
+		<td>
+			{4}
+		</td>
+		<td>
+			{5}
+		</td>
+		<td>
+			{6}
+		</td>
+	</tr>
 </table>
-", $tablelist);
+", $tablelist, $rows, sp($avg), sp($datlen), sp($idx), sp($datfree), sp($datlen + $idx));
 
 function sp($sz)
 {
