@@ -16,6 +16,23 @@ include("lib/mysql.php");
 include("lib/snippets.php");
 include("lib/post.php");
 
+
+if(isset($_GET['thread']))
+{
+	$extraWhere = "and thread = ".(int)$_GET['thread'];
+	$extraUrl = "?thread=".(int)$_GET['thread'];
+	$tname = mysql_result(mysql_query("select title from threads where id = ".(int)$_GET['thread']),0,0);
+	$description = "The latest replies for \"".$tname."\"";
+}
+else if(isset($_GET['forum']))
+{
+	$extraWhere = "and threads.forum = ".(int)$_GET['forum'];
+	$extraUrl = "?forum=".(int)$_GET['forum'];
+	$fname = mysql_result(mysql_query("select title from forums where id = ".(int)$_GET['forum']),0,0);
+	$description = "The latest replies for \"".$fname."\"";
+	//$maxPosts *= 100;
+}
+
 print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -24,17 +41,18 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	<title><?php print $feedname; ?></title>
 	<link><?php print $boardurl; ?></link>
 	<description><?php print $description; ?></description>
-	<atom:link href="<?php print $boardurl; ?>/rss2.php" rel="self" type="application/rss+xml" />
+	<atom:link href="<?php print $boardurl; ?>/rss2.php<?php print $extraUrl; ?>" rel="self" type="application/rss+xml" />
 
 <?php
 	//$qPosts = "select * from posts order by date desc limit 0, ".($maxPosts * 2);
 	$qPosts = "select ";
 	$qPosts .=
-	"posts.id, posts.thread, posts.date, posts.num, posts.deleted, posts.options, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname";
+	"posts.id, posts.thread, posts.date, posts.num, posts.deleted, posts.options, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname, threads.forum";
 	$qPosts .= 
-	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
-	$qPosts .= " where deleted=0 order by date desc limit 0, ".($maxPosts * 2);
-	$rPosts = mysql_query($qPosts) or die(mysql_error());
+	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user left join threads on threads.id = posts.thread";
+	$qPosts .= " where deleted=0 ".$extraWhere." order by date desc limit 0, ".($maxPosts * 2);
+	//print $qPosts;
+	$rPosts = mysql_query($qPosts) or die(mysql_error()." --- ".$qPosts);
 	while($post = Fetch($rPosts))
 	{
 		$qThread = "select * from threads where id=".$post['thread'];
@@ -47,6 +65,13 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		
 		if($forum['minpower'] > 0)
 			continue;
+		
+		if(isset($_GET['forum']))
+		{
+			//$maxposts /= 100; 
+			if($thread['forum'] != (int)$_GET['forum'])
+				continue;
+		}
 
 		//$qPoster = "select * from users where id=".$post['user'];
 		//$rPoster = Query($qPoster);
@@ -73,10 +98,16 @@ print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		$reply = ($post['revision'] > 0) ? "Post edited" : "New post";
 
 		print "<title>".$reply." by ".$poster['name']." (".$forum['title'].": ".$thread['title'].")</title>\n";
-			
+		
+		$text = $post['text'];
+		//Prechew the spoilers
+		$text = preg_replace("'\[spoiler\](.*?)\[/spoiler]'si","(spoiler)", $text);
+		$text = preg_replace("'\[spoiler=(.*?)\](.*?)\[/spoiler]'si","(spoiler)", $text);
+		$text = CleanUpPost($text, $poster['name'], true);
+		
 		print "<link>".$boardurl."/thread.php?pid=".$post['id']."#".$post['id']."</link>\n";
 		print "<pubDate>".gmdate(DATE_RFC1123, $post['date'])."</pubDate>\n";
-		print "<description><![CDATA[".CleanUpPost($post['text'], $poster['name'], true)."]]></description>\n";
+		print "<description><![CDATA[".$text."]]></description>\n";
 		print "<guid isPermaLink=\"false\">t".$thread['id']."p".$post['id']."</guid>\n";
 		print "</item>\n";
 
