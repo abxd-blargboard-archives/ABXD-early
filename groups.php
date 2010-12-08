@@ -3,6 +3,8 @@ include("lib/common.php");
 
 $title = "User groups";
 
+AssertForbidden("editGroups");
+
 $groups = array();
 $rGroups = Query("select * from groups order by name asc");
 if(NumRows($rGroups))
@@ -14,7 +16,7 @@ if(NumRows($rGroups))
 	while($affil = Fetch($rAffils))
 	{
 		$gid = $affil['gid'];
-		$groups[$gid]['members'][$affil['uid']] = array('id' => $affil['uid'], 'name' => $affil['name'], 'powerlevel' => $affil['powerlevel'], 'sex' => $affil['sex'], 'status' => $affil['status']);
+		$groups[$gid]['members'][$affil['uid']] = array('id' => $affil['uid'], 'name' => $affil['name'], 'displayname' => $affil['displayname'], 'powerlevel' => $affil['powerlevel'], 'sex' => $affil['sex'], 'status' => $affil['status']);
 	}
 }
 
@@ -81,7 +83,7 @@ else if($_GET['action'] == "ban")
 		}
 	}
 }
-else if($_GET['action'] == "join")
+else if($_GET['action'] == "join" && IsAllowed("joinGroups"))
 {
 	$gid = (int)$_GET['gid'];
 	if($gid == 0 || !array_key_exists($gid, $groups))
@@ -200,7 +202,8 @@ else
 				if($leader)
 				{
 					$links = "<sup>";
-					$links .= "[<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">j</a>]";
+					if(IsAllowed("joinGroups"))
+						$links .= "[<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">j</a>]";
 					$links .= "[<a href=\"groups.php?action=deny&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Deny membership\">d</a>]";
 					$links .= "</sup> ";
 				}
@@ -215,7 +218,7 @@ else
 			$waiters = "<br />Waiting: ".$waiters;
 
 		$join = "";
-		if(!array_key_exists($loguserid, $group['members']) && $loguserid)
+		if(!array_key_exists($loguserid, $group['members']) && $loguserid && IsAllowed("joinGroups"))
 			$join = "<br /><small><a href=\"groups.php?action=request&amp;gid=".$group['id']."\">Request join</a></small>";
 
 		if($loguser['powerlevel'] > 2)
