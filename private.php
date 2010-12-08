@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("viewPM");
+
 if(!$loguserid)
 	Kill("You must be logged in to view your private messages.");
 
@@ -16,6 +18,33 @@ if(isset($_GET['user']) && $loguser['powerlevel'] > 2)
 }
 
 $title = "Private messages";
+
+if(isset($_POST['action']))
+{
+	if($_POST['action'] == "multidel" && $_POST['delete'] && $snoop != 1)
+	{
+		$deleted = 0;
+		foreach($_POST['delete'] as $pid => $on)
+		{
+			$rPM = Query("select * from pmsgs where id = ".$pid." and (userto = ".$loguserid." or userfrom = ".$loguserid.")");
+			if(NumRows($rPM))
+			{
+				$pm = Fetch($rPM);
+				$val = $pm['userto'] == $loguserid ? 2 : 1;
+				$newVal = ($pm['deleted'] | $val);
+				if($newVal == 3)
+				{
+					Query("delete from pmsgs where id = ".$pid);
+					Query("delete from pmsgs_text where pid = ".$pid);
+				}
+				else
+					Query("update pmsgs set deleted = ".$newVal." where id = ".$pid);
+				$deleted++;
+			}
+		}
+		Alert(Plural($deleted, "private message")." deleted.");
+	}
+}
 
 if(isset($_GET['del']))
 {
@@ -38,16 +67,21 @@ if(isset($_GET['del']))
 }
 
 $whereFrom = "userfrom = ".$user;
-if(isset($_GET['showsent']))
+$drafting = 0;
+$deleted = 2;
+if(isset($_GET['show']))
 {
-	$showSent = "&amp;showsent=1";
-	$deleted = 1;
+	$show = "&amp;show=".(int)$_GET['show'];
+	if($_GET['show'] == 1)
+		$deleted = 1;
+	else if($_GET['show'] == 2)
+		$drafting = 1;
 }
 else
 {
 	$whereFrom = "userto = ".$user;
-	$deleted = 2;
 }
+$whereFrom .= " and drafting = ".$drafting;
 
 $qTotal = "select count(*) from pmsgs where ".$whereFrom." and deleted != ".$deleted;
 $total = FetchResult($qTotal);
@@ -60,13 +94,16 @@ else
 	$from = 0;
 
 
-$links = "<a href=\"private.php".(isset($_GET['showsent']) ? str_replace("&amp;", "?", $userGet) . "\">Show received" : "?showsent=1".$userGet."\">Show sent")."</a> | ";
-
-$links .= "<a href=\"sendprivate.php\">Send PM</a>";
+$links = "<ul class=\"pipemenu\"><li><a href=\"private.php".(isset($_GET['show']) ? str_replace("&amp;", "?", $userGet) . "\">Show received" : "?show=1".$userGet."\">Show sent")."</a></li>";
+$links .= "<li><a href=\"private.php?show=2".$userGet."\">Show drafts</a></li>";
+$links .= "<li><a href=\"sendprivate.php\">Send PM</a></li></ul>";
 
 MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php"), $links);
 
 $qPM = "select * from pmsgs left join pmsgs_text on pid = pmsgs.id where ".$whereFrom." and deleted != ".$deleted." order by date desc limit ".$from.", ".$ppp;
+
+//print $qPM;
+
 $rPM = Query($qPM);
 $numonpage = NumRows($rPM);
 
@@ -74,13 +111,13 @@ for($i = $ppp; $i < $total; $i+=$ppp)
 	if($i == $from)
 		$pagelinks .= " ".(($i/$ppp)+1);
 	else
-		$pagelinks .= " <a href=\"private.php?from=".$i.$showSent.$userGet."\">".(($i/$ppp)+1)."</a>";
+		$pagelinks .= " <a href=\"private.php?from=".$i.$show.$userGet."\">".(($i/$ppp)+1)."</a>";
 if($pagelinks)
 {
 	if($from == 0)
 		$pagelinks = " 1".$pagelinks;
 	else
-		$pagelinks = "<a href=\"private.php".str_replace("&amp;","?", $showSent).$userGet."\">1</a>".$pagelinks;
+		$pagelinks = "<a href=\"private.php".str_replace("&amp;","?", $show).$userGet."\">1</a>".$pagelinks;
 	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 }
 
@@ -88,7 +125,7 @@ if(NumRows($rPM))
 {
 	while($pm = Fetch($rPM))
 	{
-		$qUser = "select * from users where id = ".(isset($_GET['showsent']) ? $pm['userto'] : $pm['userfrom']);
+		$qUser = "select * from users where id = ".(isset($_GET['show']) ? $pm['userto'] : $pm['userfrom']);
 		$rUser = Query($qUser);
 		if(NumRows($rUser))
 			$user = Fetch($rUser);
@@ -101,10 +138,15 @@ if(NumRows($rPM))
 
 		$sender = (NumRows($rUser) ? UserLink($user) : "???");
 
+		$check = $snoop ? "" : "<input type=\"checkbox\" name=\"delete[{2}]\" />";
+
 		$pms .= format(
 "
 		<tr class=\"cell{0}\">
 			<td>
+				".$check."
+			</td>
+			<td class=\"center\">
 				{1}
 			</td>
 			<td>
@@ -118,23 +160,27 @@ if(NumRows($rPM))
 			</td>
 			{7}
 		</tr>
-",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<td><a href=\"private.php?del=".$pm['id'].$showSent."\">del</a>" : "");
+",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<td><a href=\"private.php?del=".$pm['id'].$show."\">del</a>" : "");
 	}
 }
 else
 	$pms = format(
 "
 		<tr class=\"cell1\">
-			<td colspan=\"4\">
-				You have no messages.
+			<td colspan=\"6\">
+				There are no messages to display.
 			</td>
 		</tr>
 ");
 
 write(
 "
+	<form method=\"post\" action=\"private.php\">
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
+			<th>
+				<input type=\"checkbox\" id=\"ca\" onchange=\"checkAll();\" />
+			</th>
 			<th>&nbsp;</th>
 			<th style=\"width: 75%;\">Title</th>
 			<th>{0}</th>
@@ -142,8 +188,15 @@ write(
 			{2}
 		</tr>
 		{1}
+		<tr class=\"header1\">
+			<th style=\"text-align: right;\" colspan=\"6\">
+				<input type=\"hidden\" name=\"action\" value=\"multidel\" />
+				<a href=\"javascript:void();\" onclick=\"document.forms[1].submit();\">delete checked</a>
+			</th>
+		</tr>
 	</table>
-", (isset($_GET['showsent']) ? "To" : "From"), $pms, $snoop == "" ? "<th></th>" : "");
+	</font>
+", (isset($_GET['show']) ? "To" : "From"), $pms, $snoop == "" ? "<th></th>" : "");
 
 if($pagelinks)
 	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
