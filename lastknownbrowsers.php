@@ -9,7 +9,7 @@ if(isset($_GET['byua']))
 	$sort = "lastknownbrowser asc";
 	$ual .= "byua&amp;";
 }
-
+AssertForbidden("viewLKB");
 $numUsers = FetchResult("select count(*) from users", 0, 0);
 
 $ppp = $loguser['postsperpage'];
@@ -79,15 +79,16 @@ else
 	";
 
 $items = "";
-while($peep = Fetch($peeps))
+while($user = Fetch($peeps))
 {
-	$lip = $peep['lastip'];
-	$lkb = $peep['lastknownbrowser'];
+	runBucket("manglers", "userData", $user['id']);
+	$lip = $user['lastip'];
+	$lkb = $user['lastknownbrowser'];
 	if(isset($_GET['showfull']))
 		$lkb = str_replace("-->", "", str_replace("<!--", " &mdash;", $lkb));
 
 	$cellClass = ($cellClass+1) % 2;
-	$items .= format($format, $cellClass, $peep['id'], UserLink($peep), IP2C($lip), $lip, $lkb);
+	$items .= format($format, $cellClass, $user['id'], UserLink($user), IP2C($lip), $lip, $lkb);
 }
 
 if($isMod)
