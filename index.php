@@ -1,5 +1,15 @@
 <?php
 $noAutoHeader = TRUE;
+
+if(isset($_GET['fid']) && (int)$_GET['fid'] > 0)
+	header("Location: forum.php?id=".(int)$_GET['fid']);
+else if(isset($_GET['tid']) && (int)$_GET['tid'] > 0)
+	header("Location: thread.php?id=".(int)$_GET['tid']);
+else if(isset($_GET['uid']) && (int)$_GET['uid'] > 0)
+	header("Location: profile.php?id=".(int)$_GET['uid']);
+else if(isset($_GET['pid']) && (int)$_GET['pid'] > 0)
+	header("Location: thread.php?pid=".(int)$_GET['pid']."#".(int)$_GET['pid']);
+
 include("lib/common.php");
 
 $numThreads = FetchResult("select count(*) from threads");
@@ -43,6 +53,7 @@ $rBirthdays = Query("select birthday, id, name, displayname, powerlevel, sex fro
 $birthdays = array();
 while($user = Fetch($rBirthdays))
 {
+	runBucket("manglers", "userData", $user['id']);
 	$b = $user['birthday'];
 	if(gmdate("m-d", $b) == gmdate("m-d"))
 	{
@@ -55,13 +66,18 @@ if(count($birthdays))
 
 include("lib/header.php");
 
-write(
+if(!$noAjax)
+	write(
 "
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
-		window.onload = function() { startOnlineUsers(0); startNewMarkers(); };
+		window.addEventListener(\"load\",  startOnlineUsers, false);
+		window.addEventListener(\"load\",  startNewMarkers, false);
 	</script>
+");
+write(
+"
 	<style type=\"text/css\">
 		.ignored
 		{
@@ -86,12 +102,19 @@ if($birthdaysToday)
 		</div>", $birthdaysToday);
 }	
 
+runBucket("writers", "userBar");
+
 write(
 "
-		<div class=\"header0 cell1 center\" style=\"overflow: auto; border-top: 0px\">
+		<div id=\"rss\" style=\"float: right;\">
+			<a href=\"rss2.php\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed\" /></a>
+		</div>
+		<div class=\"header0 cell1 center\" style=\"overflow: auto; border-top: 0px;\">
+			&nbsp;
 			<span id=\"onlineUsers\">
 				{0}
 			</span>
+			&nbsp;
 		</div>
 	</div>
 ",	$onlineUsers);
@@ -135,9 +158,11 @@ if($loguserid)
 $theList = "";
 while($forum = Fetch($rFora))
 {
-	if($category[$forum['catid']]['minpower'] > $pl)
+	if($category[$forum['catid']]['minpower'] > $pl || ($forum['hidden'] && $pl < 1))
 		continue;
-		
+
+	runBucket("manglers", "forumList", $forum['id']);		
+
 	if($forum['catid'] > $lastCatID)
 	{
 		$lastCatID = $forum['catid'];
@@ -159,6 +184,7 @@ while($forum = Fetch($rFora))
 		foreach($threadsRead as $trd)
 			if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
 				$newstuff++; //adding counters to the NEW part was easy -- this used to just set it to TRUE.
+	
 	$ignoreClass = $ignored[$forum['id']] ? " class=\"ignored\"" : "";
 
 	if((!$loguserid && $forum['lastpostdate'] > time() - 900) || ($loguserid && $newstuff))
@@ -179,7 +205,7 @@ while($forum = Fetch($rFora))
 		$lastLink = "";
 		if($forum['lastpostid'])
 			$lastLink = "<a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
-		$lastLink = format("{0}<br />by {1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($members[$forum['lastpostuser']]), $lastLink);
+		$lastLink = format("<span class=\"nom\">{0}<br />by </span>{1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($members[$forum['lastpostuser']]), $lastLink);
 	}
 	else
 		$lastLink = "----";
@@ -197,7 +223,7 @@ while($forum = Fetch($rFora))
 						{2}
 					</a>
 				</h4>
-				<span{8}>
+				<span{8} class=\"nom\">
 					{3}
 					{4}
 				</span>
