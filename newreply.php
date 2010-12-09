@@ -11,6 +11,8 @@ if(!isset($_GET['id']))
 	Kill("Thread ID unspecified.");
 
 $tid = (int)$_GET['id'];
+AssertForbidden("viewThread", $tid);
+AssertForbidden("makeReply", $tid);
 
 if($loguser['powerlevel'] == -1)
 	Kill("You're banned.");
@@ -33,6 +35,7 @@ if(NumRows($rFora))
 else
 	Kill("Unknown forum ID.");
 $fid = $forum['id'];
+AssertForbidden("viewForum", $fid);
 
 if($forum['minpowerreply'] > $loguser['powerlevel'])
 	Kill("Your power is not enough.");	
@@ -47,12 +50,22 @@ write(
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
-		window.onload = function() { startOnlineUsers({0}); };
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
+");
+if(!$noAjax)
+	write(
+"
+	<script type=\"text/javascript\">
+		onlineFID = {0};
+		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
 	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		&nbsp;
 		<span id=\"onlineUsers\">
 			{1}
 		</span>
+		&nbsp;
 	</div>
 ", $fid, $onlineUsers);
 
@@ -101,7 +114,7 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 {
 	//Entered another user's name and password. Look it up now.
 	$original = $_POST['password'];
-	$sha = hash("sha256", $original."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+	$sha = hash("sha256", $original.$salt, FALSE);
 	$qUser = "select * from users where name='".justEscape($_POST['username'])."' and password='".$sha."'";
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
@@ -140,6 +153,7 @@ if($_POST['action']=="Post")
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
 		if($_POST['nosm']) $options |= 2;
+		if($_POST['nobr']) $options |= 4;
 		
 		if(CanMod($loguserid, $forum['id']))
 		{
@@ -172,6 +186,8 @@ if($_POST['action']=="Post")
 		$qThreads = "update threads set lastposter=".$postingAs.", lastpostdate=".time().", replies=".($thread['replies']+1).", lastpostid=".$pid.$mod." where id=".$tid." limit 1";
 		$rThreads = Query($qThreads);
 
+		if($forum['minpower'] < 1)
+			Report("New reply by [b]".$postingAsUser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid);
 		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	}
@@ -198,6 +214,7 @@ if($_POST['action']=="Preview")
 		$previewPost['options'] = 0;
 		if($_POST['nopl']) $previewPost['options'] |= 1;
 		if($_POST['nosm']) $previewPost['options'] |= 2;
+		if($_POST['nobr']) $previewPost['options'] |= 4;
 		MakePost($previewPost, 0, $fid);
 	}
 	else
@@ -244,6 +261,8 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 if($_POST['nosm'])
 	$nosm = "checked=\"checked\"";
+if($_POST['nobr'])
+	$nobr = "checked=\"checked\"";
 
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
@@ -329,6 +348,9 @@ write(
 								<label>
 									<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;Disable&nbsp;smilies
 								</label>
+								<label>
+									<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;Disable&nbsp;auto-&lt;br>
+								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{7}\" />
 								{8}
 							</td>
@@ -337,7 +359,7 @@ write(
 				</form>
 			</td>
 			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$ninja, htmlval($postingAsUser['name']), $_POST['password'], $prefill, $moodOptions, $nopl, $nosm, $tid, $mod);
+",	$ninja, htmlval($postingAsUser['name']), $_POST['password'], $prefill, $moodOptions, $nopl, $nosm, $tid, $mod, $nobr);
 
 DoSmileyBar();
 DoPostHelp();
@@ -366,6 +388,9 @@ if(NumRows($rPosts))
 		$poster = $post;
 		$poster['id'] = $post['uid'];
 
+		$nosm = $post['options'] & 2;
+		$nobr = $post['options'] & 4;
+
 		$posts .= Format(
 "
 		<tr>
@@ -378,11 +403,14 @@ if(NumRows($rPosts))
 				{3}
 			</td>
 		</tr>
-",	$cellClass, UserLink($poster), $post['id'], CleanUpPost($post['text'], $poster['name']));
+",	$cellClass, UserLink($poster), $post['id'], CleanUpPost($post['text'], $poster['name'], $nosm, $nobr));
 	}
 	Write(
 "
 	<table class=\"outline margin\">
+		<tr class=\"header0\">
+			<th colspan=\"2\">Thread review</th>
+		</tr>
 		{0}
 	</table>
 ",	$posts);
