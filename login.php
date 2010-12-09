@@ -53,6 +53,7 @@ elseif(!$_POST['action'])
 				<td></td>
 				<td>
 					<input type=\"submit\" name=\"action\" value=\"Log in\" />
+					<button onclick=\"document.location = 'lostpass.php'; return false;\">Forgot password?</button>
 				</td>
 			</tr>
 		</table>
@@ -62,8 +63,8 @@ elseif(!$_POST['action'])
 {
 	$original = $_POST['pass'];
 	$mdfive = md5($original);
-	$brokensha = base64_encode(hash("sha256", $original, "sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH"));
-	$sha = hash("sha256", $original."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+	$brokensha = base64_encode(hash("sha256", $original, $salt));
+	$sha = hash("sha256", $original.$salt, FALSE);
 	$escapedName = justEscape($_POST['name']);
 
 	$qUser = "select * from users where name='".$escapedName."' and password='".$sha."'";
@@ -90,7 +91,7 @@ elseif(!$_POST['action'])
 	$user = Fetch($rUser);
 
 	$logdata['loguserid'] = $user['id'];
-	$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$_SERVER['REMOTE_ADDR']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+	$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt, FALSE);
 	$logdata_s = base64_encode(serialize($logdata));
 
 	if(isset($_POST['session']))
@@ -99,6 +100,7 @@ elseif(!$_POST['action'])
 		setcookie("logdata", $logdata_s, 2147483647);
 
 	include("lib/header.php");
+	Report("[b]".$user['name']."[/] logged in.", 1);
 	Redirect("You are now logged in.","./","the main page");	
 }
 
