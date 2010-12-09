@@ -205,7 +205,7 @@ button, input[type="submit"]
 	color: white;
 }
 
-input[type="text"], input[type="password"], input[type="file"], select, textarea
+input[type="text"], input[type="password"], input[type="file"], input[type="email"], select, textarea
 {
 	border: 1px solid rgba(160, 160, 255, 0.175);
 	background: rgba(0, 0, 0, 0.500);

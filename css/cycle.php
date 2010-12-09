@@ -143,7 +143,7 @@ button, input[type=submit]
 	-moz-border-radius: 8px;
 }
 
-input[type=text], input[type=password], input[type=\"file\"], textarea, select
+input[type=text], input[type=password], input[type=file], input[type=email], textarea, select
 {
 	border-radius: 6px;
 	-moz-border-radius: 6px;
