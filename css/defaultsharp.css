@@ -10,7 +10,7 @@ button, input[type="submit"]
 	color: #FFF;
 }
 
-input[type="text"], input[type="password"], input[type="file"], select, textarea
+input[type="text"], input[type="password"], input[type="file"], input[type="email"], select, textarea
 {
 	background: #24285C;
 	border: 1px solid #669;
