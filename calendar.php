@@ -2,6 +2,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("viewCalendar");
+
 $months = array
 (
 	1=>"January",
@@ -38,6 +40,7 @@ $users = Query("select birthday, id, name, displayname, sex, powerlevel from use
 $cells = array();
 while($user = Fetch($users))
 {
+	runBucket("manglers", "userData", $user['id']);
 	$d = getdate($user['birthday']);
 	if($d['mon'] == $month)
 	{
@@ -47,6 +50,7 @@ while($user = Fetch($users))
 	}
 }
 
+$cellClass = 0;
 while($i <= $max)
 {
 	$grid .= format(
@@ -65,10 +69,10 @@ while($i <= $max)
 			{1}", $dd, $cells[$dd]);
 		$grid .= format(
 "
-		<td class=\"cell{0} smallFonts\" style=\"height: 80px; vertical-align: top\">
+		<td class=\"cell{2} smallFonts\" style=\"height: 80px; vertical-align: top;\">
 			{1}
 		</td>
-",	$cellClass, $label);
+",	$cellClass, $label, ($label == "" ? 1 : 0));
 		$cellClass = ($cellClass+1) % 2;
 	}
 	$grid .= format(
@@ -110,7 +114,7 @@ write(
 		</th>
 	</tr>
 	<tr class=\"header1\">
-		<th {3}>Saturday</th>
+		<th {3}>Sunday</th>
 		<th {3}>Monday</th>
 		<th {3}>Tuesday</th>
 		<th {3}>Wednesday</th>

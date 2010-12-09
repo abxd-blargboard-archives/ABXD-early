@@ -6,6 +6,8 @@ include("lib/common.php");
 
 $title = "Member list";
 
+AssertForbidden("viewMembers");
+
 $ppp = $loguser['postsperpage'];
 if($ppp<1) $ppp=50;
 
@@ -14,6 +16,8 @@ if(isset($_GET['from']))
 else
 	$from = 0;
 
+if(isset($_GET['dir']))
+	$dir = $_GET['dir'];
 $sort = $_GET['sort'];
 $sex = $_GET['sex'];
 if(isset($_GET['pow']) && $_GET['pow'] != "")
@@ -27,11 +31,11 @@ $where = "";
 
 switch($sort)
 {
-	case "id": $order = "id asc"; break;
-	case "name": $order = "name"; break;
-	case "reg": $order = "regdate desc"; break;
-	case "karma": $order = "karma desc"; break;
-	default: $order="posts desc";
+	//case "id": $order = "id asc"; break;
+	case "name": $order = "name ".(isset($dir) ? $dir : "asc"); break;
+	case "reg": $order = "regdate ".(isset($dir) ? $dir : "desc"); break;
+	case "karma": $order = "karma ".(isset($dir) ? $dir : "desc"); break;
+	default: $order="posts ".(isset($dir) ? $dir : "desc");
 }
 
 switch($sex)
@@ -61,20 +65,20 @@ for($i = $ppp; $i < $numUsers; $i+=$ppp)
 	if($i == $from)
 		$pagelinks .= " ".(($i/$ppp)+1);
 	else
-		$pagelinks .= " ".mlink($sort,$sex,$pow,$ppp,$letter,$i).(($i/$ppp)+1)."</a>";
+		$pagelinks .= " ".mlink($sort,$sex,$pow,$ppp,$letter,$dir,$i).(($i/$ppp)+1)."</a>";
 }
 if($pagelinks)
 {
 	if($from == 0)
 		$pagelinks = "1".$pagelinks;
 	else
-		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,0)."1</a>".$pagelinks;
+		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,$dir,0)."1</a>".$pagelinks;
 }
 
 for($l = 0; $l < 26; $l++)
 {
 	$let = chr(65+$l);
-	$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,$let).$let."</a></li>\n";
+	$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,$let,$dir).$let."</a></li>\n";
 }
 
 write(
@@ -108,8 +112,20 @@ write(
 					<li>
 						{4}
 					</li>
+				</ul>
+			</td>
+		</tr>
+		<tr class=\"cell2 smallFonts\">
+			<td colspan=\"2\">
+				Order
+			</td>
+			<td colspan=\"6\">
+				<ul class=\"pipemenu\">
 					<li>
 						{5}
+					</li>
+					<li>
+						{6}
 					</li>
 				</ul>
 			</td>
@@ -121,9 +137,6 @@ write(
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
 					<li>
-						{6}
-					</li>
-					<li>
 						{7}
 					</li>
 					<li>
@@ -131,6 +144,12 @@ write(
 					</li>
 					<li>
 						{9}
+					</li>
+					<li>
+						{10}
+					</li>
+					<li>
+						{11}
 					</li>
 				</ul>
 			</td>
@@ -141,12 +160,6 @@ write(
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
-					<li>
-						{10}
-					</li>
-					<li>
-						{11}
-					</li>
 					<li>
 						{12}
 					</li>
@@ -159,6 +172,12 @@ write(
 					<li>
 						{15}
 					</li>
+					<li>
+						{16}
+					</li>
+					<li>
+						{17}
+					</li>
 				</ul>
 			</td>
 		</tr>
@@ -168,29 +187,33 @@ write(
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
-					{16}
+					{18}
 				</ul>
 			</td>
 		</tr>
 ",	Plural($numUsers, "user"),
 
-	mlink(""     ,$sex,$pow,$ppp,$letter)."Posts</a>",
-	mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
-	mlink("name" ,$sex,$pow,$ppp,$letter)."Username</a>",
-	mlink("karma",$sex,$pow,$ppp,$letter)."Karma</a>",
-	mlink("reg"  ,$sex,$pow,$ppp,$letter)."Registration date</a>",
+	mlink(""     ,$sex,$pow,$ppp,$letter,$dir)."Posts</a>",
+	//mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
+	mlink("name" ,$sex,$pow,$ppp,$letter,$dir)."Username</a>",
+	mlink("karma",$sex,$pow,$ppp,$letter,$dir)."Karma</a>",
+	mlink("reg"  ,$sex,$pow,$ppp,$letter,$dir)."Registration date / ID</a>",
 
-	mlink($sort,"m",$pow,$ppp,$letter)."Male</a>",
-	mlink($sort,"f",$pow,$ppp,$letter)."Female</a>",
-	mlink($sort,"n",$pow,$ppp,$letter)."N/A</a>",
-	mlink($sort,"", $pow,$ppp,$letter)."All</a>",
+	mlink($sort,$sex,$pow,$ppp,$letter,"asc")."Ascending</a>",
+	mlink($sort,$sex,$pow,$ppp,$letter,"desc")."Descending</a>",
+
+	mlink($sort,"m",$pow,$ppp,$letter,$dir)."Male</a>",
+	mlink($sort,"f",$pow,$ppp,$letter,$dir)."Female</a>",
+	mlink($sort,"n",$pow,$ppp,$letter,$dir)."N/A</a>",
+	mlink($sort,"", $pow,$ppp,$letter,$dir)."All</a>",
 	
-	mlink($sort,$sex,"-1",$ppp,$letter)."Banned</a>",
-	mlink($sort,$sex, "0",$ppp,$letter)."Normal</a>",
-	mlink($sort,$sex, "1",$ppp,$letter)."Local moderator</a>", 
-	mlink($sort,$sex, "2",$ppp,$letter)."Full moderator</a>",
-	mlink($sort,$sex, "3",$ppp,$letter)."Administrator</a>",
-	mlink($sort,$sex, "", $ppp,$letter)."All</a>",
+	mlink($sort,$sex,"-1",$ppp,$letter,$dir)."Banned</a>",
+	mlink($sort,$sex, "0",$ppp,$letter,$dir)."Normal</a>",
+	mlink($sort,$sex, "1",$ppp,$letter,$dir)."Local moderator</a>", 
+	mlink($sort,$sex, "2",$ppp,$letter,$dir)."Full moderator</a>",
+	mlink($sort,$sex, "3",$ppp,$letter,$dir)."Administrator</a>",
+	mlink($sort,$sex, "4",$ppp,$letter,$dir)."Root</a>",
+	mlink($sort,$sex, "", $ppp,$letter,$dir)."All</a>",
 	
 	$alphabet
 );
@@ -215,6 +238,7 @@ if($numUsers)
 {
 	while($user = Fetch($rUsers))
 	{
+		runBucket("manglers", "userData", $user['id']);
 		$daysKnown = (time()-$user['regdate'])/86400;
 		$user['average'] = sprintf("%1.02f", $user['posts'] / $daysKnown);
 
@@ -287,13 +311,14 @@ write("
 	</table>
 ");
 
-function mlink($sort,$sex,$pow,$ppp,$letter="",$from=1)
+function mlink($sort,$sex,$pow,$ppp,$letter="",$dir="",$from=1)
 {
 	return "<a href=\"memberlist.php?"
 			.($sort   ?"sort=$sort":"")
 			.($sex    ?"&amp;sex=$sex":"")
 			.(isset($pow)?"&amp;pow=$pow":"")
 			.($letter!=""?"&amp;letter=$letter":"")
+			.($dir   ?"&dir=$dir":"")
 			.($from!=1?"&amp;from=$from":"")
 			."\">";
 }

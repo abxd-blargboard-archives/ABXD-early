@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("listPosts");
+
 if(!isset($_GET['id']))
 	Kill("User ID unspecified.");
 
@@ -15,6 +17,7 @@ if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
 	Kill("Unknown user ID.");
+runBucket("manglers", "userData", $user['id']);
 
 $total = $user['posts'];
 $ppp = $loguser['postsperpage'];

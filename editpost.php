@@ -17,6 +17,7 @@ if(!isset($_GET['id']))
 	Kill("Post ID unspecified.");
 
 $pid = (int)$_GET['id'];
+AssertForbidden("editPost", $pid);
 
 $qPost = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".$pid;
 $rPost = Query($qPost);
@@ -33,6 +34,16 @@ if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
 	Kill("Unknown thread ID.");
+AssertForbidden("viewThread", $tid);
+
+$qFora = "select * from forums where id=".$thread['forum'];
+$rFora = Query($qFora);
+if(NumRows($rFora))
+	$forum = Fetch($rFora);
+else
+	Kill("Unknown forum ID.");
+$fid = $forum['id'];
+AssertForbidden("viewForum", $fid);
 
 //-- Mark as New if last post is edited --
 //print $thread['lastpostdate']."<br/>";
@@ -70,6 +81,9 @@ if($thread['closed'])
 write("
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
+	<script type=\"text/javascript\">
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
 ");
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
@@ -89,6 +103,13 @@ if($_POST['text'])
 	}
 }
 
+if(!isset($_POST['action']))
+{
+	$_POST['nopl'] = $post['options'] & 1;
+	$_POST['nosm'] = $post['options'] & 2;
+	$_POST['nobr'] = $post['options'] & 4;
+}
+
 if($_POST['action']=="Edit")
 {
 	if($_POST['text'])
@@ -102,6 +123,7 @@ if($_POST['action']=="Edit")
 		$options = 0;
 		if($_POST['nopl']) $options |= 1;
 		if($_POST['nosm']) $options |= 2;
+		if($_POST['nobr']) $options |= 4;
 
 		$qRev = "select max(revision) from posts_text where pid=".$pid;
 		$rRev = Query($qRev);
@@ -111,7 +133,7 @@ if($_POST['action']=="Edit")
 		$qPostsText = "insert into posts_text (pid,text,revision) values (".$pid.", '".$post."', ".$rev.")";
 		$rPostsText = Query($qPostsText);
 
-		$qPosts = "update posts set options='".$options."', mood=".$_POST['mood'].", currentrevision = currentrevision + 1 where id=".$pid." limit 1";
+		$qPosts = "update posts set options='".$options."', mood=".(int)$_POST['mood'].", currentrevision = currentrevision + 1 where id=".$pid." limit 1";
 		$rPosts = Query($qPosts);
 
 		//Update thread lastpostdate if we edited the last post
@@ -123,6 +145,8 @@ if($_POST['action']=="Edit")
 			$rPosts = Query($qPosts);
 		}
 
+		if($forum['minpower'] < 1)
+			Report("Post edited by [b]".$loguser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid);
 		Redirect("Edited!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	} else
@@ -146,6 +170,7 @@ if($_POST['action']=="Preview")
 		$user = Fetch($rUser);
 	else
 		Kill("Unknown user ID.");
+	runBucket("manglers", "userData", $user['id']);
 
 	if($_POST['text'])
 	{
@@ -159,6 +184,7 @@ if($_POST['action']=="Preview")
 		$previewPost['options'] = 0;
 		if($_POST['nopl']) $previewPost['options'] |= 1;
 		if($_POST['nosm']) $previewPost['options'] |= 2;
+		if($_POST['nobr']) $previewPost['options'] |= 4;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		MakePost($previewPost, 0, $fid);
 	} else
@@ -174,6 +200,8 @@ if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
 if($_POST['nosm'])
 	$nosm = "checked=\"checked\"";
+if($_POST['nobr'])
+	$nobr = "checked=\"checked\"";
 
 if(!isset($_POST['mood']))
 	$_POST['mood'] = $post['mood'];
@@ -218,6 +246,9 @@ Write(
 								<label>
 									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;Disable&nbsp;smilies
 								</label>
+								<label>
+									<input type=\"checkbox\" name=\"nobr\" {5} />&nbsp;Disable&nbsp;auto-&lt;br>
+								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{2}\" />
 							</td>
 						</tr>
@@ -225,7 +256,7 @@ Write(
 				</form>
 			</td>
 			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$prefill, $moodOptions, $pid, $nopl, $nosm);
+",	$prefill, $moodOptions, $pid, $nopl, $nosm, $nobr);
 
 DoSmileyBar();
 DoPostHelp();
@@ -239,7 +270,7 @@ Write(
 
 $qPosts = "select ";
 $qPosts .=
-	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.rankset, users.powerlevel, users.sex, users.posts";
+	"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname, users.rankset, users.powerlevel, users.sex, users.posts";
 $qPosts .= 
 	" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision left join users on users.id = posts.user";
 $qPosts .= " where thread=".$tid." and deleted=0 order by date desc limit 0, 20";
@@ -255,6 +286,9 @@ if(NumRows($rPosts))
 		$poster = $post;
 		$poster['id'] = $post['uid'];
 
+		$nosm = $post['options'] & 2;
+		$nobr = $post['options'] & 4;
+
 		$posts .= Format(
 "
 		<tr>
@@ -267,11 +301,14 @@ if(NumRows($rPosts))
 				{3}
 			</td>
 		</tr>
-",	$cellClass, UserLink($poster), $post['id'], CleanUpPost($post['text'], $poster['name']));
+",	$cellClass, UserLink($poster), $post['id'], CleanUpPost($post['text'], $poster['name'], $nosm, $nobr));
 	}
 	Write(
 "
 	<table class=\"outline margin\">
+		<tr class=\"header0\">
+			<th colspan=\"2\">Thread review</th>
+		</tr>
 		{0}
 	</table>
 ",	$posts);
