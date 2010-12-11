@@ -10,16 +10,19 @@ $autoLockMonths = 4;
 $warnMonths = 0;
 $customTitleThreshold = 100;
 $viewcountInterval = 10000;
-$overallTidy = 0;
-$theWord = "Aardwolf";
+$overallTidy = 1;
+$noAjax = 0;
+$noGuestLayouts = 1;
+$theWord = "";
 $systemUser = 0;
-$minWords = 3;
+$minWords = 2;
 $minSeconds = 30;
 $uploaderCap = 32;
+$personalCap = 4;
 $uploaderWhitelist = "png gif jpg jpeg txt css zip rar 7z ogg mp3 swf ogv mp4 webm svg";
 
 //Hacks
-$hacks['forcetheme'] = -1;
+$hacks['forcetheme'] = "";
 $hacks['themenames'] = 0;
 $hacks['postfilter'] = 0;
 

@@ -12,6 +12,7 @@ $themes = array(
 	"grayscale"=>"Grayscale",
 	"monogreen"=>"Mono Green",
 	"dos"=>"DOS-like",
+	"yule"=>"Yule XD",
 );
 
 $themeBylines = array(
@@ -23,17 +24,7 @@ $themeBylines = array(
 	"grayscale"=>"Design by Kawa<br />Variant on ABXD Classic.",
 	"monogreen"=>"Design by Kawa",
 	"dos"=>"Design by Kawa",
-);
-
-$themeOrder = array(
-	"default",
-	"defaultold",
-	"defaultsharp",
-	"cheese",
-	"cycle",
-	"grayscale",
-	"monogreen",
-	"dos",
+	"yule"=>"Fucked up by Kawa",
 );
 
 ?>
