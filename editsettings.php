@@ -6,16 +6,17 @@ include("lib/common.php");
 
 $title = "Edit settings";
 
+AssertForbidden("editSettings");
+
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the Points of Required Attention.");
 
 if($_POST['action'] == "Edit")
 {
 	if((float)$_POST['uploaderCap'] <= 0)
-	{
-		print "foo!";
 		$_POST['uploaderCap'] = "0.25";
-	}
+	if((float)$_POST['personalCap'] <= 0)
+		$_POST['personalCap'] = "0.25";
 
 	$hax = fopen("lib/settings.php", "w");
 	fputs($hax, "<?php\n");
@@ -31,15 +32,19 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "\$customTitleThreshold = ".(int)$_POST['customTitleThreshold'].";\n");
 	fputs($hax, "\$viewcountInterval = ".(int)$_POST['viewcountInterval'].";\n");
 	fputs($hax, "\$overallTidy = ".($_POST['overallTidy'] != "" ? 1 : 0).";\n");
+	fputs($hax, "\$noAjax = ".($_POST['noAjax'] != "" ? 1 : 0).";\n");
+	fputs($hax, "\$noGuestLayouts = ".($_POST['noGuestLayouts'] != "" ? 1 : 0).";\n");
 	fputs($hax, "\$theWord = \"".prepare($_POST['theWord'])."\";\n");
 	fputs($hax, "\$systemUser = ".(int)$_POST['systemUser'].";\n");
 	fputs($hax, "\$minWords = ".(int)$_POST['minWords'].";\n");	
 	fputs($hax, "\$minSeconds = ".(int)$_POST['minSeconds'].";\n");	
 	fputs($hax, "\$uploaderCap = ".(float)$_POST['uploaderCap'].";\n");
+	fputs($hax, "\$personalCap = ".(float)$_POST['personalCap'].";\n");
 	fputs($hax, "\$uploaderWhitelist = \"".prepare($_POST['uploaderWhitelist'])."\";\n");
+	fputs($hax, "\$mailResetFrom = \"".prepare($_POST['mailResetFrom'])."\";\n");
 	fputs($hax, "\n");
 	fputs($hax, "//Hacks\n");
-	fputs($hax, "\$hacks['forcetheme'] = ".(int)$_POST['theme'].";\n");
+	fputs($hax, "\$hacks['forcetheme'] = \"".prepare($_POST['theme'])."\";\n");
 	fputs($hax, "\$hacks['themenames'] = ".(int)$_POST['names'].";\n");
 	fputs($hax, "\$hacks['postfilter'] = ".(int)$_POST['filters'].";\n");
 	fputs($hax, "\n");
@@ -58,10 +63,8 @@ $forcetheme = $hacks['forcetheme'];
 $themenames = $hacks['themenames'];
 $postfilter = $hacks['postfilter'];
 
-$themelist[-1] = "[Disabled]";
-foreach($themes as $theme)
-	$themelist[] = $theme;
-arsort($themes);
+$themelist[""] = "[Disabled]";
+$themelist = array_merge($themelist, $themes);
 $names = array("[Disabled]", "Christmas", "Rainbow", "Anonymous");
 $filters = array("[Disabled]", "Pirate", "Swedish Chef", "Kraut", "Jive", "Fudd");
 
@@ -153,12 +156,34 @@ write(
 				</td>
 				<td>
 					<label>
-						<input type=\"checkbox\" id=\"ot\" name=\"overallTidy\" {8} {14} />
+						<input type=\"checkbox\" name=\"overallTidy\" {8} {14} />
 						Use HtmlTidy
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell1\">
+				<td>
+					AJAX
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"noAjax\" {22} />
+						Disable AJAX refreshers
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					Guests
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"noGuestLayouts\" {23} />
+						Disable post layouts for guests
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"theWord\">Registration word</label>
 				</td>
@@ -166,7 +191,7 @@ write(
 					<input type=\"text\" id=\"theWord\" name=\"theWord\" value=\"{9}\" />
 				</td>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"systemUser\">System user ID</label>
 				</td>
@@ -174,7 +199,7 @@ write(
 					<input type=\"text\" id=\"systemUser\" name=\"systemUser\" value=\"{10}\" />
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"minWords\">Minimal word count</label>
 				</td>
@@ -182,7 +207,7 @@ write(
 					<input type=\"text\" id=\"minWords\" name=\"minWords\" value=\"{18}\" />
 				</td>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"minSeconds\">Minimal seconds between posts</label>
 				</td>
@@ -190,12 +215,21 @@ write(
 					<input type=\"text\" id=\"minSeconds\" name=\"minSeconds\" value=\"{19}\" />
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"uploaderCap\">Uploader size cap</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"uploaderCap\" name=\"uploaderCap\" value=\"{20}\" />
+					MiB
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"personalCap\">Uploader private cap</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"personalCap\" name=\"personalCap\" value=\"{25}\" />
 					MiB
 				</td>
 			</tr>
@@ -207,20 +241,28 @@ write(
 					<input type=\"text\" id=\"uploaderWhitelist\" name=\"uploaderWhitelist\" value=\"{21}\" class=\"width75\" />
 				</td>
 			</tr>
-
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"mailResetFrom\">Mail Reset sender</label>
+				</td>
+				<td>
+					<input type=\"email\" id=\"mailResetFrom\" name=\"mailResetFrom\" value=\"{24}\" class=\"width75\" />
+				</td>
+			</tr>
+			
 			<tr class=\"header0\">
 				<th colspan=\"2\">
 					Hacks
 				</th>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"theme\">Theme</label>
 				</td>
 				<td>{11}
 				</td>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"names\">Names</label>
 				</td>
@@ -228,7 +270,7 @@ write(
 				</td>
 			</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"filters\">Filters</label>
 				</td>
@@ -240,7 +282,7 @@ write(
 					Profile Preview Post
 				</th>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"ppp\">Text</label>
 				</td>
@@ -253,7 +295,7 @@ write(
 					Meta
 				</th>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"metadesc\">Description</label>
 				</td>
@@ -261,7 +303,7 @@ write(
 					<input type=\"text\" id=\"metadesc\" name=\"metadesc\" value=\"{16}\" class=\"width75\" />
 				</td>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"metakeys\">Keywords</label>
 				</td>
@@ -284,7 +326,8 @@ write(
 	MakeSelect("theme",$forcetheme,$themelist), MakeSelect("names",$themenames,$names),
 	MakeSelect("filters",$postfilter,$filters), $tidyAvailable, $profilePreviewText,
 	htmlval($metaDescription), htmlval($metaKeywords), $minWords, $minSeconds, $uploaderCap,
-	$uploaderWhitelist
+	$uploaderWhitelist, ($noAjax ? "checked=\"checked\"" : ""), ($noGuestLayouts ? "checked=\"checked\"" : ""),
+	$mailResetFrom, $personalCap
 );
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
