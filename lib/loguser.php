@@ -136,7 +136,7 @@ if($loguserid) //Are we logged in?
 		$loguser = Fetch($rLogUser);
 		
 		//Bullcheck
-		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$_SERVER['REMOTE_ADDR']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$salt, FALSE);
 		if($loguserbull == $ourbull)
 		{
 			$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."', lastforum=".$CurrentForum." where id=".$loguserid;
@@ -156,11 +156,11 @@ if($wantGuest)
  	if(!$noOnlineUsers)
  		$rGuest = Query($qGuest);
 	
-	$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "scheme"=>0, "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80, "timezone"=>0);
+	$loguser = array("name"=>"", "powerlevel"=>0, "threadsperpage"=>50, "postsperpage"=>20, "theme"=>"default", "dateformat"=>"m-d-y", "timeformat"=>"h:i A", "fontsize"=>80, "timezone"=>0, "blocklayouts"=>$noGuestLayouts);
 	$loguserid = 0;
 }
 
-if($hacks['forcetheme'] > -1)
-	$loguser['scheme'] = $hacks['forcetheme'];
+if($hacks['forcetheme'] != "")
+	$loguser['theme'] = $hacks['forcetheme'];
 
 ?>
