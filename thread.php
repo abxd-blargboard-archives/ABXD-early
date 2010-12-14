@@ -18,6 +18,7 @@ elseif(isset($_GET['pid']))
 	$tid = $post['thread'];
 } else
 	Kill("Thread ID unspecified.");
+AssertForbidden("viewThread", $tid);
 
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
@@ -27,6 +28,7 @@ else
 	Kill("Unknown thread ID.");
 
 $fid = $thread['forum'];
+AssertForbidden("viewForum", $fid);
 
 $pl = $loguser['powerlevel'];
 if($pl == -1) $pl = 0;
@@ -60,6 +62,7 @@ $rViewCounter = Query($qViewCounter);
 
 if(isset($_GET['vote']))
 {
+	AssertForbidden("vote");
 	if(!$loguserid)
 		Kill("You can't vote without logging in.");
 	if($thread['closed'])
@@ -92,11 +95,11 @@ if(isset($_GET['vote']))
 
 if($loguser['powerlevel'] == -1)
 	$links .= "<li>You're banned.</li>";
-elseif(!$thread['closed'] || $loguser['powerlevel'] > 2)
+elseif(IsAllowed("makeReply", $tid) && (!$thread['closed'] || $loguser['powerlevel'] > 2))
 	$links .= "<li><a href=\"newreply.php?id=".$tid."\">Post Reply</a></li>";
-else
-	$links .= "Thread closed. | ";
-if(CanMod($loguserid,$forum['id']))
+elseif(IsAllowed("makeReply", $tid))
+	$links .= "<li>Thread closed.</li>";
+if(CanMod($loguserid,$forum['id']) && IsAllowed("editThread", $tid))
 {
 	$links .= "<li><a href=\"editthread.php?id=".$tid."\">Edit</a></li>";
 	if($thread['closed'])
@@ -121,19 +124,38 @@ if($isBot)
 
 //$links = substr($links, 0, strlen($links) - 2);
 
+write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (forum)\" href=\"rss2.php?forum={0}\" />", $fid);
+write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (thread)\" href=\"rss2.php?thread={0}\" />", $tid);
+write(
+"
+	<div id=\"rss\" style=\"float: right;\">
+		<a href=\"rss2.php?thread={0}\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed for this thread\" /></a>
+	</div>
+", $tid);
+
 $onlineUsers = OnlineUsers($fid);
 
 write(
 "
+	<script type=\"text/javascript\">
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
+");
+if(!$noAjax)
+	write(
+"
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
-		window.onload = function() { startOnlineUsers({0}); };
+		onlineFID = {0};
+		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
 	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		&nbsp;
 		<span id=\"onlineUsers\">
 			{1}
 		</span>
+		&nbsp;
 	</div>
 ", $fid, $onlineUsers);
 
@@ -164,16 +186,16 @@ if($thread['poll'])
 		$rOptions = Query($qOptions);
 		$pops = 0;
 		$options = array();
+		$voters = array();
 		$noColors = 0;
 		$defaultColors = array(
 					  "#0000B6","#00B600","#00B6B6","#B60000","#B600B6","#B66700","#B6B6B6",
 			"#676767","#6767FF","#67FF67","#67FFFF","#FF6767","#FF67FF","#FFFF67","#FFFFFF",);
 		while($option = Fetch($rOptions))
-		{
 			$options[] = $option;
-		}
+
 		foreach($options as $option)
-		{
+		{			
 			if($option['color'] == "")
 				$option['color'] = $defaultColors[($pops + 9) % 15];
 				
@@ -182,9 +204,12 @@ if($thread['poll'])
 			$qVotes = "select * from pollvotes where poll=".$thread['poll']." and choice=".$pops;
 			$rVotes = Query($qVotes);
 			$votes = NumRows($rVotes);
+			while($vote = Fetch($rVotes))
+				if(!in_array($vote['user'], $voters))
+					$voters[] = $vote['user'];
 
 			$cellClass = ($cellClass+1) % 2;
-			if($loguserid && !$thread['closed'])
+			if($loguserid && !$thread['closed'] && IsAllowed("vote"))
 				$label = format("{0} <a href=\"thread.php?id={1}&amp;vote={2}\">{3}</a>", $pc[$pops], $thread['id'], $pops, $option['choice']);
 			else
 				$label = format("{0} {1}", $pc[$pops], $option['choice']);
@@ -214,6 +239,7 @@ if($thread['poll'])
 ", $cellClass, $label, $bar);
 			$pops++;
 		}
+		$voters = count($voters);
 		write(
 "
 	<table class=\"outline margin\">
@@ -228,8 +254,13 @@ if($thread['poll'])
 			</td>
 		</tr>
 		{2}
+		<tr class=\"cell0\">
+			<td colspan=\"2\" class=\"smallFonts\">
+				{3} voted so far.
+			</td>
+		</tr>
 	</table>
-", $cellClass, htmlspecialchars($poll['question']), $pollLines);
+", $cellClass, htmlspecialchars($poll['question']), $pollLines, ($voters == 1 ? $voters." user has" : $voters." users have"));
 	}
 }
 
@@ -263,7 +294,29 @@ $qPosts .= " where thread=".$tid." order by date asc limit ".$from.", ".$ppp;
 
 $rPosts = Query($qPosts);
 $numonpage = NumRows($rPosts);
+$numPages = ceil($total / $ppp);
+$page = ceil($from / $ppp) + 1;
 
+$first = ($from) ? "<a href=\"thread.php?id=".$tid."\">&#x00AB;</a> " : "";
+$prev = ($from) ? "<a href=\"thread.php?id=".$tid."&amp;from=".($from - $ppp)."\">&#x2039;</a> " : "";
+$next = ($from < $total - $ppp) ? " <a href=\"thread.php?id=".$tid."&amp;from=".($from + $ppp)."\">&#x203A;</a>" : "";
+$last = ($from < $total - $ppp) ? " <a href=\"thread.php?id=".$tid."&amp;from=".(($numPages * $ppp) - $ppp)."\">&#x00BB;</a>" : "";
+
+$pageLinks = array();
+for($p = $page - 5; $p < $page + 10; $p++)
+{
+	if($p < 1 || $p > $numPages)
+		continue;
+	if($p == $page || ($from == 0 && $p == 1))
+		$pageLinks[] = $p;
+	else
+		$pageLinks[] = "<a href=\"thread.php?id=".$tid."&amp;from=".(($p-1) * $ppp)."\">".$p."</a>";
+}
+
+$pagelinks = $first.$prev.join(array_slice($pageLinks, 0, 11), " ").$next.$last;
+write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+
+/*
 for($i = $ppp; $i < $total; $i+=$ppp)
 {
 	if($i == $from)
@@ -279,6 +332,7 @@ if($pagelinks)
 		$pagelinks = "<a href=\"thread.php?id=".$tid."\">1</a>".$pagelinks;
 	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 }
+*/
 
 if(NumRows($rPosts))
 {
@@ -290,6 +344,76 @@ if(NumRows($rPosts))
 		$post['closed'] = $thread['closed'];
 		MakePost($post, $tid, $fid);
 	}
+}
+
+if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['powerlevel'] >= $category['minpower'] && (!$thread['closed'] || $loguser['powerlevel'] > 0))
+{
+	//Quick reply goes here		
+	if(CanMod($loguserid, $fid))
+	{
+		$mod = "\n\n<!-- Mod options -->\n";
+		//print $thread['closed'];
+		if(!$thread['closed'])
+			$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
+		else
+			$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;Open&nbsp;thread</label>\n";
+		if(!$thread['sticky'])
+			$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
+		else
+			$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;Unstick</label>\n";
+		$mod .= "<!-- More could follow -->\n\n";
+	}
+	$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
+	$rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
+	while($mood = Fetch($rMoods))
+		$moodOptions .= format(
+"
+	<option {0} value=\"{1}\">{2}</option>
+",	$moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
+
+	write(
+	"
+	<form action=\"newreply.php\" method=\"post\">
+		<table class=\"outline margin width75\" style=\"margin: 4px auto;\" id=\"quickreply\">
+			<tr class=\"header1\">
+				<th colspan=\"2\" onclick=\"expandTable('quickreply', this)\" style=\"cursor: pointer;\">
+					Quick-E Post&trade;
+				</th>
+			</tr>
+			<tr class=\"cell0\" style=\"display: none;\">
+				<td>
+					<label for=\"text\">
+						Post
+					</label>
+				</td>
+				<td>
+					<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{3}</textarea>
+				</td>
+			</tr>
+			<tr class=\"cell2\" style=\"display: none;\">
+				<td></td>
+				<td>
+					<input type=\"submit\" name=\"action\" value=\"Post\" /> 
+					<input type=\"submit\" name=\"action\" value=\"Preview\" />
+					<select size=\"1\" name=\"mood\">
+						{4}
+					</select>
+					<label>
+						<input type=\"checkbox\" name=\"nopl\" {5} />&nbsp;Disable&nbsp;post&nbsp;layout
+					</label>
+					<label>
+						<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;Disable&nbsp;smilies
+					</label>
+					<label>
+						<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;Disable&nbsp;auto-&lt;br>
+					</label>
+					<input type=\"hidden\" name=\"id\" value=\"{7}\" />
+					{8}
+				</td>
+			</tr>
+		</table>
+	</form>
+",	$ninja, htmlval($postingAsUser['name']), $_POST['password'], $prefill, $moodOptions, $nopl, $nosm, $tid, $mod, $nobr);
 }
 
 if($pagelinks)
