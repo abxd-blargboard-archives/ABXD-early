@@ -42,7 +42,7 @@ if(!isset($_POST['action']))
 					<label for=\"un\">User name</label>
 				</td>
 				<td class=\"cell0\">
-					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"20\" style=\"width: 98%;\" />
+					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"20\" style=\"width: 98%;\"  class=\"required testingClass anotherTestingClass\" />
 				</td>
 			</tr>
 			<tr>
@@ -50,7 +50,7 @@ if(!isset($_POST['action']))
 					<label for=\"pw\">Password</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" />
+					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" class=\"required\" />
 				</td>
 			</tr>
 			<tr>
@@ -58,7 +58,7 @@ if(!isset($_POST['action']))
 					<label for=\"email\">Email address</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"text\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\" />
+					<input type=\"email\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\"  class=\"required\" />
 				</td>
 			</tr>
 			<tr>
@@ -78,15 +78,22 @@ if(!isset($_POST['action']))
 					</label>
 				</td>
 			</tr>
+", MakeOptions("sex",2,$sexes));
+
+	if($theWord != "")
+	{
+		write(
+"
 			<tr>
 				<td class=\"cell2\">
 					<label for=\"tw\">The word</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\" />
+					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\"  class=\"required\" />
 				</td>
 			</tr>
-", MakeOptions("sex",2,$sexes));
+");
+	}
 
 	if($haveSecurimage)
 	{
@@ -99,7 +106,7 @@ if(!isset($_POST['action']))
 				<td class=\"cell1\">
 					<img id=\"captcha\" src=\"captcha.php\" alt=\"CAPTCHA Image\" />
 					<button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">New</button><br />
-					<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" />
+					<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" class=\"required\" />
 				</td>
 			</tr>
 ");
@@ -115,6 +122,11 @@ if(!isset($_POST['action']))
 						<input type=\"checkbox\" checked=\"checked\" name=\"autologin\" />
 						Log in afterwards
 					</label>
+				</td>
+			</tr>
+			<tr>
+				<td colspan=\"2\" class=\"cell0 smallFonts\">
+					Specifying an email address is not exactly a hard requirement, but it will allow you to reset your password should you forget it. By default, your email is not shown.
 				</td>
 			</tr>
 		</table>
@@ -152,7 +164,7 @@ elseif($_POST['action'] == "Register")
 		$err = "Another user is already using this IP address.".$backtomain;
 	else if(!$_POST['readFaq'])
 		$err = "You really should <a href=\"faq.php\">read the FAQ</a>...";
-	else if(strcasecmp($_POST['theWord'], $theWord))
+	else if($theWord != "" && strcasecmp($_POST['theWord'], $theWord))
 		$err = "That's not the right word. Are you sure you really <a href=\"faq.php\">read the FAQ</a>?";
 	else if(strlen($_POST['pass']) < 4)
 		$err = "Your password must be at least four characters long.".$backtomain;
@@ -171,23 +183,26 @@ elseif($_POST['action'] == "Register")
 		Kill($err);
 	}
 
-	$sha = hash("sha256", $_POST['pass']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+	$sha = hash("sha256", $_POST['pass'].$salt, FALSE);
 
 	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".justEscape($_POST['name'])."', '".$sha."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].")";
 	$rUsers = Query($qUsers);
 
 	$uid = mysql_insert_id();
 	if($uid == 1)
-		Query("update users set powerlevel = 3 where id = 1;");
+		Query("update users set powerlevel = 4 where id = 1;");
+
+	Report("New user: [b]".$_POST['name']."[/] (#".$uid.") -> [g]#HERE#?uid=".$uid);
 
 	if($_POST['autologin'])
 	{
-		$qUser = "select * from users where name='".justEscape($_POST['name'])."' and password='".md5($_POST['pass'])."'";
+		//Fixed: password was stored as SHA256 earlier, but query asks for MD5.
+		$qUser = "select * from users where name='".justEscape($_POST['name'])."' and password='".$sha."'";
 		$rUser = Query($qUser);
 		$user = Fetch($rUser);
 
 		$logdata['loguserid'] = $user['id'];
-		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$_SERVER['REMOTE_ADDR']."sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH", FALSE);
+		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt, FALSE);
 		$logdata_s = base64_encode(serialize($logdata));
 
 		setcookie("logdata", $logdata_s, 2147483647);
