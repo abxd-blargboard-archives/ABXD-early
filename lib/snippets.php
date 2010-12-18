@@ -22,35 +22,35 @@ function Plural($i, $s)
 	return $i." ".$s;
 }
 
+function HisHer($user)
+{
+	if($user['sex'] == 0)
+		return "his";
+	if($user['sex'] == 1)
+		return "her";
+	return "its";
+}
+
 function DoFooter($buffer)
 {
-	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title;
+	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title, $dblink, $footerExtensions;
 	
 	if(!$noFooter)
 	{
 		$footer = format(
 "
 		<div class=\"footer\">
-			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.0.2<br />
+			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.1<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>
 			Page rendered in {0} seconds with {1}.<br />
 
 			<a href=\"http://validator.w3.org/check?uri=referer\">
-				<img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Strict\" />
+				<img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Transitional\" />
 			</a>
 			<a href=\"http://jigsaw.w3.org/css-validator/\">
 				<img src=\"img/css.png\" alt=\"Valid CSS!\" />
 			</a>
-			<a href=\"rss2.php\">
-				<img src=\"img/rss.png\" alt=\"RSS 2.0 feed available\" />
-			</a>
-			<a href=\"http://home.comcast.net/~SupportCD/FirefoxMyths.html\">
-				<img src=\"img/fxmyths.png\" alt=\"Firefox Myths\" />
-			</a>
-			<a href=\"http://opera.com\">
-				<img src=\"img/opera.png\" alt=\"Opera!\" />
-			</a>
-			<a href=\"get\">
+			<a href=\"http://helmet.kafuka.org/thepile/ABXD\">
 				<img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" />
 			</a>
 
@@ -59,14 +59,17 @@ function DoFooter($buffer)
 </body>
 </html>
 ",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"));
+		runBucket("footers");	
 	}
 	
 	$boardTitle = $boardname;
 	if($title != "")
 		$boardTitle .= " &raquo; ".$title;
 	
-	$raw = $buffer . $footer;
+	$raw = $buffer.$footerExtensions.$footer;
 	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
+
+	mysql_close($dblink);
 
 	if(!$overallTidy)
 	{
@@ -77,7 +80,7 @@ function DoFooter($buffer)
 	(
 		"show-body-only"=>0,
 		"output-xhtml"=>1,
-		"doctype"=>"strict",
+		"doctype"=>"transitional",
 		"logical-emphasis"=>1,
 		"alt-text"=>"",
 		"drop-proprietary-attributes"=>1,
@@ -93,7 +96,8 @@ function DoFooter($buffer)
 	if(function_exists(OptimizeLayouts))
 		$raw = OptimizeLayouts($raw);
 	$clean = tidy_repair_string($raw, $tidyConfig);
-		
+
+	$clean = str_replace("class=\"required", "required=\"required\" class=\"", $clean);
 	$textareaFixed = str_replace("\r", "", $clean);
 	$textareaFixed = str_replace(" </text", "</text", $textareaFixed);
 	$textareaFixed = str_replace("\n</text", "</text", $textareaFixed);
@@ -175,7 +179,7 @@ function UserLink($user, $field = "id")
 		$classing = " style =\"color: #".GetRainbowColor()."\"";
 	} else if($hacks['themenames'] == 3)
 	{
-		if($fpow == 3)
+		if($fpow > 2)
 		{
 			$fname = "Administration";
 			$classing = " class=\"nc23\"";
@@ -189,9 +193,11 @@ function UserLink($user, $field = "id")
 			$classing = " class=\"nc22\"";
 		}
 	}
+	
+	$levels = array(-1 => " [banned]", 0 => "", 1 => " [local mod]", 2 => " [full mod]", 3 => " [admin]", 4 => " [root]", 5 => " [sys]");
 
-	return "<a href=\"profile.php?id=".$user[$field]."\"><span".$classing.">".$fname."</span></a>";
-	return "<a href=\"profile.php?id=".$user[$field]."\"".$classing.">".$fname."</a>";
+	return format("<a href=\"profile.php?id={0}\"><span{1} title=\"{3} ({0}){4}\">{2}</span></a>", $user[$field], $classing, $fname, $user['name'], $levels[$user['powerlevel']]);
+	//return "<a href=\"profile.php?id=".$user[$field]."\"".$classing.">".$fname."</a>";
 }
 
 function CanMod($userid, $fid)
@@ -357,6 +363,7 @@ function DoPostHelp()
 				<h4>Embeds</h4>
 				[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
 				[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
+				[tindeck]&hellip;[/tindeck] &mdash; link to a song on <a href="http://tindeck.com">Tindeck</a>, song ID only <br />
 				[swf ## ##]&hellip;[/swf] &mdash; insert SWF clip<br />
 				[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
 				<br />
@@ -387,7 +394,7 @@ function OnlineUsers($forum = 0)
 		$loggedIn = ($onlineUser['lastpost'] <= $onlineUser['lastview']);
 		$userLink = UserLink($onlineUser);
 		if($onlineUser['minipic'])
-			$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />".$userLink;
+			$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />&nbsp;".$userLink;
 		if(!$loggedIn)
 			$userLink = "(".$userLink.")";
 		$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;

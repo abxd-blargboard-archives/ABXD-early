@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("viewProfile");
+
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
@@ -18,14 +20,16 @@ if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
 	Kill("Unknown user ID.");
+runBucket("manglers", "userData", $user['id']);
 
 if($id == $loguserid)
 	Query("update users set newcomments = 0 where id=".$loguserid);
 
-$canDeleteComments = ($id == $loguserid || $loguser['powerlevel'] > 2);
+$canDeleteComments = ($id == $loguserid || $loguser['powerlevel'] > 2) && IsAllowed("deleteComments");
 
 if(isset($_GET['block']) && $loguserid)
 {
+	AssertForbidden("blockLayouts");
 	$block = (int)$_GET['block'];
 	$qBlock = "select * from blockedlayouts where user=".$id." and blockee=".$loguserid;
 	$rBlock = Query($qBlock);
@@ -43,18 +47,21 @@ if(isset($_GET['block']) && $loguserid)
 	}
 }
 
-$canVote = ($loguser['powerlevel'] > 0 || ((time()-$loguser['regdate'])/86400) > 9);
+$canVote = ($loguser['powerlevel'] > 0 || ((time()-$loguser['regdate'])/86400) > 9) && IsAllowed("vote");
 if($loguserid == $id) $canVote = FALSE;
 
 if($loguserid)
 {
-	$qBlock = "select * from blockedlayouts where user=".$id." and blockee=".$loguserid;
-	$rBlock = Query($qBlock);
-	$isBlocked = NumRows($rBlock);
-	if($isBlocked)
-		$blockLayoutLink = "<a href=\"profile.php?id=".$id."&amp;block=0\">Unblock layout</a> | ";
-	else
-		$blockLayoutLink = "<a href=\"profile.php?id=".$id."&amp;block=1\">Block layout</a> | ";
+	if(IsAllowed("blockLayouts"))
+	{
+		$qBlock = "select * from blockedlayouts where user=".$id." and blockee=".$loguserid;
+		$rBlock = Query($qBlock);
+		$isBlocked = NumRows($rBlock);
+		if($isBlocked)
+			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=0\">Unblock layout</a></li>";
+		else
+			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=1\">Block layout</a></li>";
+	}
 
 	if(isset($_GET['vote']) && $canVote)
 	{
@@ -81,7 +88,7 @@ if($loguserid)
 
 	$groups = "";
 	$comma = "";
-	$qGroups = "select name from groups left join groupaffiliations on groups.id = groupaffiliations.gid where uid = ".$id;
+	$qGroups = "select name from groups left join groupaffiliations on groups.id = groupaffiliations.gid where uid = ".$id." and status = 0";
 	$rGroups = Query($qGroups);
 	while($group = Fetch($rGroups))
 	{
@@ -108,7 +115,7 @@ $averageThreads = sprintf("%1.02f", $threads / $daysKnown);
 $score = ((int)$daysKnown * 2) + ($posts * 4) + ($threads * 8) + (($karma - 100) * 3);
 
 if($user['minipic'])
-	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle;\" />";
+	$minipic = "<img src=\"".$user['minipic']."\" alt=\"\" style=\"vertical-align: middle;\" />&nbsp;";
 
 if($user['rankset'])
 {
@@ -118,7 +125,7 @@ if($user['rankset'])
 		$toNextRank = Plural($toNextRank, "post");
 }
 if($user['title'])
-	$title = str_replace("<br />", " &bull; ", $user['title']);
+	$title = str_replace("<br />", " &bull; ", strip_tags(CleanUpPost($user['title'], "", true), "<b><strong><i><em><span><s><del><img><a><br><small>"));
 //$title = "";
 
 if($user['homepageurl'])
@@ -129,9 +136,18 @@ if($user['homepageurl'])
 		$homepage = "<a href=\"".$user['homepageurl']."\">".$user['homepageurl']."</a>";
 }
 
+$emailField = "Private";
+if($user['email'] == "")
+{
+	$emailField = "None given";
+}
+elseif($user['showemail'])
+{
+	$emailField = "<span id=\"emailField\">Public <button style=\"font-size: 0.7em;\" onclick=\"LoadSomething('emailField', 'ajaxcallbacks.php?a=em&amp;id=".$id."',  false);\">Show</button></span>";
+}
+
 if($user['tempbantime'])
 {
-
 	write(
 "
 	<div class=\"outline margin cell1 smallFonts\">
@@ -243,7 +259,7 @@ write("
 						<td class=\"cell0\">Homepage</td>
 						<td class=\"cell1\">{1}</td>
 					</tr>
-",	CleanUpPost($user['email']), CleanUpPost($homepage)
+",	$emailField, CleanUpPost($homepage)
 );
 
 write("
@@ -258,7 +274,7 @@ write("
 						<td class=\"cell0\">Items per page</td>
 						<td class=\"cell1\">{1}, {2}</td>
 					</tr>
-",	$themeNames[$user['scheme']],
+",	$themes[$user['theme']],
 	Plural($user['postsperpage'],"post"), Plural($user['threadsperpage'],"thread")
 );
 
@@ -292,12 +308,20 @@ write("
 						<td class=\"cell0\">Bio</td>
 						<td class=\"cell1\">{0}</td>
 					</tr>
-				</table>
-			</td>
 ",	CleanUpPost($user['bio']));
+
+runBucket("profileTable");
+write("
+				</table>
+");
+runBucket("profileLeft");
+write("
+			</td>
+");
 
 if($canDeleteComments && $_GET['action'] == "delete")
 {
+	AssertForbidden("deleteComments");
 	Query("delete from usercomments where uid=".$id." and id=".(int)$_GET['cid']);
 }
 
@@ -322,13 +346,15 @@ if(NumRows($rComments))
 								{3}{2}
 							</td>
 						</tr>
-",	UserLink($comment, "cid"), $cellClass, CleanUpPost($comment['text']), $deleteLink);
+",	UserLink($comment, "cid"), $cellClass, htmlspecialchars($comment['text']), $deleteLink);
 		$commentList = $thisComment . $commentList;
 		if(!isset($lastCID))
 			$lastCID = $comment['cid'];
 	}
 }
 else
+{
+	$commentsWasEmpty = true;
 	$commentList = $thisComment = format(
 "
 						<tr>
@@ -337,9 +363,11 @@ else
 							</td>
 						</tr>
 ");
+}
 
 if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $loguserid && $loguserid != $lastCID)
 {
+	AssertForbidden("makeComments");
 	$_POST['text'] = strip_tags($_POST['text']);
 	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
 	$rComment = Query($qComment);
@@ -356,6 +384,8 @@ if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $l
 							</td>
 						</tr>
 ",	UserLink($loguser), 2, CleanUpPost(deSlashMagic($_POST['text'])));
+	if($commentsWasEmpty)
+		$commentList = "";
 	$commentList .= $thisComment;
 }
 
@@ -365,14 +395,18 @@ if($loguserid)
 {
 	$commentField = format(
 "
-								<form method=\"post\" action=\"profile.php\">
-									<input type=\"hidden\" name=\"id\" value=\"{0}\" />
-									<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\" />
-									<input type=\"submit\" name=\"action\" value=\"Post\" />
-								</form>
+								<div>
+									<form method=\"post\" action=\"profile.php\">
+										<input type=\"hidden\" name=\"id\" value=\"{0}\" />
+										<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\" />
+										<input type=\"submit\" name=\"action\" value=\"Post\" />
+									</form>
+								</div>
 ", $id);
 	if($lastCID == $loguserid)
 		$commentField = "You already have the last word.";
+	if(!IsAllowed("makeComments"))
+		$commentField = "You are not allowed to post usercomments.";
 }
 
 write(
@@ -391,10 +425,16 @@ write(
 						</td>
 					</tr>
 				</table>
+",	UserLink($user), $commentList, $commentField);
+
+runBucket("profileRight");
+
+write(
+"
 			</td>
 		</tr>
 	</table>
-",	UserLink($user), $commentList, $commentField);
+");
 
 /*
 //Randomized previews
@@ -412,8 +452,8 @@ $previewPost['text'] = $previews[array_rand($previews)];
 $previewPost['text'] = $profilePreviewText;
 //</fixedpreview>
 
-$previewPost['num'] = "???";
-$previewPost['id'] = "???";
+$previewPost['num'] = "preview";
+$previewPost['id'] = "preview";
 $previewPost['uid'] = $id;
 $copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,rankset,signature,signsep,posts,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
@@ -423,17 +463,22 @@ $previewPost['activity'] = FetchResult("select count(*) from posts where user = 
 
 MakePost($previewPost, 0, 0);
 
-if($loguser['powerlevel'] == 3)
-	$links .= "<a href=\"edituser.php?id=".$id."\">Edit user</a> | <a href=\"private.php?user=".$id."\">Show PMs</a> | ";
-if($loguserid)
-	$links .= "<a href=\"sendprivate.php?uid=".$id."\">Send PM</a> | ";
-$links .= "<a href=\"listposts.php?id=".$id."\">Show posts</a> | ";
+if($loguser['powerlevel'] > 2)
+{
+	if(IsAllowed("editUser"))
+		$links .= "<li><a href=\"edituser.php?id=".$id."\">Edit user</a></li>";
+	if(IsAllowed("snoopPM"))
+		$links .= "<li><a href=\"private.php?user=".$id."\">Show PMs</a></li>";
+}
+if($loguserid && IsAllowed("sendPM"))
+	$links .= "<li><a href=\"sendprivate.php?uid=".$id."\">Send PM</a><li>";
+if(IsAllowed("listPosts"))
+	$links .= "<li><a href=\"listposts.php?id=".$id."\">Show posts</a></li>";
 $links .= $blockLayoutLink;
-$links = substr($links, 0, strlen($links) - 2);
 write("
-	<div class=\"smallFonts outline margin cell1\">
+	<ul class=\"smallFonts margin pipemenu\">
 		{0}
-	</div>
+	</ul>
 ", $links);
 
 $title = "Profile for ".$user['name'];
