@@ -2,6 +2,14 @@
 $noViewCount = TRUE;
 $noOnlineUsers = TRUE;
 $noFooter = TRUE;
+function runBucket($blar)
+{
+	;
+}
+function IsAllowed()
+{
+	return false;
+}
 function cdate($format, $date = 0)
 {
 	global $loguser;
@@ -22,7 +30,7 @@ $overallTidy = 0;
 $misc['poratitle'] = "Installing&hellip;";
 $misc['porabox'] = "Hold onto your hat.";
 $title = "Installation";
-ob_start("DoFooter");
+//ob_start("DoFooter");
 $timeStart = usectime();
 include("lib/feedback.php");
 include("lib/header.php");
@@ -75,7 +83,7 @@ if(!isset($_POST['action']))
 					<label for=\"dpw\">Database user password</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\">
+					<input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\" />
 				</td>
 			</tr>
 			<tr>
@@ -95,6 +103,12 @@ if(!isset($_POST['action']))
 					<input type=\"submit\" name=\"action\" value=\"Install\" />
 				</td>
 			</tr>
+			<tr class=\"cell2\">
+				<td colspan=\"2\">
+					<strong>Warning</strong> &mdash;
+					When updating, <em>back up your database</em> before you press the \"Install\" button and don't check the \"add starting forums\" box.
+				</td>
+			</tr>
 		</table>
 	</form>
 ");
@@ -102,7 +116,6 @@ if(!isset($_POST['action']))
 }
 else if($_POST['action'] == "Install")
 {
-
 	print "<div class=\"outline faq\">";
 	print "Trying to connect to database&hellip;<br />";
 	$dbserv = $_POST['dbserv'];
@@ -144,6 +157,8 @@ else if($_POST['action'] == "Install")
 		fputs($hax, "\$customTitleThreshold = ".(int)$customTitleThreshold.";\n");
 		fputs($hax, "\$viewcountInterval = ".(int)$viewcountInterval.";\n");
 		fputs($hax, "\$overallTidy = ".(int)$tidy.";\n");
+		fputs($hax, "\$noAjax = ".(int)$noAjax.";\n");
+		fputs($hax, "\$noGuestLayouts = ".(int)$noGuestLayouts.";\n");
 		fputs($hax, "\$theWord = \"".prepare($theWord)."\";\n");
 		fputs($hax, "\$systemUser = ".(int)$systemUser.";\n");
 		fputs($hax, "\$minWords = ".(int)$minWords.";\n");
@@ -152,7 +167,7 @@ else if($_POST['action'] == "Install")
 		fputs($hax, "\$uploaderWhitelist = \"".prepare($uploaderWhitelist)."\";\n");
 		fputs($hax, "\n");
 		fputs($hax, "//Hacks\n");
-		fputs($hax, "\$hacks['forcetheme'] = ".(int)$hacks['forcetheme'].";\n");
+		fputs($hax, "\$hacks['forcetheme'] = \"".prepare($hacks['forcetheme'])."\";\n");
 		fputs($hax, "\$hacks['themenames'] = ".(int)$hacks['themenames'].";\n");
 		fputs($hax, "\$hacks['postfilter'] = ".(int)$hacks['postfilter'].";\n");
 		fputs($hax, "\n");
@@ -171,9 +186,69 @@ else if($_POST['action'] == "Install")
 	}
 
 	include("lib/mysql.php");
-	print "Creating tables&hellip;<br />";
+	print "Creating/updating tables&hellip;<br />";
+	Query("DROP TABLE IF EXISTS `smilies`");
+	Upgrade();
+	
+	print "Adding bare neccesities&hellip;<br />"; 
+	$misc = Query("select * from misc");
+	if(NumRows($misc) == 0)
+		Query("INSERT INTO `misc` (`views`, `hotcount`, `porabox`, `poratitle`, `milestone`, `maxuserstext`) VALUES (0, 30, 'You might want to download the geolocation<br />table and some avatar sets from the same<br />place you got this forum software:<br /><br /><a href=\"http://helmet.kafuka.org/thepile/ABXD\">ABXD page on The Pile</a><br /><br />Then, <a href=\"editpora.php\">edit this panel</a>.', 'Points of Required Attention', 'Nothing yet.', 'Nobody yet.');");
+	$smilies = Query("select * from smilies");
+	if(NumRows($smilies) == 0)
+		Query("
+	INSERT INTO `smilies` (`code`, `image`) VALUES
+	(':)', 'smile.png'),
+	(';)', 'wink.png'),
+	(':D', 'biggrin.png'),
+	('o_o', 'blank.png'),
+	(':awsum:', 'awsum.png'),
+	('-_-', 'annoyed.png'),
+	('o_O', 'bigeyes.png'),
+	(':LOL:', 'lol.png'),
+	(':O', 'jawdrop.png'),
+	(':(', 'frown.png'),
+	(';_;', 'cry.png'),
+	('>:', 'mad.png'),
+	('O_O', 'eek.png'),
+	('8-)', 'glasses.png'),
+	('^_^', 'cute.png'),
+	('^^;;;', 'cute2.png'),
+	('>_<', 'yuck.png'),
+	('\xC2\xAC_\xC2\xAC', 'eyeshift.png'),
+	('<_<', 'shiftleft.png'),
+	('>_>', 'shiftright.png'),
+	('@_@', 'dizzy.png'),
+	('^~^', 'angel.png'),
+	('>:)', 'evil.png'),
+	('x_x', 'sick.png'),
+	(':P', 'tongue.png'),
+	(':S', 'wobbly.png'),
+	(':[', 'vamp.png'),
+	('~:o', 'baby.png'),
+	(':YES:', 'yes.png'),
+	(':NO:', 'no.png'),
+	('<3', 'heart.png'),
+	(':3', 'colonthree.png'),
+	(':up:', 'approve.png'),
+	(':down:', 'deny.png'),
+	(':durr:', 'durrr.png'),
+	('^^;', 'embarras.png'),
+	(':barf:', 'barf.png'),
+	('._.', 'ashamed.png'),
+	('''.''', 'umm.png'),
+	('''_''', 'downcast.png'),
+	(':big:', 'teeth.png'),
+	(':lawl:', 'lawl.png'),
+	(':ninja:', 'ninja.png'),
+	(':pirate:', 'pirate.png'),
+	('D:', 'outrage.png'),
+	(':sob:', 'sob.png'),
+	(':XD:', 'xd.png'),
+	(':yum:', 'yum.png');
+");
 
-	Import("installTables.sql");
+	//Import("installTables.sql");
 	if($_POST['addbase'])
 	{
 		print "Creating starting fora&hellip;<br />";
@@ -183,7 +258,7 @@ else if($_POST['action'] == "Install")
 	print "<h3>Your board has been set up.</h3>";
 	print "Things for you to do now:";
 	print "<ul>";
-	print "<li><a href=\"register.php\">Register your account</a> &mdash; the first to register gets to be administrator.</li>";
+	print "<li><a href=\"register.php\">Register your account</a> &mdash; the first to register gets to be Root.</li>";
 	print "<li>Check out the <a href=\"admin.php\">administrator's toolkit</a>.</li>";
 	print "<li><a href=\"install.php?delete=1\">Delete</a> the installation script.</li>";
 	print "</ul>";
@@ -235,4 +310,87 @@ function deSlashMagic($text)
 	else
 		return $text;
 }
+
+
+function Upgrade()
+{
+	global $dbname;
+	include("installSchema.php");
+	foreach($tables as $table => $tableSchema)
+	{
+		print "<li>";
+		print $table."&hellip;";
+		$tableStatus = Query("show table status from ".$dbname." like '".$table."'");
+		$numRows = NumRows($tableStatus);
+		if($numRows == 0)
+		{
+			print " creating&hellip;";
+			$create = "create table `".$table."` (\n";
+			$comma = "";
+			foreach($tableSchema['fields'] as $field => $type)
+			{
+				$create .= $comma."\t`".$field."` ".$type;
+				$comma = ",\n";
+			}
+			if(isset($tableSchema['special']))
+				$create .= ",\n\t".$tableSchema['special'];
+			$create .= "\n);";
+			//print "<pre>".$create."</pre>";
+			Query($create);
+		}
+		else
+		{
+			//print " checking&hellip;";
+			//$tableStatus = mysql_fetch_assoc($tableStatus);
+			//print "<pre>"; print_r($tableStatus); print "</pre>";
+			$primaryKey = "";
+			$changes = 0;
+			$foundFields = array();
+			$scan = Query("show columns from `".$table."`");
+			while($field = mysql_fetch_assoc($scan))
+			{
+				$fieldName = $field['Field'];
+				$foundFields[] = $fieldName;
+				$type = $field['Type'];
+				if($field['Null'] == "NO")
+					$type .= " NOT NULL";
+				//if($field['Default'] != "")
+				if($field['Extra'] == "auto_increment")
+					$type .= " AUTO_INCREMENT";
+				else
+					$type .= " DEFAULT '".$field['Default']."'";
+				if($field['Key'] == "PRI")
+					$primaryKey = $fieldName;
+				if(array_key_exists($fieldName, $tableSchema['fields']))
+				{
+					$wantedType = $tableSchema['fields'][$fieldName];
+					if(strcasecmp($wantedType, $type))
+					{
+						print " \"".$fieldName."\" not correct type&hellip;";
+						if($fieldName == "id")
+						{
+							print_r($field);
+							print "{ ".$type." }";
+						}
+						Query("ALTER TABLE `".$table."` CHANGE `".$fieldName."` `".$fieldName."` ".$wantedType);
+						$changes++;
+					}
+				}
+			}
+			foreach($tableSchema['fields'] as $fieldName => $type)
+			{
+				if(!in_array($fieldName, $foundFields))
+				{
+					print " \"".$fieldName."\" missing&hellip;";
+					Query("ALTER TABLE `".$table."` ADD `".$fieldName."` ".$wantedType);
+					$changes++;
+				}
+			}
+			if($changes == 0)
+				print " OK.";
+		}
+		print "</li>";
+	}
+}
+
 ?>
