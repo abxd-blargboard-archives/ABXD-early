@@ -3,6 +3,7 @@
 
 include_once("geshi.php");
 include_once("write.php");
+include_once("filters.php");
 
 function LoadSmilies($byOrder = FALSE)
 {
@@ -56,6 +57,8 @@ function GetRank($poster)
 		return "";
 	LoadRanks($poster['rankset']);
 	$thisSet = $ranks[$poster['rankset']];
+	if(!is_array($thisSet))
+		return "";
 	$ret = "";
 	foreach($thisSet as $num => $text)
 	{
@@ -79,6 +82,8 @@ function GetToNextRank($poster)
 		return "";
 	LoadRanks($poster['rankset']);
 	$thisSet = $ranks[$poster['rankset']];
+	if(!is_array($thisSet))
+		return 0;
 	$ret = 0;
 	foreach($thisSet as $num => $text)
 	{
@@ -229,7 +234,7 @@ function GetSyndrome($activity)
 	return $soFar;
 }
 
-function CleanUpPost($postText, $poster = "", $noSmilies = false)
+function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 {
 	global $smilies;
 	LoadSmilies();
@@ -284,7 +289,8 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	//Do we need this?
 	//$s = preg_replace("'\[c=([0123456789ABCDEFabcdef]+)\](.*?)\[/c\]'si","<span style=\"color: #\\1\">\\2</span>", $s);
 
-	$s = str_replace("\n","<br />", $s);
+	if($noBr == FALSE)
+		$s = str_replace("\n","<br />", $s);
 
 	//Blacklisted tags
 	$badTags = array('script','iframe','frame','blink','textarea','noscript','meta','xmp','plaintext');
@@ -295,7 +301,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 	}
 
 	//Bad sites
-	$s = preg_replace("'jul.rusted'si", "zophar.", $s); //I didn't add this! Honest! -- Kawa
+	//$s = preg_replace("'jul.rusted'si", "zophar.", $s); //I didn't add this! Honest! -- Kawa
 	$s = preg_replace("'goatse'si","goat<span>se</span>", $s);
 	$s = preg_replace("'tubgirl.com'si","www.youtube.com/watch?v=EK2tWVj6lXw", $s);
 	$s = preg_replace("'ogrish.com'si","www.youtube.com/watch?v=2iveTJXcp6k", $s);
@@ -346,6 +352,9 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false)
 
 	$s = preg_replace("'\[video\](.*?)\[/video\]'si","<video src=\"\\1\" width=\"425\" height=\"344\"  controls=\"controls\">Video not supported &mdash; <a href=\"\\1\">download</a></video>", $s);
 
+	//<a href="http://tindeck.com/listen/givy"><img src="http://tindeck.com/image/givy/stats.png"border=0></a>
+	$s = preg_replace("'\[tindeck\](.*?)\[/tindeck\]'si", "<a href=\"http://tindeck.com/listen/\\1\"><img src=\"http://tindeck.com/image/\\1/stats.png\" alt=\"Tindeck\" /></a>", $s);
+
 	$s =  str_replace("[quote]","<blockquote><div><hr />", $s);
 	$s =  str_replace("[/quote]","<hr /></div></blockquote>", $s);
 	$s = preg_replace("'\[quote=\"(.*?)\" id=\"(.*?)\"\]'si","<blockquote><div><small><i>Posted by <a href=\"thread.php?pid=\\2#\\2\">\\1</a></i></small><hr />", $s);
@@ -392,26 +401,33 @@ function ApplyTags($text, $tags)
 	$s = $text;
 	foreach($tags as $tag => $val)
 		$s = str_replace("&".$tag."&", $val, $s);
+	if(is_numeric($tags['numposts']))
+		$s = preg_replace('@&(\d+)&@sie', 'max($1 - '.$tags['numposts'].', 0)', $s);
+	else
+		$s = preg_replace("'&(\d+)&'si", "preview", $s);
 	return $s;
 }
 
 function MakePost($post, $thread, $forum, $ispm=0)
 {
-	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts;
+	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts, $postText;
+	if(isset($_GET['pid']))
+		$highlight = (int)$_GET['pid'];
 
 	//$qBlock = "select * from blockedlayouts where user=".$post['uid']." and blockee=".$loguserid;
 	//$rBlock = Query($qBlock);
 	LoadBlockLayouts();
 	$isBlocked = $blocklayouts[$post['uid']] /* NumRows($rBlock) */ | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
 	$noSmilies = $post['options'] & 2;
+	$noBr = $post['options'] & 4;
 
-	if($post['deleted'])
+	if($post['deleted'] && !ispm)
 	{
 		$meta = "Posted on ".cdate($dateformat,$post['date']);
-		$links = "Post deleted | ";
-		if(CanMod($loguserid,$forum) || $post['uid'] == $loguserid)
-			$links .= "<a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a> | ";
-		$links .= "ID: ".$post['id'];
+		$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
+		if(CanMod($loguserid,$forum) || $post['uid'] == $loguserid && IsAllowed("editPost", $post['id']))
+			$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
+		$links .= "<li>ID: ".$post['id']."</li></ul>";
 		write(
 "
 		<div class=\"outline margin\">
@@ -443,19 +459,20 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$links = "";
 		if(!$ispm && !$isBot)
 		{
-			$links .= "<a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a> | ";
-			if($thread && $loguser['powerlevel'] > -1 && $forum != -2)
-				$links .= "<a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a> | ";
-			if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'])
-				$links .= "<a href=\"editpost.php?id=".$post['id']."\">Edit</a> | ";
-			if(CanMod($loguserid, $forum))
-				$links .= "<a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a> | ";
-			if($forum != -2)
-				$links .= "ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a>";
+			$links .= "<ul class=\"pipemenu\"><li><a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a></li>";
+			if($thread && $loguser['powerlevel'] > -1 && $forum != -2 && IsAllowed("makeReply", $thread))
+				$links .= "<li><a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a></li>";
+			if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'] && IsAllowed("editPost", $post['id']))
+				$links .= "<li><a href=\"editpost.php?id=".$post['id']."\">Edit</a></li>";
+			if(CanMod($loguserid, $forum) && IsAllowed("editPost", $post['id']))
+				$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a></li>";
+			if($forum != -2 && IsAllowed("makeReply", $thread))
+				$links .= "<li>ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a></li>";
 			else
-				$links .= "ID: ".$post['id'];
+				$links .= "<li>ID: ".$post['id']."</li>";
 			if($loguser['powerlevel'] > 0)
-				$links .= " | ".$post['ip'];
+				$links .= "<li>".$post['ip']."</li>";
+			$links .= "</ul>";
 		}
 
 		$meta = (!$ispm ? "Posted on " : 'Sent on ').cdate($dateformat,$post['date']);
@@ -464,9 +481,15 @@ function MakePost($post, $thread, $forum, $ispm=0)
 			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".htmlspecialchars($post['threadname'])."</a>";
 		//Revisions
 		if($post['revision'])
-			$meta .= " (revision ".($post['revision']+1).")";
+		{
+			if(CanMod($loguserid, $forum))
+				$meta .= " (<a href=\"javascript:void(0);\" onclick=\"showRevisions(".$post['id'].")\">revision ".$post['revision']."</a>)";
+			else
+				$meta .= " (revision ".$post['revision'].")";
+		}
 		//</revisions>
-	} else
+	}
+	else
 		$meta = "Sample post";
 
 	if($forum==-1)
@@ -479,7 +502,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	if($sideBarStuff)
 		$sideBarStuff .= "<br />";
 	if($post['title'])
-		$sideBarStuff .= $post['title']."<br />";
+		$sideBarStuff .= strip_tags(CleanUpPost($post['title'], "", true), "<b><strong><i><em><span><s><del><img><a><br><small>")."<br />";
 	else
 	{
 		$levelRanks = array(-1=>"Banned", 0=>"", 1=>"Local mod", 2=>"Full mod", 3=>"Administrator");
@@ -499,7 +522,11 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$lastpost = ($post['lastposttime'] ? timeunits(time() - $post['lastposttime']) : "none");
 	$lastview = timeunits(time() - $post['lastactivity']);
 
-	$sideBarStuff .= "<br />\nPosts: ".$post['num']."/".$post['posts'];
+	if($post['num'] != "preview")
+		$sideBarStuff .= "<br />\nPosts: ".$post['num']."/".$post['posts'];
+	else
+		$sideBarStuff .= "<br />\nPosts: ".$post['posts'];
+	
 	$sideBarStuff .= "<br />\nSince: ".cdate($loguser['dateformat'], $post['regdate']);
 	$sideBarStuff .= "<br /><br />\nLast post: ".$lastpost;
 	$sideBarStuff .= "<br />\nLast view: ".$lastview;
@@ -513,7 +540,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	if($post['lastactivity'] > time() - 3600)
 		$sideBarStuff .= "<br />\nUser is <strong>online</strong>";
 
-	if($post['id'] != "???")
+	if($post['id'] != "preview")
 		$anchor = "<a name=\"".$post['id']."\" />";
 	if(!$isBlocked)
 	{
@@ -525,8 +552,8 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$tags = array();
 	$rankHax = $post['posts'];
-	if($post['num'] == "???")
-		$post['num'] = $post['posts'];
+	//if($post['num'] == "preview")
+	//	$post['num'] = $post['posts'];
 	$post['posts'] = $post['num'];
 	//Disable tags by commenting/removing this part.
 	$tags = array
@@ -557,7 +584,9 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	else if($hacks['postfilter'] == 5)
 		$post['text'] = FuddFilter($post['text']);
 
-	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
+	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies, $noBr), $tags);
+	
+	runBucket("postManglers");
 
 	if($post['signature'] && !$isBlocked)
 	{
@@ -570,52 +599,18 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$postCode =
 "
-		<div class=\"outline margin id=\"post_{13}\">
-			{0}
-			<table class=\"post\">
-				<tr>
-					<td class=\"side userlink {1}\">
-						{5}
-					</td>
-					<td class=\"meta right {2}\">
-						<div style=\"float: left;\">
-							{7}
-						</div>
-						{8}
-					</td>
-				</tr>
-				<tr>
-					<td class=\"side {3}\">
-						<div class=\"smallFonts\">
-							{6}
-						</div>
-					</td>
-					<td class=\"post {4}\">
-
-						{9}
-						
-						{10}
-						
-						{12}
-						{11}
-
-					</td>
-				</tr>
-			</table>
-		</div>
-";
-
-	$postCode =
-"
-		<table class=\"post margin\">
+		<table class=\"post margin {14}\">
 			<tr>
 				<td class=\"side userlink {1}\">
 					{0}
 					{5}
 				</td>
 				<td class=\"meta right {2}\">
-					<div style=\"float: left;\">
+					<div style=\"float: left;\" id=\"meta_{13}\">
 						{7}
+					</div>
+					<div style=\"float: left; display: none;\" id=\"dyna_{13}\">
+						Hi.
 					</div>
 					{8}
 				</td>
@@ -626,7 +621,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 						{6}
 					</div>
 				</td>
-				<td class=\"post {4}\">
+				<td class=\"post {4}\" id=\"post_{13}\">
 
 					{9}
 
@@ -640,46 +635,10 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		</table>
 ";
 
-/*
-	$postCode =
-"
-	<div class=\"post_container\" id=\"post_{13}B\">
-		{0}
-		<div class=\"post_about {3}B1\">
-			<div class=\"post_user {1}B\">
-				{5}
-			</div>
-			<div class=\"post_info {3}B2\">
-				{6}
-			</div>
-		</div>
-		<div class=\"post_topbar {2}B\">
-
-			<div class=\"post_timestamp\">
-				{7}
-			</div>
-			<div class=\"post_options\">
-				{8}
-			</div>
-		</div>
-		<div class=\"post_content {4}B\">
-
-						{9}
-						
-						{10}
-						
-						{12}
-						{11}
-
-		</div>
-	</div>
-";
-*/
-
 	write($postCode,
 			$anchor, $topBar1, $topBar2, $sideBar, $mainBar,
 			UserLink($post, "uid"), $sideBarStuff, $meta, $links,
-			$postHeader, $postText, $postFooter, $separator, $post['id']);
+			$postHeader, $postText, $postFooter, $separator, $post['id'], $post['id'] == $highlight ? "highlightedPost" : "");
 
 }
 
