@@ -8,6 +8,7 @@ include("lib/common.php");
 
 $action = $_GET['a'];
 $id = (int)$_GET['id'];
+$hideTricks = "<a href=\"javascript:void(0)\" onclick=\"hideTricks(".$id.")\">Back</a>";
 if($action == "q")
 {
 	$qPost = "select * from posts where id=".$id;
@@ -36,6 +37,9 @@ if($action == "q")
 	$qPoster = "select name from users where id=".$post['user'];
 	$rPoster = Query($qPoster);
 	$poster = Fetch($rPoster);
+	
+	$text = preg_replace("'/me '","[b]* ".$poster['name']."[/b] ", $text);
+	
 	$reply = "[quote=\"".$poster['name']."\" id=\"".$id."\"]".$text."[/quote]";
 	die($reply);
 }
@@ -60,7 +64,7 @@ else if($action == "tf")
 		$logopic = "img/themes/".$theme."/logo.png";
 	die($themeFile."|".$logopic);
 }
-else if($action = "ni")
+else if($action == "ni")
 {
 	$pl = $loguser['powerlevel'];
 
@@ -103,6 +107,119 @@ else if($action = "ni")
 	}
 
 	die(join(",", $news));
+}
+elseif($action == "srl")
+{
+	$qPost = "select currentrevision, thread from posts where id=".$id;
+	$rPost = Query($qPost);
+	if(NumRows($rPost))
+		$post = Fetch($rPost);
+	else
+		die("Unknown post ID #".$id.". ".$hideTricks);
+
+	$qThread = "select forum from threads where id=".$post['thread'];
+	$rThread = Query($qThread);
+	$thread = Fetch($rThread);
+	$qForum = "select minpower from forums where id=".$thread['forum'];
+	$rForum = Query($qForum);
+	$forum = Fetch($rForum);
+	if($forum['minpower'] > $loguser['powerlevel'])
+		die("No. ".$hideTricks);
+
+	$reply = "Show revision: ";
+	for($i = 0; $i <= $post['currentrevision']; $i++)
+		$reply .= "<a href=\"javascript:void(0)\" onclick=\"showRevision(".$id.",".$i.")\">".$i."</a> ";
+	$reply .= $hideTricks;
+	die($reply);	
+}
+elseif($action == "sr")
+{
+
+	$qPost = "select ";
+	$qPost .=
+		"posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts_text.text, posts_text.text, posts_text.revision, users.id as uid, users.name, users.displayname, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, users.postheader, users.signature, users.signsep, users.globalblock, users.lastposttime, users.lastactivity, users.regdate, posts.thread";
+	$qPost .= 
+		" from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = ".(int)$_GET['rev']." left join users on users.id = posts.user";
+	$qPost .= " where posts_text.pid=".$id;
+
+	$rPost = Query($qPost);
+	if(NumRows($rPost))
+		$post = Fetch($rPost);
+	else
+		die("Unknown post ID #".$id." or revision missing.");
+
+	$qThread = "select forum from threads where id=".$post['thread'];
+	$rThread = Query($qThread);
+	$thread = Fetch($rThread);
+	$qForum = "select minpower from forums where id=".$thread['forum'];
+	$rForum = Query($qForum);
+	$forum = Fetch($rForum);
+	if($forum['minpower'] > $loguser['powerlevel'])
+		$post['text'] = "No.";
+
+	LoadBlockLayouts();
+	$isBlocked = $blocklayouts[$post['uid']] /* NumRows($rBlock) */ | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
+	$noSmilies = $post['options'] & 2;
+
+	$tags = array();
+	$rankHax = $post['posts'];
+	if($post['num'] == "???")
+		$post['num'] = $post['posts'];
+	$post['posts'] = $post['num'];
+	//Disable tags by commenting/removing this part.
+	$tags = array
+	(
+		"numposts" => $post['num'],
+		"5000" => 5000 - $post['num'],
+		"20000" => 20000 - $post['num'],
+		"30000" => 30000 - $post['num'],
+		"rank" => GetRank($post),
+	);
+
+	$post['posts'] = $rankHax;
+
+	if($post['postheader'] && !$isBlocked)
+		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
+
+	//Pirate Day filter
+	if($hacks['postfilter'])
+		include_once("filters.php");
+	if($hacks['postfilter'] == 1 || "0919" == gmdate('md'))
+		$post['text'] = PirateFilter($post['text']);
+	else if($hacks['postfilter'] == 2)
+		$post['text'] = ChefFilter($post['text']);
+	else if($hacks['postfilter'] == 3)
+		$post['text'] = KrautFilter($post['text']);
+	else if($hacks['postfilter'] == 4)
+		$post['text'] = JiveFilter($post['text']);
+	else if($hacks['postfilter'] == 5)
+		$post['text'] = FuddFilter($post['text']);
+
+	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
+
+	if($goggles)
+	{
+		$postText = str_replace("<!--", "<span style=\"color: #66ff66;\">&lt;!--", $postText);
+		$postText = str_replace("-->", "--&gt;</span>", $postText);
+	}
+
+	if($post['signature'] && !$isBlocked)
+	{
+		$postFooter = ApplyTags(CleanUpPost($post['signature']), $tags);
+		if(!$post['signsep'])
+			$separator = "<br />_________________________<br />";
+		else
+			$separator = "<br />";
+	}
+
+	$reply = $postHeader.$postText.$separator.$postFooter;
+
+	die($reply);	
+}
+elseif($action == "em")
+{
+	$blah = FetchResult("select email from users where id=".$id." and showemail=1");
+	die($blah);
 }
 
 die("Unknown action.");
