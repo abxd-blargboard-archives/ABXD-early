@@ -8,6 +8,7 @@ if(!isset($_GET['id']))
 	Kill("Forum ID unspecified.");
 
 $fid = (int)$_GET['id'];
+AssertForbidden("viewForum", $fid);
 
 $pl = $loguser['powerlevel'];
 if($pl == -1) $pl = 0;
@@ -63,6 +64,15 @@ else if(isset($_GET['unignore']))
 	}
 }
 
+
+write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (forum)\" href=\"rss2.php?forum={0}\" />", $fid);
+write(
+"
+	<div id=\"rss\" style=\"float: right;\">
+		<a href=\"rss2.php?forum={0}\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed for this forum\" /></a>
+	</div>
+", $fid);
+
 $isIgnored = FetchResult("select count(*) from ignoredforums where uid=".$loguserid." and fid=".$fid, 0, 0) == 1;
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
@@ -75,20 +85,26 @@ if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
 }
 
-$onlineUsers = OnlineUsers($fid);
-Write(
+if(!$noAjax)
+{
+	$onlineUsers = OnlineUsers($fid);
+	write(
 "
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
 	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
-		window.onload = function() { startOnlineUsers({0}); };
+		onlineFID = {0};
+		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
 	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+		&nbsp;
 		<span id=\"onlineUsers\">
 			{1}
 		</span>
+		&nbsp;
 	</div>
 ",	$fid, $onlineUsers);
+}
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
@@ -107,8 +123,11 @@ $qThreads = "select * from threads where forum=".$fid." order by sticky desc, la
 $rThreads = Query($qThreads);
 
 $rMembers = Query("select name, displayname, id, powerlevel, sex from users");
-while($mem = Fetch($rMembers))
-	$members[$mem['id']] = $mem;
+while($user = Fetch($rMembers))
+{
+	runBucket("manglers", "userData", $user['id']);
+	$members[$user['id']] = $user;
+}
 
 $numonpage = NumRows($rThreads);
 
@@ -158,7 +177,7 @@ if(NumRows($rThreads))
 			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
 
 		if($thread['icon'])
-			$ThreadIcon = "<img src=\"".htmlspecialchars($thread['icon'])."\" width=\"15\" alt=\"\"/>";
+			$ThreadIcon = "<img src=\"".htmlspecialchars($thread['icon'])."\" alt=\"\" class=\"smiley\"/>";
 		else
 			$ThreadIcon = "";
 
@@ -174,12 +193,25 @@ if(NumRows($rThreads))
 		}
 		if($thread['sticky'] && $haveStickies == 0) $haveStickies = 1;
 
-		$poll = ($thread['poll'] ? "<img src=\"img/poll.png\" alt=\"Poll\" /> " : "");
+		$poll = ($thread['poll'] ? "<img src=\"img/poll.png\" alt=\"Poll\"/> " : "");
 
-		$pl = "";
+		$n = 4;
 		$total = $thread['replies'];
-		for($i = $ppp; $i <= $total; $i+=$ppp)
-			$pl .= " <a href=\"thread.php?id=".$thread['id']."&amp;from=".$i."\">".(($i/$ppp)+1)."</a>";
+		$numpages = floor($total / $ppp);
+		$pl = "";
+		if($numpages <= $n * 2)
+		{
+			for($i = 1; $i <= $numpages; $i++)
+				$pl .= " <a href=\"thread.php?id=".$thread['id']."&amp;from=".($i * $ppp)."\">".($i+1)."</a>";
+		}
+		else
+		{
+			for($i = 1; $i < $n; $i++)
+				$pl .= " <a href=\"thread.php?id=".$thread['id']."&amp;from=".($i * $ppp)."\">".($i+1)."</a>";
+			$pl .= " &hellip; ";
+			for($i = $numpages - $n + 1; $i <= $numpages; $i++)
+				$pl .= " <a href=\"thread.php?id=".$thread['id']."&amp;from=".($i * $ppp)."\">".($i+1)."</a>";
+		}
 		if($pl)
 			$pl = " <span class=\"smallFonts\">[<a href=\"thread.php?id=".$thread['id']."\">1</a>".$pl."]</span>";
 
@@ -246,7 +278,6 @@ if($pagelinks)
 	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
-
 ForumJump();
 
 function readpostread($userid)
@@ -260,12 +291,50 @@ function readpostread($userid)
 function ForumJump()
 {
 	global $fid, $loguser;
-	$fora = Query("select id, title from forums where minpower <= ".$loguser['powerlevel'] . " order by catid asc, forder asc");
-	$jump = "<select onchange=\"document.location='forum.php?id=' + this.options[this.selectedIndex].value;\">";
-	while($forum = Fetch($fora))
-		$jump .= format("<option value=\"{0}\"{2}>{1}</option>", $forum['id'], $forum['title'], ($forum['id'] == $fid ? " selected=\"selected\"" : ""));
-	$jump .= "</select>";
-	print $jump;
+	$pl = $loguser['powerlevel'];
+	if($pl == -1) $pl = 0;
+	$rCategories = Query("select name, minpower from categories");
+	$category[] = "dummy";
+	while($cat = Fetch($rCategories))
+		$category[] = array("name" => $cat['name'], "minpower" => $cat['minpower']);
+	$lastCatID = -1;
+	$forumsHad = array();
+	$rFora = Query("select * from forums order by catid, forder");
+	$theList = "";
+	$optgroup = "";
+	while($forum = Fetch($rFora))
+	{
+		if($category[$forum['catid']]['minpower'] > $pl || ($forum['hidden'] && $pl < 1))
+			continue;
+		if($forum['catid'] > $lastCatID)
+		{
+			$lastCatID = $forum['catid'];
+			$theList .= format(
+"
+			{0}
+			<optgroup label=\"{1}\">
+", $optgroup, $category[$lastCatID]['name']);
+			$optgroup = "</optgroup>";
+		}
+		if(array_key_exists($forum['id'], $forumsHad))
+			continue;
+		$theList .= format(
+"
+				<option value=\"{0}\"{2}>{1}</option>
+",	$forum['id'], $forum['title'], ($forum['id'] == $fid ? " selected=\"selected\"" : ""));
+	$forumsHad[$forum['id']] = $forum['name'];
+	}
+
+	write(
+"
+	<label>
+		Forum Jump:
+		<select onchange=\"document.location='forum.php?id='+this.options[this.selectedIndex].value;\">
+			{0}
+			</optgroup>
+		</select>
+	</label>
+",	$theList);
 }
 
 ?>
