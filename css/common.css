@@ -266,6 +266,8 @@ table.breadcrumbs, table.breadcrumbs td
 .nc01 { color: #D8E8FE; } .nc11 { color: #FFB3F3; } .nc21 { color: #EEB9BA; }
 .nc02 { color: #AFFABE; } .nc12 { color: #C762F2; } .nc22 { color: #47B53C; }
 .nc03 { color: #FFEA95; } .nc13 { color: #C53A9E; } .nc23 { color: #F0C413; }
+/* .nc04 { color: #FFBB66; } .nc14 { color: #FF6666; } .nc24 { color: #FFCC44; } */
+.nc04 { color: #5555FF; } .nc14 { color: #FF5588; } .nc24 { color: #FF55FF; } 
 .nc05 { color: #FF0000; } .nc15 { color: #FF0000; } .nc25 { color: #FF0000; }
 
 /* [Quote] stuff */
@@ -381,7 +383,7 @@ ul.pipemenu li:first-child
 	opacity: 1;
 }
 
-.smilies img
+.smilies img, #rss img
 {
 	padding: 1px;
 	opacity: 0.50;
@@ -394,7 +396,7 @@ ul.pipemenu li:first-child
 	   -moz-transition: opacity 0.2s ease-in-out;
 	-webkit-transition: opacity 0.2s ease-in-out;
 }
-.smilies img:hover
+.smilies img:hover, #rss img:hover
 {
 	margin: 0px;
 	opacity: 1;
@@ -414,9 +416,9 @@ a:hover span
 	color: white !important;
 }
 
-input[type="text"], input[type="password"], input[type="file"], select, textarea
+input, select, textarea, button
 {
-/*	font-size: 1em; */
+	font-size: 1em;
 }
 
 
@@ -583,7 +585,7 @@ button.expander
 	-moz-border-radius: 8px;
 	padding: 0px;
 	width: 20px;
-	margin: 1px;
+	margin: 0px;
 	float: right;
 }
 button.expander:hover
@@ -746,6 +748,11 @@ table.post td.post
 	border-bottom-right-radius: 8px;
 }
 
+.highlightedPost
+{
+	box-shadow: 0px 0px 1em white !important;
+}
+
 table.outline
 {
 	outline: 0px none !important;
@@ -848,40 +855,19 @@ td.threadIcons label > input:checked ~ *
 	background: rgba(255,255,255, 0.25);
 	border: 1px solid rgba(255,255,255, 0.50);
 
-	     -o-transform: scale(1.05);
-	        transform: scale(1.05);
-	   -moz-transform: scale(1.05);
-	-webkit-transform: scale(1.05);
+	     -o-transform: scale(1.10);
+	        transform: scale(1.10);
+	   -moz-transform: scale(1.10);
+	-webkit-transform: scale(1.10);
 }
 
-
-
-
-
-
-
-
-
-
-
-#goomba
+@media handheld
 {
-	background: url("../img/goomba.png") no-repeat 0px 0px;
-	width: 16px;
-	height: 16px;
-	position: fixed;
-	bottom: 0px;
-	left: -32px;
-	z-index: 100;
+	.nom
+	{
+		display: none !important;
+	}
 }
 
 
-/* RPG stuff */
-.battlebar
-{
-	background-repeat: no-repeat !important;
-	background-position: left center !important;
-	height: 1.2em;
-	font-weight: bold;
-	padding-left: 104px;
-}
+

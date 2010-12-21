@@ -4,6 +4,8 @@
 
 include("lib/common.php");
 
+AssertForbidden("editProfile");
+
 if($loguserid == 0)
 	Kill("You must be logged in to edit your profile.");
 
@@ -45,27 +47,15 @@ if(isset($_POST['displayname']))
 	}
 }
 
-$newMD5 = md5($_POST['newPW']);
-if($_POST['action'] == "Edit profile")
+if($_POST['newPW'] != "" && $_POST['repeatPW'] != "" && $_POST['repeatPW'] != $_POST['newPW'])
 {
-	$wantToChange = FALSE;
-	$allowedToChange = FALSE;
-	if($_POST['newPW'] != "")
-	{
-		if($newMD5 != $user['password'])
-			$wantToChange = TRUE;
-	}
-	if($_POST['repeatPW'] != "")
-	{
-		if($_POST['newPW'] == $_POST['repeatPW'])
-			$allowedToChange = TRUE;
-	}
-	if($wantToChange && !$allowedToChange)
-	{
-		Alert("To change your password, you must type it twice without error.");
-		$_POST['action'] = "Not yet.";
-	}
+	Alert("To change your password, you must type it twice without error.");
+	$_POST['newPW'] = "";
+	$_POST['action'] = "Not yet.";
 }
+else if($_POST['repeatPW'] == "")
+	$_POST['newPW'] = "";
+
 
 if($_POST['action'] == "Edit profile")
 {
@@ -178,7 +168,6 @@ if($_POST['action'] == "Edit profile")
 		}
 	}
 
-	$newscheme = array_search($_POST['theme'],$themeFiles);
 	$tpp = (int)$_POST['tpp'];
 	$ppp = (int)$_POST['ppp'];
 	$fontsize = (int)$_POST['fontsize'];
@@ -199,6 +188,7 @@ if($_POST['action'] == "Edit profile")
 	$globalblock = (int)($_POST['globalblock'] == "on");
 	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
 	$usebanners = (int)($_POST['usebanners'] == "on");
+	$showemail = (int)($_POST['showemail'] == "on");
 	$signsep = (int)($_POST['signsep'] != "on");
 
     $timezone = ((int)$_POST['timezoneH'] * 3600) + ((int)$_POST['timezoneM'] * 60) * ((int)$_POST['timezoneH'] < 0 ? -1 : 1);
@@ -209,25 +199,37 @@ if($_POST['action'] == "Edit profile")
 		$_POST['timeformat'] = $_POST['presettime'];
 
 	if($_POST['birthday'])
-		$bday = strtotime($_POST['birthday']);
+		$bday = strtotime($_POST['birthday'].", 12:00 PM");
 	else
 		$bday = 0;
 
-	if($_POST['newPW'])
-		$sha = base64_encode(hash("sha256", $_POST['newPW'], "sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH"));
+	if($_POST['newPW'] != "")
+	{
+		$sha = hash("sha256", $_POST['newPW'].$salt, FALSE);
+		$logdata['loguserid'] = $user['id'];
+		$logdata['bull'] = hash('sha256', $user['id'].$sha.$salt, FALSE);
+		$logdata_s = base64_encode(serialize($logdata));
+		setcookie("logdata", $logdata_s, 2147483647);
+	}
+
+	$plugSets = array();
+	foreach($pluginSettings as $setName => $setItem)
+		$plugSets[$setName] = $_POST[$setName];
+	//print_r($plugSets);
+	$plugSets = serialize($plugSets);
 
 	$qUser = "update users set ";
 	if($sha)
 		$qUser.= "password='".$sha."', ";
 	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
 	if(TitleCheck())
-		$qUser.= "title = '".justEscape(CleanUpPost($_POST['title'], "", true))."', ";
+		$qUser.= "title = '".justEscape($_POST['title'])."', ";
 	if(isset($usepic)) $qUser.= "picture='".$usepic."', ";
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	$qUser.= "displayname = '".justEscape($_POST['displayname'])."', ";
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
-	$qUser.= "realname = '".justEscape(CleanUpPost($_POST['realname']))."', ";
-	$qUser.= "location = '".justEscape(CleanUpPost($_POST['location']))."', ";
+	$qUser.= "realname = '".justEscape(htmlspecialchars($_POST['realname']))."', ";
+	$qUser.= "location = '".justEscape(htmlspecialchars($_POST['location']))."', ";
 	$qUser.= "birthday = ".(int)$bday.", ";
 	$qUser.= "bio = '".justEscape($_POST['bio'])."', ";
 	$qUser.= "postheader = '".justEscape($_POST['postheader'])."', ";
@@ -235,7 +237,7 @@ if($_POST['action'] == "Edit profile")
 	$qUser.= "email = '".justEscape($_POST['email'])."', ";
 	$qUser.= "homepageurl = '".justEscape($_POST['hpurl'])."', ";
 	$qUser.= "homepagename = '".justEscape($_POST['hpname'])."', ";
-	$qUser.= "scheme = '".justEscape($newscheme)."', ";
+	$qUser.= "theme = '".justEscape($_POST['theme'])."', ";
 	$qUser.= "threadsperpage = ".$tpp.", ";
 	$qUser.= "postsperpage = ".$ppp.", ";
 	$qUser.= "timezone = ".$timezone.", ";
@@ -244,9 +246,13 @@ if($_POST['action'] == "Edit profile")
 	$qUser.= "fontsize = ".$fontsize.", ";
 	$qUser.= "signsep = '".$signsep."', ";
 	$qUser.= "blocklayouts = '".$blocklayouts."', ";
-	$qUser.= "usebanners = '".$usebanners."' ";
+	$qUser.= "usebanners = '".$usebanners."', ";
+	$qUser.= "showemail = '".$showemail."', ";
+	$qUser.= "pluginsettings = '".justEscape($plugSets)."' ";
 	$qUser.= "where id=".$id." limit 1";
+	//kill($qUser);
 	$rUser = Query($qUser);
+	Report("[b]".$user['name']."[/] edited ".HisHer($user)." profile. -> [g]#HERE#?uid=".$id, 1);
 	Redirect("Profile updated.","profile.php?id=".$id,($id == $loguserid ? "your" : "that user's") . " profile");
 }
 
@@ -260,32 +266,26 @@ $ranksets[] = "None";
 while($rankset = Fetch($rRanksets))
 	$ranksets[] = $rankset['name'];
 
-//Iterate through the themes, appending the number of users with that scheme...
+//Iterate through the themes, appending the number of users with that theme...
 $themeList = "";
 
-$themeKeys = array_keys($themes);
-for($ii = 0; $ii < count($themes); $ii++)
-	$themeKeys[$themeKeys[$ii]] = $ii;
-
-for($ii = 0; $ii < count($themes); $ii++)
+foreach($themes as $themeKey => $themeName)
 {
-	$i = $themeKeys[$themeOrder[$ii]];
-
-	$qCount = "select count(*) from users where scheme=".$i;
+	$qCount = "select count(*) from users where theme='".$themeKey."'";
 	$numUsers = FetchResult($qCount);
 	
-	$preview = "img/themes/".$themeFiles[$i]."/preview.png";
+	$preview = "img/themes/".$themeKey."/preview.png";
 	if(is_file($preview))
-		$preview = "<img src=\"".$preview."\" alt=\"".$themeNames[$i]."\" style=\"float: left; margin-bottom: 0.5em;\" />";
+		$preview = "<img src=\"".$preview."\" alt=\"".$themeName."\" style=\"float: left; margin-bottom: 0.5em;\" />";
 	else
 		$preview = "<span style=\"float: left; width: 260px; height: 80px;\">&nbsp;</span>";
 	
-	if(array_key_exists($themeFiles[$i], $themeBylines))
-		$byline = "<br />".$themeBylines[$themeFiles[$i]];
+	if(array_key_exists($themeKey, $themeBylines))
+		$byline = "<br />".$themeBylines[$themeKey];
 	else
 		$byline = "";
 	
-	if($i == $loguser['scheme'])
+	if($themeKey == $loguser['theme'])
 		$selected = " checked=\"checked\"";
 	else
 		$selected = "";
@@ -300,7 +300,7 @@ for($ii = 0; $ii < count($themes); $ii++)
 			<br />
 			{5}.
 	</label>
-",	$themeNames[$i], $byline, $preview, $themeFiles[$i], $selected, Plural($numUsers, "user"),
+",	$themeName, $byline, $preview, $themeKey, $selected, Plural($numUsers, "user"),
 	($ii > 0 ? "border-top: 1px solid black;" : "") );
 }
 
@@ -320,23 +320,47 @@ if($user['birthday'] == 0)
 else
 	$bday = gmdate("F j, Y", $user['birthday']);
 
+$pluginsHider = count($pluginSettings) ? "" : " style=\"display: none;\"";
+
 write(
 "
-	<div class=\"margin width50\" id=\"tabs\">
+	<div class=\"margin width0\" id=\"tabs\">
 		<button id=\"generalButton\" onclick=\"showEditProfilePart('general');\" class=\"selected\">General</button>
-		<button id=\"loginButton\" onclick=\"showEditProfilePart('login');\">Login</button>
-		<button id=\"avatarButton\" onclick=\"showEditProfilePart('avatar');\">Avatar</button>
 		<button id=\"personalButton\" onclick=\"showEditProfilePart('personal');\">Personal</button>
 		<button id=\"postlayoutButton\" onclick=\"showEditProfilePart('postlayout');\">Post Layout</button>
 		<button id=\"themeButton\" onclick=\"showEditProfilePart('theme');\">Theme</button>
+		<button id=\"pluginButton\" onclick=\"showEditProfilePart('plugin');\"{0}>Extras</button>
 	</div>
 
 	<form action=\"editprofile.php\" method=\"post\" enctype=\"multipart/form-data\">
-");
+", $pluginsHider);
 
 write(
 "
 		<table class=\"outline margin width50\" id=\"general\" style=\"display: table;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Login information
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					User name
+				</td>
+				<td>
+					{0}
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"pw\">Password</label>
+				</td>
+				<td>
+					<input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\" />
+					/ Repeat:
+					<input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\" />
+				</td>
+			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">Appearance</th>
 			</tr>
@@ -346,7 +370,7 @@ write(
 					<sup title=\"Leave empty to use login name\">[?]</sup>
 				</td>
 				<td>
-					<input type=\"text\" id=\"displayname\" name=\"displayname\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"20\" />
+					<input type=\"text\" id=\"displayname\" name=\"displayname\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"20\" />
 				</td>
 			</tr>
 			<tr class=\"cell1\">
@@ -354,10 +378,10 @@ write(
 					<label for=\"rankset\">Rank set</label>
 				</td>
 				<td>
-					{1}
+					{2}
 				</td>
 			</tr>
-", $user['displayname'], MakeSelect("rankset",$user['rankset'],$ranksets));
+", htmlval($user['name']), $user['displayname'], MakeSelect("rankset",$user['rankset'],$ranksets));
 
 if(TitleCheck())
 {
@@ -376,6 +400,35 @@ if(TitleCheck())
 
 write(
 "
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Avatar
+				</th>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"pic\">Picture</label>
+				</td>
+				<td>
+					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\" /> 
+					<label>
+						<input type=\"checkbox\" name=\"removepic\" />
+						Remove
+					</label>
+				</td>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"mpic\">Minipic</label>
+				</td>
+				<td>
+					<input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\" />
+					<label>
+						<input type=\"checkbox\" name=\"removempic\" />
+						Remove
+					</label>
+				</td>
+			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">Presentation</th>
 			</tr>
@@ -450,70 +503,6 @@ write(
 
 write(
 "
-		<table class=\"outline margin width50\" id=\"login\" style=\"display: none;\">
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Login information
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					User name
-				</td>
-				<td>
-					{0}
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"pw\">Password</label>
-				</td>
-				<td>
-					<input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\" />
-					/ Repeat:
-					<input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\" />
-				</td>
-			</tr>
-		</table>
-", htmlval($user['name']));
-
-write(
-"
-		<table class=\"outline margin width50\" id=\"avatar\" style=\"display: none;\">
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Avatar
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"pic\">Picture</label>
-				</td>
-				<td>
-					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\" /> 
-					<label>
-						<input type=\"checkbox\" name=\"removepic\" />
-						Remove
-					</label>
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"mpic\">Minipic</label>
-				</td>
-				<td>
-					<input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\" />
-					<label>
-						<input type=\"checkbox\" name=\"removempic\" />
-						Remove
-					</label>
-				</td>
-			</tr>
-		</table>
-");
-
-write(
-"
 		<table class=\"outline margin width50\" id=\"personal\" style=\"display: none;\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
@@ -579,7 +568,11 @@ write(
 					<label for=\"email\">Email address</label>
 				</td>
 				<td>
-					<input type=\"text\" id=\"email\" name=\"email\" value=\"{5}\" style=\"width: 98%;\" maxlength=\"60\" />
+					<input type=\"email\" id=\"email\" name=\"email\" value=\"{5}\" style=\"width: 50%;\" maxlength=\"60\" />
+					<label>
+						<input type=\"checkbox\" name=\"showemail\" {10}/>
+						Public
+					</label>
 				</td>
 			</tr>
 			<tr class=\"cell1\">
@@ -601,7 +594,8 @@ write(
 		</table>
 ",	MakeOptions("sex",$user['sex'],$sexes), htmlval($user['realname']), htmlval($user['location']), $bday,
 	htmlval($user['bio']), $user['email'], $user['homepageurl'], htmlval($user['homepagename']),
-	(int)($loguser['timezone']/3600), floor(abs($loguser['timezone']/60)%60));
+	(int)($user['timezone']/3600), floor(abs($user['timezone']/60)%60),
+	($user['showemail'] ? "checked=\"checked\"" : ""));
 
 write(
 "
@@ -616,7 +610,7 @@ write(
 					<label for=\"hd\">Header</label>
 				</td>
 				<td>
-					<textarea id=\"hd\" name=\"postheader\" rows=\"8\" style=\"width: 98%;\">{0}</textarea>
+					<textarea id=\"hd\" name=\"postheader\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
 				</td>
 			</tr>
 			<tr class=\"cell1\">
@@ -624,7 +618,7 @@ write(
 					<label for=\"sig\">Footer</label>
 				</td>
 				<td>
-					<textarea id=\"sig\" name=\"signature\" rows=\"8\" style=\"width: 98%;\">{1}</textarea>
+					<textarea id=\"sig\" name=\"signature\" rows=\"16\" style=\"width: 98%;\">{1}</textarea>
 				</td>
 			</tr>
 			<tr class=\"cell0\">
@@ -655,6 +649,57 @@ write(
 			</tr>
 		</table>
 ",	$themeList);
+
+$plugsets = "";
+foreach($pluginSettings as $setName => $setItem)
+{
+	$c = ($c + 1) % 2;
+	if($setItem['check'])
+	{
+		$checked = $setItem['value'] ? " checked=\"checked\"" : "";
+		$plugsets .= format(
+"
+			<tr class=\"cell{0}\">
+				<td>
+					&nbsp;
+				</td>
+				<td>
+					<label>
+						<input type=\"checkbox\" name=\"{2}\" {3}/>
+						{1}
+					</label>
+				</td>
+			</tr>
+",	$c, $setItem['label'], $setName, $checked);
+	}
+	else
+	{
+		$plugsets .= format(
+"
+			<tr class=\"cell{0}\">
+				<td>
+					{1}
+				</td>
+				<td>
+					<input type=\"text\" name=\"{2}\" value=\"{3}\" style=\"width: 98%;\" maxlength=\"200\" />
+				</td>
+			</tr>
+",	$c, $setItem['label'], $setName, htmlval($setItem['value']));
+	}
+}
+if($plugsets == "")
+	$plugsets = "<tr><td colspan=\"2\" class=\"cell0\">No active plugins with settings.</td></tr>";
+write(
+"
+		<table class=\"outline margin width50\" id=\"plugin\" style=\"display: none;\">
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					Plugins
+				</th>
+			</tr>
+			{0}
+		</table>
+", $plugsets);
 
 write(
 "
