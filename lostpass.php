@@ -15,7 +15,7 @@ if(isset($_GET['key']) && isset($_GET['id']))
 	$newPass = randomString(8);
 	$sha = hash("sha256", $newPass.$salt, FALSE);
 
-	Query("update users set lostkey = '', password = '".$sha."' where id = ".(int)$_GET['id']);
+	Query("update users set lostkey = '', password = '".$sha."', pss = '' where id = ".(int)$_GET['id']);
 	Kill("Your password has been reset to <strong>".$newPass."</strong>. You can use this password to log in to the board. We suggest you change it as soon as possible.", "Password reset");
 	
 }
