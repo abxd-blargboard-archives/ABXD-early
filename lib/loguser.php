@@ -136,7 +136,7 @@ if($loguserid) //Are we logged in?
 		$loguser = Fetch($rLogUser);
 		
 		//Bullcheck
-		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$salt, FALSE);
+		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$salt.$loguser['pss'], FALSE);
 		if($loguserbull == $ourbull)
 		{
 			$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."', lastforum=".$CurrentForum." where id=".$loguserid;
