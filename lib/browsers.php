@@ -13,7 +13,8 @@ $knownBrowsers = array
 	"MSIE" => "Internet Explorer",
 	"Opera Mini" => "Opera Mini", //Opera/9.80 (J2ME/MIDP; Opera Mini/4.2.18887/764; U; nl) Presto/2.4.15
 	"Nintendo Wii" => "Wii Internet Channel", //Opera/9.30 (Nintendo Wii; U; ; 3642; nl)
-	"Nintendo DS" => "Nintendo DS Browser", //Opera/9.50 (Nintendo DSi; Opera/507; U; en-US)
+	"Nintendo DSi" => "Nintendo DSi Browser", //Opera/9.50 (Nintendo DSi; Opera/507; U; en-US)
+	"Nitro" => "Nintendo DS Browser",
 	"Opera" => "Opera",
 	"MozillaDeveloperPreview" => "Firefox dev",
 	"Firefox" => "Firefox",
@@ -40,6 +41,11 @@ $knownOSes = array
 	"Linux" => "Linux",
 	"Mac OS X" => "Mac OS X %",
 	"iPhone" => "iPhone",
+	"iPad" => "iPad",
+	"BlackBerry" => "BlackBerry",
+	"Nintendo Wii" => "Nintendo Wii",
+	"Nitro" => "Nintendo DS",
+	"Android" => "Android",
 );
 
 $ua = $_SERVER['HTTP_USER_AGENT'];
