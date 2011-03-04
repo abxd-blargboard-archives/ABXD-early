@@ -17,6 +17,8 @@ if($_POST['action'] == "Edit")
 		$_POST['uploaderCap'] = "0.25";
 	if((float)$_POST['personalCap'] <= 0)
 		$_POST['personalCap'] = "0.25";
+	if((float)($_POST['uploaderMaxFileSize'] * 1024 * 1024) > IniValToBytes(ini_get("upload_max_filesize")) || (float)$_POST['uploaderMaxFileSize'] <= 0)
+		$_POST['uploaderMaxFileSize'] = floor(IniValToBytes(ini_get("upload_max_filesize")) / 1024 / 1024);
 
 	$hax = fopen("lib/settings.php", "w");
 	fputs($hax, "<?php\n");
@@ -40,8 +42,10 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "\$minSeconds = ".(int)$_POST['minSeconds'].";\n");	
 	fputs($hax, "\$uploaderCap = ".(float)$_POST['uploaderCap'].";\n");
 	fputs($hax, "\$personalCap = ".(float)$_POST['personalCap'].";\n");
+	fputs($hax, "\$uploaderMaxFileSize = ".(float)$_POST['uploaderMaxFileSize'].";\n");	
 	fputs($hax, "\$uploaderWhitelist = \"".prepare($_POST['uploaderWhitelist'])."\";\n");
 	fputs($hax, "\$mailResetFrom = \"".prepare($_POST['mailResetFrom'])."\";\n");
+	fputs($hax, "\$lastPostsTimeLimit = ".(int)$_POST['lastPostsTimeLimit'].";\n");	
 	fputs($hax, "\n");
 	fputs($hax, "//Hacks\n");
 	fputs($hax, "\$hacks['forcetheme'] = \"".prepare($_POST['theme'])."\";\n");
@@ -54,6 +58,11 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "//Meta\n");
 	fputs($hax, "\$metaDescription = \"".prepare($_POST['metadesc'], "\\\"")."\";\n");
 	fputs($hax, "\$metaKeywords = \"".prepare($_POST['metakeys'], "\\\"")."\";\n");
+	fputs($hax, "\n");
+	fputs($hax, "//RSS\n");
+	fputs($hax, "\$feedname = \"".prepare($_POST['feedname'], "\\\"")."\";\n");
+	fputs($hax, "\$rssblurb = \"".prepare($_POST['rssblurb'], "\\\"")."\";\n");
+	fputs($hax, "\n");
 	fputs($hax, "?>");
 	fclose($hax);
 	Redirect("Edited!","./","the main page");
@@ -235,18 +244,35 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
+					<label for=\"uploaderMaxFileSize\">Uploader max file size</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"uploaderMaxFileSize\" name=\"uploaderMaxFileSize\" value=\"{29}\" />
+					MiB <img src=\"img/icons/icon5.png\" title=\"You cannot go past the php.ini setting, which is {30}. Exceeding this value or entering zero will reset the limit to {30}.\" alt=\"[?]\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
 					<label for=\"uploaderWhitelist\">Uploader whitelist</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"uploaderWhitelist\" name=\"uploaderWhitelist\" value=\"{21}\" class=\"width75\" />
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"mailResetFrom\">Mail Reset sender</label>
 				</td>
 				<td>
 					<input type=\"email\" id=\"mailResetFrom\" name=\"mailResetFrom\" value=\"{24}\" class=\"width75\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"lastPostsTimeLimit\">Time limit for Last Posts</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"lastPostsTimeLimit\" name=\"lastPostsTimeLimit\" value=\"{26}\" /> hours
 				</td>
 			</tr>
 			
@@ -311,6 +337,27 @@ write(
 					<input type=\"text\" id=\"metakeys\" name=\"metakeys\" value=\"{17}\" class=\"width75\" />
 				</td>
 			</tr>
+			<tr class=\"header0\">
+				<th colspan=\"2\">
+					RSS Feed
+				</th>
+			</tr>
+			<tr class=\"cell0\">
+				<td>
+					<label for=\"feedname\">Feed name</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"feedname\" name=\"feedname\" value=\"{27}\" class=\"width75\" />
+				</td>
+			</tr>
+			<tr class=\"cell1\">
+				<td>
+					<label for=\"rssblurb\">Blurb</label>
+				</td>
+				<td>
+					<input type=\"text\" id=\"rssblurb\" name=\"rssblurb\" value=\"{28}\" class=\"width75\" />
+				</td>
+			</tr>
 			<tr class=\"cell2\">
 				<td>
 				</td>
@@ -327,7 +374,8 @@ write(
 	MakeSelect("filters",$postfilter,$filters), $tidyAvailable, $profilePreviewText,
 	htmlval($metaDescription), htmlval($metaKeywords), $minWords, $minSeconds, $uploaderCap,
 	$uploaderWhitelist, ($noAjax ? "checked=\"checked\"" : ""), ($noGuestLayouts ? "checked=\"checked\"" : ""),
-	$mailResetFrom, $personalCap
+	$mailResetFrom, $personalCap, $lastPostsTimeLimit, $feedname, $rssblurb, $uploaderMaxFileSize,
+	BytesToSize(IniValToBytes(ini_get("upload_max_filesize")))
 );
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
@@ -343,9 +391,9 @@ function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
 	return $result;
 }
 
-function prepare($text, $quot = "&quot;")
+function prepare($text)
 {
-	$s = str_replace("\"", $quot, deSlashMagic($text));
+	$s = str_replace("\\'", "'", addslashes(deSlashMagic($text)));
 	return $s;
 }
 
