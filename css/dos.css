@@ -263,7 +263,6 @@ a, a span
 	border: 0px none;
 	margin: 0em;
 	border-radius: 0px;
-	-moz-border-radius: 0px;
 	width: 75%;
 }
 
@@ -271,7 +270,6 @@ a, a span
 {
 	border: 0px none;
 	border-radius: 0px;
-	-moz-border-radius: 0px;
 	color: white;
 	text-shadow: none;
 	box-shadow: none;
@@ -301,20 +299,17 @@ a, a span
 	color: silver;
 	box-shadow: none;
 	border-radius: 0px;
-	-moz-border-radius: 0px;
 	border: 0px none;
 }
 
 table.outline, table.outline td, table.outline th
 {
 	border-radius: 0px !important;
-	-moz-border-radius: 0px !important;
 }
 
 .PoRT, .PoRT div
 {
 	border-radius: 0px !important;
-	-moz-border-radius: 0px !important;
 	box-shadow: none !important;
 }
 .PoRT .errorc
@@ -327,7 +322,6 @@ table.outline, table.outline td, table.outline th
 div#tabs button
 {
 	border-radius: 0px;
-	-moz-border-radius: 0px;
 	border: 0px none;
 }
 

@@ -98,7 +98,6 @@ button, input[type=submit]
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 30%);
 	border-radius: 4px;
-	-moz-border-radius: 4px;
 	box-shadow:
 		inset -1px -10px 5px hsl([huesat], 20%),
 		inset 1px 6px 12px hsl([huesat], 50%),
@@ -112,7 +111,6 @@ input[type=text], input[type=password], textarea, select
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 10%);
 	border-radius: 4px;
-	-moz-border-radius: 4px;
 	box-shadow: inset 1px 6px 12px black;
 	color: white;
 	padding-left: 0.5em;
@@ -129,7 +127,6 @@ input[type=checkbox], input[type=radio]
 input[type=radio]
 {
 	border-radius: 8px;
-	-moz-border-radius: 8px;
 }
 */
 
@@ -140,13 +137,11 @@ button, input[type=submit]
 	color: white;
 	text-shadow: 1px 1px 0px #000;
 	border-radius: 8px;
-	-moz-border-radius: 8px;
 }
 
 input[type=text], input[type=password], input[type=file], input[type=email], textarea, select
 {
 	border-radius: 6px;
-	-moz-border-radius: 6px;
 	border: 1px solid hsl([huesat], 20%);
 	background-color: hsl([huesat], 10%);
 	color: white;
@@ -161,7 +156,6 @@ input[type=checkbox], input[type=radio]
 input[type=radio]
 {
 	border-radius: 8px;
-	-moz-border-radius: 8px;
 }
 
 .pollbarContainer
