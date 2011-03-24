@@ -229,27 +229,23 @@ input[type="submit"], button
 table.outline
 {
 	border-radius: 0px !important;
-	-moz-border-radius: 0px !important;
 	border-collapse: collapse !important;
 }
 table.outline td, table.outline th
 {
 	border-radius: 0px !important;
-	-moz-border-radius: 0px !important;
 	border: 1px solid black !important;
 }
 
 .PoRT, .PoRT div
 {
 	border-radius: 0px !important;
-	-moz-border-radius: 0px !important;
 	box-shadow: none !important;
 }
 
 div#tabs button
 {
 	border-radius: 0px;
-	-moz-border-radius: 0px;
 	border: 0px none;
 }
 
