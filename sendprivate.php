@@ -107,6 +107,9 @@ if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
 			$post = mysql_real_escape_string($post);
 
+			//$pid = FetchResult("SELECT id+1 FROM pmsgs WHERE (SELECT COUNT(*) FROM pmsgs p2 WHERE p2.id=pmsgs.id+1)=0 ORDER BY id ASC LIMIT 1");
+			//if($pid < 1) $pid = 1;
+
 			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread, drafting) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0, ".$wantDraft.")";
 			$rPM = Query($qPM);
 			$pid = mysql_insert_id();
@@ -114,7 +117,10 @@ if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
 			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".justEscape($_POST['title'])."', '".$post."')";
 			$rPMT = Query($qPMT);
 
-			Redirect("PM sent!","private.php","your PM box");
+			if($_POST['action'] == "Save as Draft")
+				Redirect("PM saved!","private.php?show=1","your PM outbox");
+			else
+				Redirect("PM sent!","private.php?show=1","your PM outbox");
 			exit();
 		} else
 		{
@@ -138,7 +144,7 @@ if($_POST['action']=="Preview")
 		$_POST['posts'] = "---";
 		$_POST['id'] = "???";
 		$_POST['uid'] = $loguserid;
-		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
 		foreach($copies as $toCopy)
 			$_POST[$toCopy] = $loguser[$toCopy];
 		$realtext = $_POST['text'];
