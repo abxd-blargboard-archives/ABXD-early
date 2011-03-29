@@ -9,7 +9,15 @@ function Debug($s)
 //	Not really much different to kill()
 function Alert($s, $t="Alert")
 {
-	write("<div class=\"outline margin\"><div class=\"errort\"><strong>{1}</strong></div><div class=\"errorc cell2\">{0}</div></div>", $s, $t);
+	write("
+	<div class=\"outline margin\">
+		<div class=\"errort\">
+			<strong>{1}</strong>
+		</div>
+		<div class=\"errorc cell2\">
+			{0}
+		</div>
+	</div>", $s, $t);
 }
 
 function Kill($s, $t="Error")
