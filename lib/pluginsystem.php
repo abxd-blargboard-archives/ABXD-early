@@ -1,18 +1,12 @@
 <?php
 
-$pluginList = array();
 $pluginSettings = array();
-
-function registerPlugin($pluginname)
-{
-	global $pluginList, $currentPlug;
-	$pluginList[] = $pluginname;
-	$currentPlug = $pluginname;
-}
+$plugins = array();
+$pluginbuckets = array();
 
 function registerSetting($settingname, $label, $check = false)
 {
-	global $pluginSettings, $currentPlug;
+	global $pluginSettings;
 	$pluginSettings[$settingname] = array("label" => $label, "value" => "", "check" => $check);
 }
 
@@ -30,37 +24,48 @@ function getSetting($settingname, $useUser = false)
 		if(!is_array($settings))
 			return "";
 		if(array_key_exists($settingname, $settings))
-			return $settings[$settingname];
+			return stripslashes(urldecode($settings[$settingname]));
 	}
 	return "";
 }
 
-function register($bucket, $functionname, $argcount = 0)
-{
-	global $pluginbuckets;
-	$pluginbuckets[$bucket][] = array("name" => $functionname, "args" => $argcount);
-}
-
-function runBucket($bucket)
-{
-	global $pluginbuckets;
-	$args = func_get_args();
-	if(isset($pluginbuckets[$bucket]))
-		foreach($pluginbuckets[$bucket] as $func)
-			call_user_func_array($func["name"], array_slice($args, 1, $func["args"]));
-}
 
 $pluginsDir = @opendir("plugins");
 if($pluginsDir !== FALSE)
 {
 	while(($plugin = readdir($pluginsDir)) !== FALSE)
 	{
-		if($plugin[0] == ".") continue;
-		if(substr($plugin,-4) != ".php") continue;
-		$currentPlug = "";
-		include "plugins/".$plugin;
+		if ($plugin == "." || $plugin == "..") continue;
+		if (is_dir("./plugins/".$plugin)) {
+			$plugins[$plugin] = array();
+			$plugins[$plugin]['dir'] = $plugin;
+			if (file_exists("./plugins/".$plugin."/plugin.settings")) { //Does this plugin have a settings file?
+				$settingsFile = file_get_contents("./plugins/".$plugin."/plugin.settings");
+				$settings = explode("\n", $settingsFile);
+				foreach ($settings as $setting)
+				{
+					$setting = explode("=", $setting);
+					if ($setting[0][0] == "#") continue;
+					if ($setting[0][0] == "$")
+						registerSetting(substr($setting[0],1), $setting[1]);
+					else
+						$plugins[$plugin][$setting[0]] = $setting[1];
+				}
+				$dir = "./plugins/".$plugins[$plugin]['dir'];
+				$pdir = @opendir($dir);
+				while ($f = readdir($pdir)) {
+					if (substr($f, (strlen($f) - 4), 4) == ".php")
+						$pluginbuckets[substr($f, 0, strlen($f) - 4)][] = $plugins[$plugin]['dir'];
+				}
+			} else {
+				unset($plugins[$plugin]);
+				continue;
+			}
+		}
 	}
-}
+	
+	$bucket = "extrasettings"; include("./lib/pluginloader.php");
+} else mkdir("plugins");
 
 if($loguser['pluginsettings'] != "")
 {
@@ -69,7 +74,7 @@ if($loguser['pluginsettings'] != "")
 		$settings = array();
 	foreach($settings as $setName => $setVal)
 		if(array_key_exists($setName, $pluginSettings))
-			$pluginSettings[$setName]["value"] = $setVal;
+			$pluginSettings[$setName]["value"] = stripslashes(urldecode($setVal));
 }
 
 ?>
