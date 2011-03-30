@@ -27,13 +27,10 @@ $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where
 	By registering a user account, you will be able to post on the board as well as use several features only accessible through registering, such as the ability to mark forums as read and private messaging. Unregistered users have guest access to the board, meaning they can view threads but not reply to them. They can also only see the board in whatever theme is the default.
 </p>
 
-<!-- ROOT NOTICE: Change the ID for the "new members thread" listed here, then uncomment this block. -->
-<!--
 <h3>I'm new, where should I start?</h3>
 <p>
 	The best place for newcomers to start is the <a href="thread.php?id=103">New Members thread</a> where you can introduce yourself to the board. If you have any questions not addressed by The Rules, feel free to ask them in the proper forum.
 </p>
--->
 
 <h3>Why are there name and password fields in the New Reply form?</h3>
 <p>
@@ -306,7 +303,7 @@ if($theWord != "")
 
 <h3>How can I get a copy of this board software?</h3>
 <p>
-	You can get the latest stable version <a href="http://helmet.kafuka.org/thepile/ABXD">here</a>. Keep in mind that you'll need some place to run it on, and that place must support PHP and MySQL. Having basic skills in PHP and MySQL database management can be very useful.
+	You can get the latest stable version <a href="http://helmet.kafuka.org/nikoboard/get/">here</a>. Keep in mind that you'll need some place to run it on, and that place must support PHP and MySQL. Having basic skills in PHP and MySQL database management can be very useful.
 </p>
 
 </div>
