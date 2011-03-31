@@ -226,7 +226,7 @@ if($_POST['action'] == $editVerb)
 		$fontsize = 200;
 	if($fontsize < 20)
 		$fontsize = 20;
-
+	
 	$globalblock = (int)($_POST['globalblock'] == "on");
 	$blocklayouts = (int)($_POST['blocklayouts'] == "on");
 	$usebanners = (int)($_POST['usebanners'] == "on");
@@ -246,11 +246,14 @@ if($_POST['action'] == $editVerb)
 		$bday = 0;
 
 	if($_POST['newPW'] != "")
-		$sha = hash("sha256", $_POST['newPW'].$salt, FALSE);
+	{
+		$newsalt = Shake();
+		$sha = hash("sha256", $_POST['newPW'].$salt.$newsalt, FALSE);
+	}
 
 	$plugSets = array();
 	foreach($pluginSettings as $setName => $setItem)
-		$plugSets[$setName] = $_POST[$setName];
+		$plugSets[$setName] = urlencode($_POST[$setName]);
 	//print_r($plugSets);
 	$plugSets = serialize($plugSets);
 
@@ -266,7 +269,7 @@ if($_POST['action'] == $editVerb)
 		$qUser.= "picture='".$usepic."', ";
 	if(isset($usempic))
 		$qUser.= "minipic='".$usempic."', ";
-	if(isset($_POST['powerlevel']))
+	if(isset($_POST['level']))
 		$qUser.= "powerlevel = ".(int)$_POST['level'].", ";
 	$qUser.= "globalblock = ".$globalblock.", ";
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
