@@ -53,45 +53,38 @@ elseif(!$_POST['action'])
 				<td></td>
 				<td>
 					<input type=\"submit\" name=\"action\" value=\"Log in\" />
-					<button onclick=\"document.location = 'lostpass.php'; return false;\">Forgot password?</button>
+					{0}
 				</td>
 			</tr>
 		</table>
 	</form>
-");
+",  $mailResetFrom == "" ? "" : "<button onclick=\"document.location = 'lostpass.php'; return false;\">Forgot password?</button>"
+);
 } elseif($_POST['action'] == "Log in")
 {
 	$original = $_POST['pass'];
-	$mdfive = md5($original);
-	$brokensha = base64_encode(hash("sha256", $original, $salt));
-	$sha = hash("sha256", $original.$salt, FALSE);
 	$escapedName = justEscape($_POST['name']);
-
-	$qUser = "select * from users where name='".$escapedName."' and password='".$sha."'";
+	$qUser = "select * from users where name='".$escapedName."'";
 	$rUser = Query($qUser);
-	if(NumRows($rUser) == 0)
+	if(NumRows($rUser))
 	{
-		//Check if the password hash in DB was an old MD5 one.
-		$wasMD5 = FetchResult("select count(*) from users where name='".$escapedName."' and password='".$mdfive."'", 0, 0);
-		if(!$wasMD5)
-			$wasMD5 = FetchResult("select count(*) from users where name='".$escapedName."' and password='".$brokensha."'", 0, 0);
-		if($wasMD5)
-		{
-			//Consider the login attempt a success anyway and replace the password hash with the SHA version.
-			Query("update users set password='".$sha."' where name='".$escapedName."'");
-			$qUser = "select * from users where name='".$escapedName."' and password='".$sha."'";
-			$rUser = Query($qUser);
-		}
-		else
+		$user = Fetch($rUser);
+		$sha = hash("sha256", $original.$salt.$user['pss'], FALSE);
+		if($user['password'] != $sha)
 		{
 			include("lib/header.php");
+			Report("A visitor from [b]".$_SERVER['REMOTE_ADDR']."[/] tried to log in as [b]".$user['name']."[/].");
 			Kill("Invalid user name or password.<br /><a href=\"./\">Back to main</a> or <a href=\"login.php\">try again</a>.</div>");
 		}
 	}
-	$user = Fetch($rUser);
+	else
+	{
+		include("lib/header.php");
+		Kill("Invalid user name or password.<br /><a href=\"./\">Back to main</a> or <a href=\"login.php\">try again</a>.</div>");
+	}
 
 	$logdata['loguserid'] = $user['id'];
-	$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt, FALSE);
+	$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt.$user['pss'], FALSE);
 	$logdata_s = base64_encode(serialize($logdata));
 
 	if(isset($_POST['session']))
@@ -100,7 +93,7 @@ elseif(!$_POST['action'])
 		setcookie("logdata", $logdata_s, 2147483647);
 
 	include("lib/header.php");
-	Report("[b]".$user['name']."[/] logged in.", 1);
+	Report("[b]".$escapedName."[/] logged in.", 1);
 	Redirect("You are now logged in.","./","the main page");	
 }
 
