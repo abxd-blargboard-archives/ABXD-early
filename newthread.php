@@ -36,6 +36,8 @@ if($forum['minpowerthread'] > $loguser['powerlevel'])
 if(!isset($_POST['poll']) || isset($_GET['poll']))
 	$_POST['poll'] = $_GET['poll'];
 
+$isHidden = (int)($forum['minpower'] > 0);
+
 $onlineUsers = OnlineUsers($fid);
 write(
 "
@@ -102,7 +104,8 @@ if($_POST['text'] && $_POST['action'] == "Post")
 
 if($_POST['action']=="Post")
 {
-	if($_POST['text'] && $_POST['title'])
+	$trimmedTitle = trim(str_replace('&nbsp;', ' ', $_POST['title']));
+	if($_POST['text'] && $trimmedTitle != "")
 	{
 		$post = htmlentities2(deSlashMagic($_POST['text']));
 		$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
@@ -124,17 +127,9 @@ if($_POST['action']=="Post")
 				$iconurl = justEscape($_POST['iconurl']);
 		}
 
+		$mod = '0, 0';
 		if(CanMod($loguserid, $forum['id']))
-		{
-			if($_POST['lock'])
-				$mod.= ", closed = 1";
-			else if($_POST['unlock'])
-				$mod.= ", closed = 0";
-			if($_POST['stick'])
-				$mod.= ", sticky = 1";
-			else if($_POST['unstick'])
-				$mod.= ", sticky = 0";
-		}
+			$mod = (($_POST['lock'] == 'on') ? '1':'0').', '.(($_POST['stick'] == 'on') ? '1':'0');
 		
 		//	Guess who forgot to make sure not every thread was a poll? XD -- Arbe
 		if($_POST['poll'])
@@ -148,7 +143,9 @@ if($_POST['action']=="Post")
 				if($_POST['pollOption'.$pops])
 				{
 					$pollColor = filterPollColors($_POST['pollColor'.$pops]);
-					$qPollOption = "insert into poll_choices (poll, choice, color) values (".$pod.", '".justEscape($_POST['pollOption'.$pops])."', '".$pollColor."')";
+					$newID = FetchResult("SELECT id+1 FROM poll_choices WHERE (SELECT COUNT(*) FROM poll_choices p2 WHERE p2.id=poll_choices.id+1)=0 ORDER BY id ASC LIMIT 1");
+					if($newID < 1) $newID = 1;
+					$qPollOption = "insert into poll_choices (id, poll, choice, color) values (".$newID.", ".$pod.", '".justEscape($_POST['pollOption'.$pops])."', '".$pollColor."')";
 					$rPollOption = Query($qPollOption);
 				}
 			}
@@ -157,7 +154,10 @@ if($_POST['action']=="Post")
 			$pod = 0;
 		//Yeah, that was me ^^; -- Kawa
 
-		$qThreads = "insert into threads (forum, user, title, icon, lastpostdate, lastposter, poll) values (".$fid.",".$loguserid.",'".justEscape($_POST['title'])."','".$iconurl."',".time().",".$loguserid.", ".$pod.")";
+		$newID = FetchResult("SELECT id+1 FROM threads WHERE (SELECT COUNT(*) FROM threads t2 WHERE t2.id=threads.id+1)=0 ORDER BY id ASC LIMIT 1");
+		if($newID < 1) $newID = 1;
+
+		$qThreads = "insert into threads (id, forum, user, title, icon, lastpostdate, lastposter, closed, sticky, poll) values (".$newID.",".$fid.",".$loguserid.",'".justEscape($_POST['title'])."','".$iconurl."',".time().",".$loguserid.", ".$mod.", ".$pod.")";
 		$rThreads = Query($qThreads);
 		$tid = mysql_insert_id();
 
@@ -176,13 +176,12 @@ if($_POST['action']=="Post")
 		
 		Query("update threads set lastpostid = ".$pid." where id = ".$tid);
 
-		if($forum['minpower'] < 1)
-			Report("New ".($_POST['poll'] ? "poll" : "thread")." by [b]".$loguser['name']."[/]: [b]".$_POST['title']."[/] (".$forum['title'].") -> [g]#HERE#?tid=".$tid);
+		Report("New ".($_POST['poll'] ? "poll" : "thread")." by [b]".$loguser['name']."[/]: [b]".$_POST['title']."[/] (".$forum['title'].") -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Posted!","thread.php?id=".$tid,"the thread");
 		exit();
 	} else
 	{
-		if($_POST['title'])
+		if($trimmedTitle)
 			Alert("Enter a message and try again.","Your post is empty.");
 		else if($_POST['text'])
 			Alert("Enter a thread title and try again.","Your thread is unnamed.");
@@ -323,7 +322,7 @@ while(is_file("img/icons/icon".$i.".png"))
 "
 							<label>
 								<input type=\"radio\" {0} name=\"iconid\" value=\"{1}\" />
-								<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" />
+								<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" onclick=\"javascript:void()\" />
 							</label>
 ", $checked, $i);
 	$i++;
@@ -390,7 +389,7 @@ if($_POST['poll'])
 								<input type=\"text\" id=\"p{1}\" name=\"pollOption{1}\" value=\"{3}\" style=\"width: 50%;\" maxlength=\"40\" >&nbsp;
 								<label>
 									Color&nbsp;
-									<input type=\"text\" name=\"pollColor{1}\" value=\"{4}\" size=\"10\" maxlength=\"10\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left'}\" />
+									<input type=\"text\" name=\"pollColor{1}\" value=\"{4}\" size=\"10\" maxlength=\"7\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left',pickerMode:'HVS'}\" />
 								</label>
 								{5}
 							</td>
@@ -439,15 +438,8 @@ while($mood = Fetch($rMoods))
 if(CanMod($loguserid, $forum['id']))
 {
 	$mod = "\n\n<!-- Mod options -->\n";
-	//print $thread['closed'];
-	if(!$thread['closed'])
-		$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
-	else
-		$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;Open&nbsp;thread</label>\n";
-	if(!$thread['sticky'])
-		$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
-	else
-		$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;Unstick</label>\n";
+	$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
+	$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
 	$mod .= "<!-- More could follow -->\n\n";
 }
 
@@ -488,13 +480,14 @@ write(
 								<input type=\"hidden\" name=\"id\" value=\"{5}\" />
 								<input type=\"hidden\" name=\"poll\" value=\"{6}\" />
 								{7}
+								{9}
 							</td>
 						</tr>
 					</table>
 				</form>
 			</td>
 			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$prefill, $postButton, $moodOptions, $nopl, $nosm, $fid, stripslashes($_POST['poll']), $multivote, $nobr);
+",	$prefill, $postButton, $moodOptions, $nopl, $nosm, $fid, stripslashes($_POST['poll']), $multivote, $nobr, $mod);
 
 DoSmileyBar();
 DoPostHelp();
