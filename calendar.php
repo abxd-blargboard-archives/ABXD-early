@@ -40,7 +40,7 @@ $users = Query("select birthday, id, name, displayname, sex, powerlevel from use
 $cells = array();
 while($user = Fetch($users))
 {
-	runBucket("manglers", "userData", $user['id']);
+	$bucket = "userMangler"; include("./lib/pluginloader.php");
 	$d = getdate($user['birthday']);
 	if($d['mon'] == $month)
 	{
