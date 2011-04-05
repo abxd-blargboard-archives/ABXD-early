@@ -17,7 +17,7 @@ if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
 	Kill("Unknown user ID.");
-runBucket("manglers", "userData", $user['id']);
+$bucket = "userMangler"; include("./lib/pluginloader.php");
 
 $total = $user['posts'];
 $ppp = $loguser['postsperpage'];
