@@ -30,19 +30,22 @@ if(NumRows($rPM))
 else
 	Kill("Unknown PM");
 
+if($pm['drafting'] && $pm['userfrom'] != $loguserid)
+	Kill("Unknown PM"); //could say "PM is addresssed to you, but is being drafted", but what they hey?
+
 $qUser = "select * from users where id = ".$pm['userfrom'];
 $rUser = Query($qUser);
 if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
 	Kill("Unknown user.");
-runBucket("manglers", "userData", $user['id']);
+$bucket = "userMangler"; include("./lib/pluginloader.php");
 
 if(!isset($_GET['snooping']) && $pm['userto'] == $loguserid)
 {
 	$qPM = "update pmsgs set msgread=1 where id=".$pm['id'];
 	$rPM = Query($qPM);
-	$links = "<a href=\"sendprivate.php?pid=".$id."\">Send reply</a>";
+	$links = "<a href=\"sendprivate.php?pid=".$pm['id']."\">Send reply</a>";
 }
 else if(!isset($_GET['snooping']) && $pm['drafting'])
 {

@@ -81,7 +81,7 @@ else
 $items = "";
 while($user = Fetch($peeps))
 {
-	runBucket("manglers", "userData", $user['id']);
+	$bucket = "userMangler"; include("./lib/pluginloader.php");
 	$lip = $user['lastip'];
 	$lkb = $user['lastknownbrowser'];
 	if(isset($_GET['showfull']))
