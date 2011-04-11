@@ -75,7 +75,7 @@ if((int)$_GET['delete'] == 1)
 if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
 	Kill("You are not allowed to edit posts.");
 
-if($thread['closed'])
+if($thread['closed'] && !CanMod($loguserid, $fid))
 	Kill("This thread is closed.");
 	
 write("
@@ -170,7 +170,7 @@ if($_POST['action']=="Preview")
 		$user = Fetch($rUser);
 	else
 		Kill("Unknown user ID.");
-	runBucket("manglers", "userData", $user['id']);
+	$bucket = "userMangler"; include("./lib/pluginloader.php");
 
 	if($_POST['text'])
 	{
@@ -178,7 +178,7 @@ if($_POST['action']=="Preview")
 		$previewPost['num'] = $post['num'];
 		$previewPost['id'] = $pid;
 		$previewPost['uid'] = $post['user'];
-		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,posts,regdate,lastactivity,lastposttime,rankset");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $user[$toCopy];
 		$previewPost['options'] = 0;
