@@ -38,11 +38,8 @@ if(NumRows($rCat))
 //Autolock system
 if($autoLockMonths > 0)
 {
-	$qLocker = "select id from threads where forum=".$fid." and closed = 0 and lastpostdate < ".(time() - (2592000 * $autoLockMonths)); //Math note: 60 seconds * 60 minutes * 24 hours * 30 days
-	$rLocker = Query($qLocker);
-	if(NumRows($rLocker))
-		while($lockThread = Fetch($rLocker))
-			Query("update threads set closed = 1 where id = ".$lockThread['id']);
+	$locktime = time() - (2592000 * $autoLockMonths);
+	Query("UPDATE threads SET closed=1 WHERE forum=".$fid." AND closed=0 AND lastpostdate<".$locktime);
 }
 //</autolock>
 
@@ -64,15 +61,6 @@ else if(isset($_GET['unignore']))
 	}
 }
 
-
-write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (forum)\" href=\"rss2.php?forum={0}\" />", $fid);
-write(
-"
-	<div id=\"rss\" style=\"float: right;\">
-		<a href=\"rss2.php?forum={0}\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed for this forum\" /></a>
-	</div>
-", $fid);
-
 $isIgnored = FetchResult("select count(*) from ignoredforums where uid=".$loguserid." and fid=".$fid, 0, 0) == 1;
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
@@ -85,9 +73,13 @@ if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
 }
 
+DoPrivateMessageBar();
+$bucket = "userBar"; include("./lib/pluginloader.php");
+
+$onlineUsers = OnlineUsers($fid);
+
 if(!$noAjax)
 {
-	$onlineUsers = OnlineUsers($fid);
 	write(
 "
 	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
@@ -96,15 +88,28 @@ if(!$noAjax)
 		onlineFID = {0};
 		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
-	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+",	$fid, $onlineUsers);
+}
+
+if($rssBar)
+{
+	write("
+	<div style=\"float: left; width: {1}px;\">&nbsp;</div>
+	<div id=\"rss\">
+		{0}
+	</div>
+", $rssBar, $rssWidth + 4);
+}
+write(
+"
+	<div class=\"header0 cell1 center outline smallFonts margin\" style=\"overflow: auto;\">
 		&nbsp;
 		<span id=\"onlineUsers\">
-			{1}
+			{0}
 		</span>
 		&nbsp;
 	</div>
-",	$fid, $onlineUsers);
-}
+", $onlineUsers, $rssBar, $rssWidth);
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
@@ -117,23 +122,24 @@ else
 
 if(!$tpp) $tpp = 50;
 
-$postread = readpostread($loguserid);
-
-$qThreads = "select * from threads where forum=".$fid." order by sticky desc, lastpostdate desc limit ".$from.", ".$tpp;
-$rThreads = Query($qThreads);
-
-$rMembers = Query("select name, displayname, id, powerlevel, sex from users");
-while($user = Fetch($rMembers))
-{
-	runBucket("manglers", "userData", $user['id']);
-	$members[$user['id']] = $user;
-}
+$rThreads = Query("	SELECT 
+						t.*,
+						".($loguserid ? "tr.date readdate," : '')."
+						su.id suid, su.name suname, su.displayname sudisplayname, su.powerlevel supowerlevel, su.sex susex,
+						lu.id luid, lu.name luname, lu.displayname ludisplayname, lu.powerlevel lupowerlevel, lu.sex lusex
+					FROM 
+						threads t
+						".($loguserid ? "LEFT JOIN threadsread tr ON tr.thread=t.id AND tr.id=".$loguserid : '')."
+						LEFT JOIN users su ON su.id=t.user
+						LEFT JOIN users lu ON lu.id=t.lastposter
+					WHERE forum=".$fid." 
+					ORDER BY sticky DESC, lastpostdate DESC LIMIT ".$from.", ".$tpp);
 
 $numonpage = NumRows($rThreads);
 
 for($i = $tpp; $i < $total; $i+=$tpp)
 	if($i == $from)
-		$pagelinks .= " ".(($i/$ppp)+1);
+		$pagelinks .= " ".(($i/$tpp)+1);
 	else
 		$pagelinks .= " <a href=\"forum.php?id=".$fid."&amp;from=".$i."\">".(($i/$tpp)+1)."</a>";
 if($pagelinks)
@@ -148,15 +154,20 @@ if($pagelinks)
 $ppp = $loguser['postsperpage'];
 if(!$ppp) $ppp = 20;
 
-DoPrivateMessageBar();
+$bucket = "topBar"; include("./lib/pluginloader.php");
 
 if(NumRows($rThreads))
 {	
 	$forumList = "";
 	while($thread = Fetch($rThreads))
 	{
-		$last = $members[$thread['lastposter']];
-		$starter = $members[$thread['user']];
+		$user = array('id'=>$thread['suid'], 'name'=>$thread['suname'], 'displayname'=>$thread['sudisplayname'], 'powerlevel'=>$thread['supowerlevel'], 'sex'=>$thread['susex']);
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
+		$starter = $user;
+		
+		$user = array('id'=>$thread['luid'], 'name'=>$thread['luname'], 'displayname'=>$thread['ludisplayname'], 'powerlevel'=>$thread['lupowerlevel'], 'sex'=>$thread['lusex']);
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
+		$last = $user;
 
 		$tags = ParseThreadTags($thread['title']);
 
@@ -167,12 +178,15 @@ if(NumRows($rThreads))
 		if($thread['replies'] >= $misc['hotcount'])
 			$NewIcon .= "hot";
 		if((!$loguserid && $thread['lastpostdate'] > time() - 900) ||
-			($loguserid && $thread['lastpostdate'] > $postread[$thread['id']]) &&
+			($loguserid && $thread['lastpostdate'] > $thread['readdate']) &&
 			!$isIgnored)
 		{
 			$NewIcon .= "new";
 			$newstuff++;
 		}
+		else if(!$thread['closed'] && !$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
+			$NewIcon = "old";
+		
 		if($NewIcon)
 			$NewIcon = "<img src=\"img/status/".$NewIcon.".png\" alt=\"\"/>";
 
@@ -234,7 +248,7 @@ if(NumRows($rThreads))
 				{6}
 				{7}
 			</td>
-			<td>
+			<td class=\"center\">
 				{8}
 			</td>
 			<td class=\"center\">
@@ -243,11 +257,11 @@ if(NumRows($rThreads))
 			<td class=\"center\">
 				{10}
 			</td>
-			<td class=\"smallFonts\">
+			<td class=\"smallFonts center\">
 				{11}<br />
 				by {12} {13}</td>
 		</tr>
-",	$cellClass, $NewIcon, $ThreadIcon, $poll, $thread['id'], htmlspecialchars($thread['title']), $pl, $tags,
+",	$cellClass, $NewIcon, $ThreadIcon, $poll, $thread['id'], strip_tags($thread['title']), $pl, $tags,
 	UserLink($starter), $thread['replies'], $thread['views'],
 	cdate($dateformat,$thread['lastpostdate']), UserLink($last), $lastLink);
 	}
@@ -280,49 +294,43 @@ if($pagelinks)
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 ForumJump();
 
-function readpostread($userid)
-{
-	$postreads = Query("select * from threadsread where id=".$userid);
-	while($read1 = Fetch($postreads))
-		$postread[$read1['thread']] = $read1['date'];
-	return $postread;
-}
 
 function ForumJump()
 {
 	global $fid, $loguser;
+	
 	$pl = $loguser['powerlevel'];
 	if($pl == -1) $pl = 0;
-	$rCategories = Query("select name, minpower from categories");
-	$category[] = "dummy";
-	while($cat = Fetch($rCategories))
-		$category[] = array("name" => $cat['name'], "minpower" => $cat['minpower']);
-	$lastCatID = -1;
-	$forumsHad = array();
-	$rFora = Query("select * from forums order by catid, forder");
+	
+	$lastCatID = -1;	
+	$rFora = Query("	SELECT 
+							f.id, f.title, f.catid,
+							c.name cname
+						FROM 
+							forums f
+							LEFT JOIN categories c ON c.id=f.catid
+						WHERE c.minpower<=".$pl." AND f.minpower<=".$pl.(($pl < 1) ? " AND f.hidden=0" : '')."
+						ORDER BY c.corder, c.id, f.forder");
+	
 	$theList = "";
 	$optgroup = "";
 	while($forum = Fetch($rFora))
 	{
-		if($category[$forum['catid']]['minpower'] > $pl || ($forum['hidden'] && $pl < 1))
-			continue;
-		if($forum['catid'] > $lastCatID)
+		if($forum['catid'] != $lastCatID)
 		{
 			$lastCatID = $forum['catid'];
 			$theList .= format(
 "
 			{0}
 			<optgroup label=\"{1}\">
-", $optgroup, $category[$lastCatID]['name']);
+", $optgroup, strip_tags($forum['cname']));
 			$optgroup = "</optgroup>";
 		}
-		if(array_key_exists($forum['id'], $forumsHad))
-			continue;
+
 		$theList .= format(
 "
 				<option value=\"{0}\"{2}>{1}</option>
-",	$forum['id'], $forum['title'], ($forum['id'] == $fid ? " selected=\"selected\"" : ""));
-	$forumsHad[$forum['id']] = $forum['name'];
+",	$forum['id'], strip_tags($forum['title']), ($forum['id'] == $fid ? " selected=\"selected\"" : ""));
 	}
 
 	write(

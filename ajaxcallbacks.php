@@ -9,7 +9,7 @@ include("lib/common.php");
 $action = $_GET['a'];
 $id = (int)$_GET['id'];
 $hideTricks = "<a href=\"javascript:void(0)\" onclick=\"hideTricks(".$id.")\">Back</a>";
-if($action == "q")
+if($action == "q")	//Quote
 {
 	$qPost = "select * from posts where id=".$id;
 	$rPost = Query($qPost);
@@ -43,11 +43,11 @@ if($action == "q")
 	$reply = "[quote=\"".$poster['name']."\" id=\"".$id."\"]".$text."[/quote]";
 	die($reply);
 }
-else if($action == "o")
+else if($action == "ou")	//Online Users
 {
 	die(OnlineUsers((int)$_GET['f']));
 }
-else if($action == "tf")
+else if($action == "tf")	//Theme File
 {
 	include("css/themelist.php");
 	$theme = $_GET['t'];
@@ -64,7 +64,7 @@ else if($action == "tf")
 		$logopic = "img/themes/".$theme."/logo.png";
 	die($themeFile."|".$logopic);
 }
-else if($action == "ni")
+else if($action == "ni")	//New Indicators
 {
 	$pl = $loguser['powerlevel'];
 
@@ -92,7 +92,7 @@ else if($action == "ni")
 
 	$news = array();
 
-	$rFora = Query("select * from forums order by catid, forder");
+	$rFora = Query("select f.* from forums f left join categories c on c.id=f.catid order by c.corder, c.id, f.forder");
 	while($forum = Fetch($rFora))
 	{
 		if($category[$forum['catid']]['minpower'] > $pl)
@@ -108,7 +108,7 @@ else if($action == "ni")
 
 	die(join(",", $news));
 }
-elseif($action == "srl")
+elseif($action == "srl")	//Show Revision List
 {
 	$qPost = "select currentrevision, thread from posts where id=".$id;
 	$rPost = Query($qPost);
@@ -132,7 +132,7 @@ elseif($action == "srl")
 	$reply .= $hideTricks;
 	die($reply);	
 }
-elseif($action == "sr")
+elseif($action == "sr")	//Show Revision
 {
 
 	$qPost = "select ";
@@ -216,10 +216,15 @@ elseif($action == "sr")
 
 	die($reply);	
 }
-elseif($action == "em")
+elseif($action == "em")	//Email
 {
 	$blah = FetchResult("select email from users where id=".$id." and showemail=1");
 	die($blah);
+}
+elseif($action == "vc")	//View Counter
+{
+	$blah = FetchResult("select views from misc");
+	die(number_format($blah));
 }
 
 die("Unknown action.");
