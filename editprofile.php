@@ -1,10 +1,13 @@
 <?php
-//  AcmlmBoard XD - User editing page
-//  Access: administrators only
+//  AcmlmBoard XD - Profile editing page
+//  Access: Normal users and above
 
 include("lib/common.php");
+include("lib/layout.php");
 
 AssertForbidden("editProfile");
+
+$avatarSize = 30720;
 
 if($loguserid == 0)
 	Kill("You must be logged in to edit your profile.");
@@ -75,7 +78,7 @@ if($_POST['action'] == "Edit profile")
 		$dimy = 100;
 		$dimxs = 60;
 		$dimys = 60;
-		$size = 30720;
+		$size = $avatarSize;
 
 		$validext = false;
 		$extlist = "";
@@ -199,28 +202,37 @@ if($_POST['action'] == "Edit profile")
 		$_POST['timeformat'] = $_POST['presettime'];
 
 	if($_POST['birthday'])
+	{
 		$bday = strtotime($_POST['birthday'].", 12:00 PM");
+		if($bday > time())
+			$bday = 0;
+	}
 	else
 		$bday = 0;
 
 	if($_POST['newPW'] != "")
 	{
-		$sha = hash("sha256", $_POST['newPW'].$salt, FALSE);
+		$newsalt = Shake();
+		$sha = hash("sha256", $_POST['newPW'].$salt.$newsalt, FALSE);
 		$logdata['loguserid'] = $user['id'];
-		$logdata['bull'] = hash('sha256', $user['id'].$sha.$salt, FALSE);
+		$logdata['bull'] = hash('sha256', $user['id'].$sha.$salt.$newsalt, FALSE);
 		$logdata_s = base64_encode(serialize($logdata));
 		setcookie("logdata", $logdata_s, 2147483647);
 	}
 
 	$plugSets = array();
 	foreach($pluginSettings as $setName => $setItem)
-		$plugSets[$setName] = $_POST[$setName];
-	//print_r($plugSets);
+		$plugSets[$setName] = urlencode($_POST[$setName]);
 	$plugSets = serialize($plugSets);
+	$bucket = "EditProfile_BeforeQuery";
+	include('lib/pluginloader.php');
 
 	$qUser = "update users set ";
 	if($sha)
+	{
 		$qUser.= "password='".$sha."', ";
+		$qUser.= "pss='".$newsalt."', ";
+	}
 	$qUser.= "rankset = ".(int)$_POST['rankset'].", ";
 	if(TitleCheck())
 		$qUser.= "title = '".justEscape($_POST['title'])."', ";
@@ -249,15 +261,21 @@ if($_POST['action'] == "Edit profile")
 	$qUser.= "usebanners = '".$usebanners."', ";
 	$qUser.= "showemail = '".$showemail."', ";
 	$qUser.= "pluginsettings = '".justEscape($plugSets)."' ";
+	$bucket = "EditProfile_Query_Set";
+	include('lib/pluginloader.php');
 	$qUser.= "where id=".$id." limit 1";
-	//kill($qUser);
 	$rUser = Query($qUser);
 	Report("[b]".$user['name']."[/] edited ".HisHer($user)." profile. -> [g]#HERE#?uid=".$id, 1);
 	Redirect("Profile updated.","profile.php?id=".$id,($id == $loguserid ? "your" : "that user's") . " profile");
 }
 
+write("
+	<script type=\"text/javascript\">
+		window.addEventListener(\"load\", function() { hookUploadCheck(\"pic\", 0, {0}) }, false);
+	</script>
+", $avatarSize);
+
 $sexes = array("Male","Female","N/A");
-//$sexes = array("Makes babies?", "Yes please", "I'm Christian.");
 $levels = array(-1 => "-1 - Banned", 0 => "0 - Normal user", 1 => "1 - Local Mod", 2 => "2 - Full Mod", 3 => "3 - Admin");
 
 $qRanksets = "select name from ranksets";
@@ -325,318 +343,195 @@ $pluginsHider = count($pluginSettings) ? "" : " style=\"display: none;\"";
 write(
 "
 	<div class=\"margin width0\" id=\"tabs\">
-		<button id=\"generalButton\" onclick=\"showEditProfilePart('general');\" class=\"selected\">General</button>
-		<button id=\"personalButton\" onclick=\"showEditProfilePart('personal');\">Personal</button>
-		<button id=\"postlayoutButton\" onclick=\"showEditProfilePart('postlayout');\">Post Layout</button>
-		<button id=\"themeButton\" onclick=\"showEditProfilePart('theme');\">Theme</button>
-		<button id=\"pluginButton\" onclick=\"showEditProfilePart('plugin');\"{0}>Extras</button>
+");
+tab("general", "General");
+tab("personal", "Personal");
+tab("postlayout", "Post layout");
+tab("theme", "Theme");
+if (!$pluginsHider)
+	tab("plugin", "Extras");
+write("
 	</div>
-
 	<form action=\"editprofile.php\" method=\"post\" enctype=\"multipart/form-data\">
-", $pluginsHider);
+");
 
-write(
-"
-		<table class=\"outline margin width50\" id=\"general\" style=\"display: table;\">
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Login information
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					User name
-				</td>
-				<td>
-					{0}
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"pw\">Password</label>
-				</td>
-				<td>
-					<input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\" />
+table("general");
+head("Login information");
+row("User name", NULL, array("content"=>htmlval($user['name'])));
+row("Password", NULL, array(
+	"content"=>"<input type=\"password\" id=\"pw\" name=\"newPW\" size=\"13\" maxlength=\"32\" />
 					/ Repeat:
-					<input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\" />
-				</td>
-			</tr>
-			<tr class=\"header0\">
-				<th colspan=\"2\">Appearance</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"displayname\">Display name</label>
-					<sup title=\"Leave empty to use login name\">[?]</sup>
-				</td>
-				<td>
-					<input type=\"text\" id=\"displayname\" name=\"displayname\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"20\" />
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"rankset\">Rank set</label>
-				</td>
-				<td>
-					{2}
-				</td>
-			</tr>
-", htmlval($user['name']), $user['displayname'], MakeSelect("rankset",$user['rankset'],$ranksets));
+					<input type=\"password\" name=\"repeatPW\" size=\"13\" maxlength=\"32\" />",
+	"id"=>"newPW"
+));
+$bucket = "EditProfile_General_Login";
+include('lib/pluginloader.php');
 
-if(TitleCheck())
-{
-	write(
-	"
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"tit\">Title</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"tit\" name=\"title\" value=\"{0}\" style=\"width: 98%;\" maxlength=\"255\" />
-				</td>
-			</tr>
-	", htmlval($user['title']));
-}
+head("Appearance");
+row("Display name<sup title=\"Leave empty to use login name.\">[?]</sup>", array(
+	"type"=>"text",
+	"name"=>"displayname",
+	"value"=>$user['displayname'],
+	"ext"=>' style="width: 98%;"',
+));
+row("Rank set", NULL, array("content"=>MakeSelect("rankset", $user['rankset'], $ranksets)));
+if (TitleCheck())
+	row("Title", array(
+		"type"=>"text",
+		"name"=>"title",
+		"id"=>"tit",
+		"ext"=>'maxlength="255" style="width: 98%;"',
+		"value"=>$user['title']
+	));
+$bucket = "EditProfile_General_Appearance";
+include('lib/pluginloader.php');
 
-write(
-"
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Avatar
-				</th>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"pic\">Picture</label>
-				</td>
-				<td>
-					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\" /> 
+head("Avatar");
+row("Picture", NULL, array(
+	"content"=>"<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 98%;\" /> 
 					<label>
 						<input type=\"checkbox\" name=\"removepic\" />
 						Remove
 					</label>
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"mpic\">Minipic</label>
-				</td>
-				<td>
-					<input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\" />
+					<div id=\"sizeWarning\" style=\"display: none;\">File is too large.</div>
+					<div id=\"typeWarning\" style=\"display: none;\">File is not an allowed image format.</div>
+	",
+	"id"=>"pic"
+));
+row("Minipic", NULL, array(
+	"content"=>"<input type=\"file\" id=\"mpic\" name=\"minipic\" style=\"width: 98%;\" />
 					<label>
 						<input type=\"checkbox\" name=\"removempic\" />
 						Remove
-					</label>
-				</td>
-			</tr>
-			<tr class=\"header0\">
-				<th colspan=\"2\">Presentation</th>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"tpp\">Threads per page</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"tpp\" name=\"tpp\" value=\"{1}\" />
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"ppp\">Posts per page</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"ppp\" name=\"ppp\" value=\"{2}\" />
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"df\">Date format</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"df\" name=\"dateformat\" value=\"{3}\" />
-					or preset:
-					{4}
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"tf\">Time format</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"tf\" name=\"timeformat\" value=\"{5}\" />
-					or preset:
-					{6}
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"fontsize\">Font scale</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"fontsize\" name=\"fontsize\" value=\"{7}\" />
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					Extras
-				</td>
-				<td>
+					</label>",
+	"id"=>"mpic"
+));
+head("Presentation");
+row("Threads per page", array(
+	"type"=>"text",
+	"name"=>"tpp",
+	"id"=>"tpp",
+	"value"=>$user['threadsperpage']
+));
+row("Posts per page", array(
+	"type"=>"text",
+	"name"=>"ppp",
+	"id"=>"ppp",
+	"value"=>$user['postsperpage']
+));
+row("Date format", array(
+	"type"=>"text",
+	"name"=>"dateformat",
+	"value"=>$user['dateformat']
+), array(
+	"append"=>" or ".MakeSelect("presetdate", -1, $datelist)
+));
+row("Time format", array(
+	"type"=>"text",
+	"name"=>"timeformat",
+	"value"=>$user['timeformat']
+), array(
+	"append"=>" or ".MakeSelect("presettime", -1, $timelist)
+));
+row("Font scale", array(
+	"type"=>"text",
+	"name"=>"fontsize",
+	"value"=>$user['fontsize']
+));
+row("Extras", NULL, array(
+	"content"=>'
 					<label>
-						<input type=\"checkbox\" name=\"blocklayouts\" {8} />
-						Block all layouts
-					</label><br />
-					<label>
-						<input type=\"checkbox\" name=\"usebanners\" {9} />
-						Use nice notification banners
+						<input name="blocklayouts" type="checkbox"'.($loguser['blocklayouts'] == 1 ? " checked=\"checked\"" : "").' /> Don\'t show post layouts
 					</label>
-				</td>
-			</tr>
-		</table>
-",
-	0,
-	$user['threadsperpage'], $user['postsperpage'], $user['dateformat'],
-	MakeSelect("presetdate", -1, $datelist), $user['timeformat'],
-	MakeSelect("presettime", -1, $timelist), $user['fontsize'],
-	($user['blocklayouts'] ? "checked=\"checked\"" : ""),
-	($user['usebanners'] ? "checked=\"checked\"" : "")
-);
+					<br />
+					<label>
+						<input name="usebanners" type="checkbox"'.($user['usebanners'] == 1 ? " checked=\"checked\"" : "").' /> Show private message notification banners
+					</label>'
+));
+$bucket = "EditProfile_General_Presentation";
+include('lib/pluginloader.php');
+endTable();
 
-write(
-"
-		<table class=\"outline margin width50\" id=\"personal\" style=\"display: none;\">
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Personal information
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					Sex
-				</td>
-				<td>
-					{0}
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"rn\">Real name</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"rn\" name=\"realname\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"60\" />
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"loc\">Location</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"loc\" name=\"location\" value=\"{2}\" style=\"width: 98%;\" maxlength=\"60\" />
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"bd\">Birthday</label>
-				</td>
-				<td class=\"smallFonts\">
-					<input type=\"text\" id=\"bd\" name=\"birthday\" value=\"{3}\" style=\"width: 98%;\" maxlength=\"60\" />
-					(example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"bio\">Bio</label>
-				</td>
-				<td>
-					<textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">{4}</textarea>
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					Timezone offset
-				</td>
-				<td>
-					<input type=\"text\" name=\"timezoneH\" size=\"2\" maxlength=\"3\" value=\"{8}\" />
+table("personal", true);
+head("Personal information");
+row("Sex", NULL, array("content"=>MakeOptions("sex", $user['sex'], $sexes)));
+row("Real name", array(
+	"name"=>"realname",
+	"type"=>"text",
+	"value"=>$user['realname'],
+	"ext"=>'style="width: 98%;"',
+	"maxlength"=>60,
+));
+row("Location", array(
+	"name"=>"location",
+	"type"=>"text",
+	"value"=>$user['location'],
+	"ext"=>'style="width: 98%;"',
+	"maxlength"=>60
+));
+row("Birthday", array(
+	"name"=>"birthday",
+	"type"=>"text",
+	"value"=>$bday,
+	"ext"=>'style="width: 98%;"',
+	"maxlength"=>60
+), array(
+	"append"=>'<span class="smallFonts">(example: June 26, 1983. <a href=\"http://nl2.php.net/manual/en/function.strtotime.php\">More</a>)</span>'
+));
+row("Bio", NULL, array(
+	"id"=>"bio",
+	"content"=>"<textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".$user['bio']."</textarea>"
+));
+row("Timezone offset", NULL, array(
+	"id"=>"toffz",
+	"content"=>"<input type=\"text\" id=\"toffz\" name=\"timezoneH\" size=\"2\" maxlength=\"3\" value=\"".(int)($user['timezone']/3600)."\" />
 					:
-					<input type=\"text\" name=\"timezoneM\" size=\"2\" maxlength=\"3\" value=\"{9}\" />
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Contact information
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"email\">Email address</label>
-				</td>
-				<td>
-					<input type=\"email\" id=\"email\" name=\"email\" value=\"{5}\" style=\"width: 50%;\" maxlength=\"60\" />
+					<input type=\"text\" name=\"timezoneM\" size=\"2\" maxlength=\"3\" value=\"".floor(abs($user['timezone']/60)%60)."\" />"
+));
+$bucket = "EditProfile_Personal_PersonalInformation";
+include('lib/pluginloader.php');
+head("Contact information");
+row("Email address", array(
+	"type"=>"text",
+	"class"=>"width50",
+	"name"=>"email",
+	"value"=>$user['email']
+), array(
+	"append"=>" 
 					<label>
-						<input type=\"checkbox\" name=\"showemail\" {10}/>
-						Public
-					</label>
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"hpurl\">Homepage URL</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"hpurl\" name=\"hpurl\" value=\"{6}\" style=\"width: 98%;\" maxlength=\"200\" />
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"hpname\">Homepage name</label>
-				</td>
-				<td>
-					<input type=\"text\" id=\"hpname\" name=\"hpname\" value=\"{7}\" style=\"width: 98%;\" maxlength=\"60\" />
-				</td>
-			</tr>
-		</table>
-",	MakeOptions("sex",$user['sex'],$sexes), htmlval($user['realname']), htmlval($user['location']), $bday,
-	htmlval($user['bio']), $user['email'], $user['homepageurl'], htmlval($user['homepagename']),
-	(int)($user['timezone']/3600), floor(abs($user['timezone']/60)%60),
-	($user['showemail'] ? "checked=\"checked\"" : ""));
+						<input type=\"checkbox\"".($user['showemail'] ? " checked=\"checked\"" : "")." name=\"showemail\" /> Public
+					</label>"
+));
+row("Homepage URL", array(
+	"type"=>"text",
+	"name"=>"hpurl",
+	"value"=>$user['homepageurl'],
+	"maxlength"=>60,
+	"ext"=>'style="width: 98%;"'
+));
+row("Homepage name", array(
+	"type"=>"text",
+	"name"=>"hpname",
+	"value"=>$user['homepagename'],
+	"maxlength"=>60,
+	"ext"=>'style="width: 98%;"'
+));
+$bucket = "EditProfile_Personal_ContactInformation";
+include('lib/pluginloader.php');
+endTable();
+
+table("postlayout", true);
+head("Post layout");
+row("Header", NULL, array("id"=>"hd", "content"=>"<textarea id=\"hd\" name=\"postheader\" rows=\"16\" style=\"width: 98%;\">".htmlval($user['postheader'])."</textarea>"));
+row("Footer", NULL, array("id"=>"sig", "content"=>"<textarea id=\"sig\" name=\"signature\" rows=\"16\" style=\"width: 98%;\">".htmlval($user['signature'])."</textarea>"));
+row("&nbsp;", NULL, array("id"=>"sigsep", "content"=>"<label><input type=\"checkbox\" name=\"signsep\"".($user['signsep'] ? "" : " checked=\"checked\"")." />Show signature separator</label>"));
+$bucket = "EditProfile_PostLayout";
+include('lib/pluginloader.php');
+endTable();
 
 write(
 "
-		<table class=\"outline margin width50\" id=\"postlayout\" style=\"display: none;\">
-			<tr class=\"header0\">
-				<th colspan=\"2\">
-					Post layout
-				</th>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"hd\">Header</label>
-				</td>
-				<td>
-					<textarea id=\"hd\" name=\"postheader\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
-				</td>
-			</tr>
-			<tr class=\"cell1\">
-				<td>
-					<label for=\"sig\">Footer</label>
-				</td>
-				<td>
-					<textarea id=\"sig\" name=\"signature\" rows=\"16\" style=\"width: 98%;\">{1}</textarea>
-				</td>
-			</tr>
-			<tr class=\"cell0\">
-				<td>
-				</td>
-				<td>
-					<label>
-						<input type=\"checkbox\" name=\"signsep\" {2} />
-						Show signature separator
-					</label>
-				</td>
-			</tr>
-		</table>
-",	htmlval($user['postheader']), htmlval($user['signature']), ($user['signsep'] ? "" : "checked=\"checked\""));
-
-write(
-"
-		<table class=\"outline margin width50\" id=\"theme\" style=\"display: none;\">
+		<table class=\"outline margin width50 eptable\" id=\"theme\" style=\"display: none;\">
 			<tr class=\"header0\">
 				<th>
 					Theme
@@ -647,8 +542,12 @@ write(
 					{0}
 				</td>
 			</tr>
-		</table>
 ",	$themeList);
+$bucket = "EditProfile_Theme";
+include('lib/pluginloader.php');
+Write("
+		</table>
+");
 
 $plugsets = "";
 foreach($pluginSettings as $setName => $setItem)
@@ -691,7 +590,7 @@ if($plugsets == "")
 	$plugsets = "<tr><td colspan=\"2\" class=\"cell0\">No active plugins with settings.</td></tr>";
 write(
 "
-		<table class=\"outline margin width50\" id=\"plugin\" style=\"display: none;\">
+		<table class=\"outline margin width50 eptable\" id=\"plugin\" style=\"display: none;\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
 					Plugins
@@ -704,7 +603,7 @@ write(
 write(
 "
 		<div class=\"margin right width50\" id=\"button\">
-			<input type=\"submit\" name=\"action\" value=\"Edit profile\" />
+			<input type=\"submit\" id=\"submit\" name=\"action\" value=\"Edit profile\" />
 			<input type=\"hidden\" name=\"id\" value=\"{0}\" />
 		</div>
 
