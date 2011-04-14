@@ -16,8 +16,13 @@ if(isset($_GET['from']))
 else
 	$from = 0;
 
+if(isset($dir)) unset($dir);
 if(isset($_GET['dir']))
+{
 	$dir = $_GET['dir'];
+	if($dir != "asc" && $dir != "desc")
+		unset($dir);
+}
 $sort = $_GET['sort'];
 $sex = $_GET['sex'];
 if(isset($_GET['pow']) && $_GET['pow'] != "")
@@ -31,7 +36,7 @@ $where = "";
 
 switch($sort)
 {
-	//case "id": $order = "id asc"; break;
+	case "id": $order = "id ".(isset($dir) ? $dir : "asc"); break;
 	case "name": $order = "name ".(isset($dir) ? $dir : "asc"); break;
 	case "reg": $order = "regdate ".(isset($dir) ? $dir : "desc"); break;
 	case "karma": $order = "karma ".(isset($dir) ? $dir : "desc"); break;
@@ -49,7 +54,14 @@ switch($sex)
 if(isset($pow))
 	$where.= " and powerlevel=".$pow;
 if($letter != "")
-	$where.= " and name like '".$letter."%'";
+{
+	if($letter == "@")	//I can't figure it out. Anybody else?
+		$where.= " and substring(name, 1,1) regexp '[:punct:]' or substring(displayname, 1,1) regexp '[:punct:]'";
+	if($letter == "#")
+		$where.= " and substring(name, 1,1) regexp '[0-9]' or substring(displayname, 1,1) regexp '[0-9]'";
+	else
+		$where.= " and name like '".$letter."%' or displayname like '".$letter."%'";
+}
 
 if(!(isset($pow) && $pow == 5))
 	$where.= " and powerlevel < 5";
@@ -75,11 +87,14 @@ if($pagelinks)
 		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,$dir,0)."1</a>".$pagelinks;
 }
 
+//$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"@",$dir)."@</a></li>\n";
+$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"%23",$dir)."#</a></li>\n";
 for($l = 0; $l < 26; $l++)
 {
 	$let = chr(65+$l);
 	$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,$let,$dir).$let."</a></li>\n";
 }
+$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"",$dir)."All</a></li>\n";
 
 write(
 "
@@ -112,6 +127,9 @@ write(
 					<li>
 						{4}
 					</li>
+					<li>
+						{5}
+					</li>
 				</ul>
 			</td>
 		</tr>
@@ -122,10 +140,10 @@ write(
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
 					<li>
-						{5}
+						{6}
 					</li>
 					<li>
-						{6}
+						{7}
 					</li>
 				</ul>
 			</td>
@@ -136,9 +154,6 @@ write(
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
-					<li>
-						{7}
-					</li>
 					<li>
 						{8}
 					</li>
@@ -178,6 +193,9 @@ write(
 					<li>
 						{17}
 					</li>
+					<li>
+						{18}
+					</li>
 				</ul>
 			</td>
 		</tr>
@@ -187,17 +205,17 @@ write(
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
-					{18}
+					{19}
 				</ul>
 			</td>
 		</tr>
 ",	Plural($numUsers, "user"),
 
 	mlink(""     ,$sex,$pow,$ppp,$letter,$dir)."Posts</a>",
-	//mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
+	mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
 	mlink("name" ,$sex,$pow,$ppp,$letter,$dir)."Username</a>",
 	mlink("karma",$sex,$pow,$ppp,$letter,$dir)."Karma</a>",
-	mlink("reg"  ,$sex,$pow,$ppp,$letter,$dir)."Registration date / ID</a>",
+	mlink("reg"  ,$sex,$pow,$ppp,$letter,$dir)."Registration date</a>",
 
 	mlink($sort,$sex,$pow,$ppp,$letter,"asc")."Ascending</a>",
 	mlink($sort,$sex,$pow,$ppp,$letter,"desc")."Descending</a>",
@@ -238,7 +256,7 @@ if($numUsers)
 {
 	while($user = Fetch($rUsers))
 	{
-		runBucket("manglers", "userData", $user['id']);
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
 		$daysKnown = (time()-$user['regdate'])/86400;
 		$user['average'] = sprintf("%1.02f", $user['posts'] / $daysKnown);
 
