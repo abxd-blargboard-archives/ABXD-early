@@ -33,34 +33,43 @@ if(!$canMod && $thread['user'] != $loguserid)
 if(isset($_POST['title']))
 	$_POST['title'] = htmlentities2($_POST['title']);
 
+$qFora = "select minpower from forums where id=".$thread['forum'];
+$rFora = Query($qFora);
+if(NumRows($rFora))
+	$forum = Fetch($rFora);
+else
+	Kill("Unknown forum ID.");
+
+$isHidden = (int)($forum['minpower'] > 0);
+
 if($canMod)
 {
 	if($_GET['action']=="close")
 	{
 		$qThread = "update threads set closed=1 where id=".$tid;
 		$rThread = Query($qThread);
-		Report("[b]".$loguser['name']."[/] closed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+		Report("[b]".$loguser['name']."[/] closed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="open")
 	{
 		$qThread = "update threads set closed=0 where id=".$tid;
 		$rThread = Query($qThread);
-		Report("[b]".$loguser['name']."[/] opened thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+		Report("[b]".$loguser['name']."[/] opened thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="stick")
 	{
 		$qThread = "update threads set sticky=1 where id=".$tid;
 		$rThread = Query($qThread);
-		Report("[b]".$loguser['name']."[/] stickied thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+		Report("[b]".$loguser['name']."[/] stickied thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action']=="unstick")
 	{
 		$qThread = "update threads set sticky=0 where id=".$tid;
 		$rThread = Query($qThread);
-		Report("[b]".$loguser['name']."[/] unstuck thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+		Report("[b]".$loguser['name']."[/] unstuck thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_POST['action']=="Move")
@@ -83,7 +92,7 @@ if($canMod)
 				SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
 				WHERE forums.id=".$thread['forum']." OR forums.id=".$moveto);
 		
-		Report("[b]".$loguser['name']."[/] moved thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+		Report("[b]".$loguser['name']."[/] moved thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect("Thread moved.","forum.php?id=".$moveto,"the new forum");
 	}
 	elseif($_GET['action']=="delete")
@@ -134,7 +143,7 @@ if($canMod)
 			$rPollChoices = Query($qPollChoices);
 		}
 
-		Report("[b]".$loguser['name']."[/] deleted thread [b]".$thread['title']."[/]");
+		Report("[b]".$loguser['name']."[/] deleted thread [b]".$thread['title']."[/]", $isHidden);
 		Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum");
 	}
 	elseif($_GET['action'] == "trash")
@@ -158,7 +167,7 @@ if($canMod)
 					SET forums.lastpostdate=IFNULL(threads.lastpostdate,0), forums.lastpostuser=IFNULL(threads.lastposter,0), forums.lastpostid=IFNULL(threads.lastpostid,0)
 					WHERE forums.id=".$thread['forum']." OR forums.id=".$trashid);
 
-			Report("[b]".$loguser['name']."[/] thrashed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+			Report("[b]".$loguser['name']."[/] thrashed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 			Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
 		}
 		else
@@ -170,7 +179,8 @@ if($canMod)
 		$isClosed = (isset($_POST['isClosed']) ? 1 : 0);
 		$isSticky = (isset($_POST['isSticky']) ? 1 : 0);
 
-		if($_POST['title'])
+		$trimmedTitle = trim(str_replace('&nbsp;', ' ', $thread['title']));
+		if($trimmedTitle != "")
 		{
 			if($_POST['iconid'])
 			{
@@ -184,7 +194,7 @@ if($canMod)
 			$qThreads = "update threads set title='".justEscape($_POST['title'])."', icon='".$iconurl."', closed=".$isClosed.", sticky=".$isSticky." where id=".$tid." limit 1";
 			$rThreads = Query($qThreads);
 
-			Report("[b]".$loguser['name']."[/] edited thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+			Report("[b]".$loguser['name']."[/] edited thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
 		}
@@ -201,7 +211,7 @@ else
 			$qThreads = "update threads set title='".justEscape($_POST['title'])."' where id=".$tid." limit 1";
 			$rThreads = Query($qThreads);
 
-			Report("[b]".$loguser['name']."[/] renamed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid);
+			Report("[b]".$loguser['name']."[/] renamed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 			Redirect("Edited!","thread.php?id=".$tid,"the thread");
 			exit();
 		}
@@ -310,7 +320,7 @@ if($canMod)
 				<td></td>
 				<td>
 					<input type=\"submit\" name=\"action\" value=\"Edit\"></input>
-					<input type=\"button\" value=\"Delete\" onclick=\"window.navigate('editthread.php?id={7}&amp;action=delete');\" />
+					<button onclick=\"window.navigate('editthread.php?id={7}&amp;action=delete');\">Delete</button>
 
 					<select name=\"moveTo\" size=\"1\">{8}</select>
 					<input type=\"submit\" name=\"action\" value=\"Move\" />
