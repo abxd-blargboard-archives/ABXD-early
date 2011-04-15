@@ -150,7 +150,7 @@ if(NumRows($rPM))
 				{1}
 			</td>
 			<td>
-				<a href=\"showprivate.php?id={2}{3}\">{4}</a>
+				<a href=\"showprivate.php?id={2}{3}\">{4}</a>{7}
 			</td>
 			<td>
 				{5}
@@ -158,9 +158,8 @@ if(NumRows($rPM))
 			<td>
 				{6}
 			</td>
-			{7}
 		</tr>
-",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<td><a href=\"private.php?del=".$pm['id'].$show."\">del</a>" : "");
+",	$cellClass, $img, $pm['id'], $snoop, htmlspecialchars($pm['title']), $sender, cdate($dateformat,$pm['date']), $snoop == "" ? "<sup>&nbsp;<a href=\"private.php?del=".$pm['id'].$show."\">&#x2718;</a></sup>" : "");
 	}
 }
 else
@@ -178,14 +177,13 @@ write(
 	<form method=\"post\" action=\"private.php\">
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
-			<th>
+			<th style=\"width: 22px;\">
 				<input type=\"checkbox\" id=\"ca\" onchange=\"checkAll();\" />
 			</th>
-			<th>&nbsp;</th>
+			<th style=\"width: 22px;\">&nbsp;</th>
 			<th style=\"width: 75%;\">Title</th>
 			<th>{0}</th>
 			<th>Date</th>
-			{2}
 		</tr>
 		{1}
 		<tr class=\"header1\">
@@ -196,7 +194,7 @@ write(
 		</tr>
 	</table>
 	</font>
-", (isset($_GET['show']) ? "To" : "From"), $pms, $snoop == "" ? "<th></th>" : "");
+", (isset($_GET['show']) ? "To" : "From"), $pms);
 
 if($pagelinks)
 	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);

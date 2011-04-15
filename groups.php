@@ -5,6 +5,21 @@ $title = "User groups";
 
 AssertForbidden("editGroups");
 
+function TableExists($table)
+{
+	global $dbname;
+	$tables = mysql_list_tables($dbname);
+	while (list($temp) = mysql_fetch_array($tables))
+		if ($temp == $table)
+			return TRUE;
+	return FALSE;
+}
+
+if(!TableExists("groupaffilitions"))
+	Query("CREATE TABLE IF NOT EXISTS `groupaffiliations` (`id` int(11) NOT NULL AUTO_INCREMENT, `uid` int(11) NOT NULL DEFAULT '0', `gid` int(11) NOT NULL DEFAULT '0', `status` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`) )");
+if(!TableExists("groups"))
+	Query("CREATE TABLE IF NOT EXISTS `groups` (`id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL DEFAULT '', `leader` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`) )");
+
 $groups = array();
 $rGroups = Query("select * from groups order by name asc");
 if(NumRows($rGroups))
@@ -182,32 +197,29 @@ else
 		$leader = ($group['leader'] == $loguserid || $loguser['powerlevel'] >=3);
 		foreach($group['members'] as $member)
 		{
-			$links = " ";
+			$links = "";
 			if($member['status'] == 0)
 			{
-				$links = "<sup>";
 				if ($member['id'] == $loguserid)
-					$links .= "[<a href=\"groups.php?action=leave&amp;gid=".$group['id']."\" title=\"Leave\">l</a>]";
+					$links .= "<a href=\"groups.php?action=leave&amp;gid=".$group['id']."\" title=\"Leave\">&#x229D;</a>";
 				if($leader && $member['id'] != $group['leader'])
 				{
-					$links .= "[<a href=\"groups.php?action=pass&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Pass leadership\">p</a>]";
-					$links .= "[<a href=\"groups.php?action=kick&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Kick out\">k</a>]";
-					$links .= "[<a href=\"groups.php?action=ban&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Ban\" onclick=\"if(!confirm('Are you sure you want to just up and ban ".$member['name']."? This is quite permanent.') || !confirm('Seriously?')) return false;\">b</a>]";
+					$links .= "<a href=\"groups.php?action=pass&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Pass leadership\">&#x2359;</a>";
+					$links .= "<a href=\"groups.php?action=kick&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Kick out\">&#x2298;</a>";
+					$links .= "<a href=\"groups.php?action=ban&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Ban\" onclick=\"if(!confirm('Are you sure you want to just up and ban ".$member['name']."? This is quite permanent.') || !confirm('Seriously?')) return false;\">&#x2297;</a>";
 				}
-				$links .= "</sup> ";
-				$members .= UserLink($member).$links;
+				$members .= UserLink($member).($links != "" ? "<sup>[".$links."]</sup>" : "")."&nbsp;";
 			}
 			else if($member['status'] == 1)
 			{
 				if($leader)
 				{
-					$links = "<sup>";
+					$links = "";
 					if(IsAllowed("joinGroups"))
-						$links .= "[<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">j</a>]";
-					$links .= "[<a href=\"groups.php?action=deny&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Deny membership\">d</a>]";
-					$links .= "</sup> ";
+						$links .= "<a href=\"groups.php?action=join&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Join group\">&#x2714;</a>";
+					$links .= "<a href=\"groups.php?action=deny&amp;gid=".$group['id']."&amp;uid=".$member['id']."\" title=\"Deny membership\">&#x2718;</a>";
 				}
-				$waiters .= UserLink($member).$links;
+				$waiters .= UserLink($member).($links != "" ? "<sup>[".$links."]</sup>" : "")."&nbsp;";
 				continue;
 			}
 			else if($member['status'] == 3)
@@ -222,7 +234,7 @@ else
 			$join = "<br /><small><a href=\"groups.php?action=request&amp;gid=".$group['id']."\">Request join</a></small>";
 
 		if($loguser['powerlevel'] > 2)
-			$delete = "<sup>[<a href=\"groups.php?action=delete&amp;gid=".$group['id']."\" title=\"Delete group\" onclick=\"if(!confirm('Are you sure you want to remove the user group ".$group['name']."?') || !confirm('Seriously?')) return false;\">d</a>]</sup>";
+			$delete = "<sup><a href=\"groups.php?action=delete&amp;gid=".$group['id']."\" title=\"Delete group\" onclick=\"if(!confirm('Are you sure you want to remove the user group ".$group['name']."?') || !confirm('Seriously?')) return false;\">&#x2718;</a></sup>";
 
 		$groupList .= format(
 "
