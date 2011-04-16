@@ -20,7 +20,7 @@ if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
 	Kill("Unknown user ID.");
-runBucket("manglers", "userData", $user['id']);
+$bucket = "userMangler"; include("./lib/pluginloader.php");
 
 if($id == $loguserid)
 	Query("update users set newcomments = 0 where id=".$loguserid);
@@ -66,7 +66,7 @@ if($loguserid)
 	if(isset($_GET['vote']) && $canVote)
 	{
 		$vote = (int)$_GET['vote'];
-		if($vote > 1) $vote = 1;
+		if($vote > 1) $vote = 1 ;
 		if($vote < -1) $vote = -1;
 		$k = FetchResult("select count(*) from uservotes where uid=".$id." and voter=".$loguserid);
 		if($k == 0)
@@ -85,16 +85,6 @@ if($loguserid)
 		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=1\">up</a>]</small>";
 	else if($k == 1)
 		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=0\">down</a>]</small>";
-
-	$groups = "";
-	$comma = "";
-	$qGroups = "select name from groups left join groupaffiliations on groups.id = groupaffiliations.gid where uid = ".$id." and status = 0";
-	$rGroups = Query($qGroups);
-	while($group = Fetch($rGroups))
-	{
-		$groups .= $comma . $group['name'];
-		$comma = ", ";
-	}	
 }
 
 $karma = $user['karma'];
@@ -157,164 +147,86 @@ if($user['tempbantime'])
 	);
 }
 
+
+
+$profileParts = array();
+
+$foo = array();
+$foo['Name'] = $minipic .($user['displayname'] ? $user['displayname'] : $user['name']) . ($user['displayname'] ? " (".$user['name'].")" : "");
+if($title)
+	$foo['Title'] = $title;
+if($currentRank)
+	$foo['Rank'] = $currentRank;
+if($toNextRank)
+	$foo['To next rank'] = $toNextRank;
+$foo['Karma'] = $karma.$karmaLinks;
+$foo['Total posts'] = format("{0} ({1} per day)", $posts, $averagePosts);
+$foo['Total threads'] = format("{0} ({1} per day)", $threads, $averageThreads);
+$foo['Registered on'] = format("{0} ({1} ago)", cdate($dateformat, $user['regdate']), TimeUnits($daysKnown*86400));
+$foo['Score'] = $score;
+$foo['Browser'] = $user['lastknownbrowser'];
+if($loguser['powerlevel'] > 0)
+	$foo['Last known IP'] = $user['lastip'] . " " . IP2C($user['lastip']);	
+$profileParts['General information'] = $foo;
+
+$foo = array();
+$foo['Email address'] = $emailField;
+if($homepage)
+	$foo['Homepage'] = CleanUpPost($homepage);
+$profileParts['Contact information'] = $foo;
+
+$foo = array();
+$foo['Theme'] = $themes[$user['theme']];
+$foo['Items per page'] = Plural($user['postsperpage'],"post") . ", " . Plural($user['threadsperpage'],"thread");
+$profileParts['Presentation'] = $foo;
+
+$foo = array();
+if($user['realname'])
+	$foo['Real name'] = strip_tags($user['realname']);
+if($user['location'])
+	$foo['Location'] = strip_tags($user['location']);
+if($user['birthday'])
+	$foo['Birthday'] = format("{0} ({1} old)", cdate("F j, Y", $user['birthday']), Plural(floor((time() - $user['birthday']) / 86400 / 365.2425), "year"));
+if($user['bio'])
+	$foo['Bio'] = CleanUpPost($user['bio']);
+if(count($foo))
+	$profileParts['Personal information'] = $foo;
+
+$prepend = "";
+$bucket = "profileTable"; include("./lib/pluginloader.php");
+
 write("
 	<table>
 		<tr>
 			<td style=\"width: 60%; border: 0px none; vertical-align: top; padding-right: 1em; padding-bottom: 1em;\">
+				{0}
 				<table class=\"outline margin\">
+", $prepend);
+$cc = 0;
+foreach($profileParts as $partName => $fields)
+{
+	write("
 					<tr class=\"header0\">
-						<th colspan=\"2\">General information</th>
+						<th colspan=\"2\">{0}</th>
 					</tr>
-					<tr>
-						<td class=\"cell0\" style=\"width: 20%;\">Name</td>
-						<td class=\"cell1\">{0}{1}{2}</td>
-					</tr>
-",	$minipic, ($user['displayname'] ? $user['displayname'] : $user['name']),
-	($user['displayname'] ? " (".$user['name'].")" : "")
-);
-if($title)
-{
-	write("
-					<tr>
-						<td class=\"cell0\">Title</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-", $title);
-}
-if($currentRank)
-{
-	write("
-					<tr>
-						<td class=\"cell0\">Rank</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-", $currentRank);
-}
-if($toNextRank)
-{
-	write("
-					<tr>
-						<td class=\"cell0\">To next rank</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-", $toNextRank);
-}
-write("
-					<tr>
-						<td class=\"cell0\">Karma</td>
-						<td class=\"cell1\">{0}{1}</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Total posts</td>
-						<td class=\"cell1\">{2} ({3} per day)</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Total threads</td>
-						<td class=\"cell1\">{4} ({5} per day)</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Registered on</td>
-						<td class=\"cell1\">{6} ({7} ago)</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Score</td>
-						<td class=\"cell1\">{8}</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Browser</td>
-						<td class=\"cell1\">{9}</td>
-					</tr>
-",	$karma, $karmaLinks, $posts, $averagePosts, $threads, $averageThreads,
-	cdate($dateformat, $user['regdate']), TimeUnits($daysKnown*86400),
-	$score, $user['lastknownbrowser']
-);
-if($groups)
-{
-	write("
-					<tr>
-						<td class=\"cell0\">Groups</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-", $groups);
-}
-if($loguser['powerlevel'] > 0)
-{
-	write("
-					<tr>
-						<td class=\"cell0\">Last known IP</td>
-						<td class=\"cell1\">{1} {0}</td>
-					</tr>
-", $user['lastip'], IP2C($user['lastip']));
+", $partName);
+	foreach($fields as $label => $value)
+	{
+		$cc = ($cc + 1) % 2;
+		write("
+							<tr>
+								<td class=\"cell2\">{0}</td>
+								<td class=\"cell{2}\">{1}</td>
+							</tr>
+", str_replace(" ", "&nbsp;", $label), $value, $cc);
+	}
 }
 
-write("
-					<tr class=\"header0\">
-						<th colspan=\"2\">Contact information</th>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Email address</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Homepage</td>
-						<td class=\"cell1\">{1}</td>
-					</tr>
-",	$emailField, CleanUpPost($homepage)
-);
-
-write("
-					<tr class=\"header0\">
-						<th colspan=\"2\">Presentation</th>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Theme</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Items per page</td>
-						<td class=\"cell1\">{1}, {2}</td>
-					</tr>
-",	$themes[$user['theme']],
-	Plural($user['postsperpage'],"post"), Plural($user['threadsperpage'],"thread")
-);
-
-write("
-					<tr class=\"header0\">
-						<th colspan=\"2\">Personal information</th>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Real name</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-					<tr>
-						<td class=\"cell0\">Location</td>
-						<td class=\"cell1\">{1}</td>
-					</tr>
-",	strip_tags($user['realname']), strip_tags($user['location'])
-);
-if($user['birthday'])
-{
-	write("
-					<tr>
-						<td class=\"cell0\">Birthday</td>
-						<td class=\"cell1\">{0} ({1} years old)</td>
-					</tr>
-",	cdate("F j, Y", $user['birthday']),
-	floor((time() - $user['birthday']) / 86400 / 365.2425)
-	);
-}
-write("
-					<tr>
-						<td class=\"cell0\">Bio</td>
-						<td class=\"cell1\">{0}</td>
-					</tr>
-",	CleanUpPost($user['bio']));
-
-runBucket("profileTable");
 write("
 				</table>
 ");
-runBucket("profileLeft");
+
+$bucket = "profileLeft"; include("./lib/pluginloader.php");
 write("
 			</td>
 ");
@@ -325,7 +237,7 @@ if($canDeleteComments && $_GET['action'] == "delete")
 	Query("delete from usercomments where uid=".$id." and id=".(int)$_GET['cid']);
 }
 
-$qComments = "select users.name, users.displayname, users.powerlevel, users.sex, usercomments.id, usercomments.cid, usercomments.text from usercomments left join users on users.id = usercomments.cid where uid=".$id." order by usercomments.id desc limit 0,10";
+$qComments = "select users.name, users.displayname, users.powerlevel, users.sex, usercomments.id, usercomments.cid, usercomments.text from usercomments left join users on users.id = usercomments.cid where uid=".$id." order by usercomments.date desc limit 0,10";
 $rComments = Query($qComments);
 $commentList = "";
 $commentField = "";
@@ -334,7 +246,7 @@ if(NumRows($rComments))
 	while($comment = Fetch($rComments))
 	{
 		if($canDeleteComments)
-			$deleteLink = "<small style=\"float: right; margin: 0px 4px;\">[<a  href=\"profile.php?id=".$id."&amp;action=delete&amp;cid=".$comment['id']."\" title=\"Delete comment\">d</a>]</small>";
+			$deleteLink = "<small style=\"float: right; margin: 0px 4px;\"><a  href=\"profile.php?id=".$id."&amp;action=delete&amp;cid=".$comment['id']."\" title=\"Delete comment\">&#x2718;</a></small>";
 		$cellClass = ($cellClass+1) % 2;
 		$thisComment = format(
 "
@@ -346,7 +258,7 @@ if(NumRows($rComments))
 								{3}{2}
 							</td>
 						</tr>
-",	UserLink($comment, "cid"), $cellClass, htmlspecialchars($comment['text']), $deleteLink);
+",	UserLink($comment, "cid"), $cellClass, PutASmileOnThatFace(htmlspecialchars($comment['text'])), $deleteLink);
 		$commentList = $thisComment . $commentList;
 		if(!isset($lastCID))
 			$lastCID = $comment['cid'];
@@ -369,9 +281,12 @@ if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $l
 {
 	AssertForbidden("makeComments");
 	$_POST['text'] = strip_tags($_POST['text']);
-	$qComment = "insert into usercomments (uid, cid, text) values (".$id.", ".$loguserid.", '".justEscape($_POST['text'])."')";
+	$newID = FetchResult("SELECT id+1 FROM usercomments WHERE (SELECT COUNT(*) FROM usercomments u2 WHERE u2.id=usercomments.id+1)=0 ORDER BY id ASC LIMIT 1");
+	if($newID < 1) $newID = 1;
+	$qComment = "insert into usercomments (id, uid, cid, date, text) values (".$newID.", ".$id.", ".$loguserid.", ".time().", '".justEscape($_POST['text'])."')";
 	$rComment = Query($qComment);
-	Query("update users set newcomments = 1 where id=".$id);
+	if($loguserid != $id)
+		Query("update users set newcomments = 1 where id=".$id);
 	$lastCID = $loguserid;
 	$thisComment = format(
 "
@@ -383,7 +298,7 @@ if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $l
 								{2}
 							</td>
 						</tr>
-",	UserLink($loguser), 2, CleanUpPost(deSlashMagic($_POST['text'])));
+",	UserLink($loguser), 2, PutASmileOnThatFace(htmlspecialchars($_POST['text'])));
 	if($commentsWasEmpty)
 		$commentList = "";
 	$commentList .= $thisComment;
@@ -427,7 +342,7 @@ write(
 				</table>
 ",	UserLink($user), $commentList, $commentField);
 
-runBucket("profileRight");
+$bucket = "profileRight"; include("./lib/pluginloader.php");
 
 write(
 "
@@ -495,6 +410,24 @@ function IP2C($ip)
 	if($q) $r = @mysql_fetch_array($q);
 	if($r['cc'])
 		return " <img src=\"img/flags/".strtolower($r['cc']).".png\" alt=\"".$r['cc']."\" title=\"".$r['cc']."\" />";
+}
+
+function PutASmileOnThatFace($s)
+{
+	global $smilies;
+	LoadSmilies();
+	$s = preg_replace_callback("'\[user=([0-9]+)\]'si", "MakeUserLink", $s);
+	for($i = 0; $i < count($smilies); $i++)
+	{
+		$preg_special = array("\\","^","$",".","*","+","?","|","(",")","[","]","{","}","@");
+		$preg_special_escape = array("\\\\","\\^","\\$","\\.","\\*","\\+","\\?","\\|","\\(","\\)","\\[","\\]","\\{","\\}","\\@");
+
+		$s = preg_replace("@<([^>]+)(".str_replace($preg_special, $preg_special_escape, $smilies[$i]['code']).")+([^>]+)>@si", "<$1##LOLDONTREPLACESMILIESINHTMLTAGZLOL##$3>", $s);
+		$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
+		$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".str_replace(">", "&gt;", $smilies[$i]['code'])."\" />", $s);
+		$s = str_replace("##LOLDONTREPLACESMILIESINHTMLTAGZLOL##", $smilies[$i]['code'], $s);
+	}
+	return $s;
 }
 
 ?>
