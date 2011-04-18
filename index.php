@@ -1,14 +1,16 @@
 <?php
 $noAutoHeader = TRUE;
+if($_SERVER['HTTP_X_PURPOSE'] == "preview")
+	die(header("Location: speeddial.php"));
 
-if(isset($_GET['fid']) && (int)$_GET['fid'] > 0)
-	header("Location: forum.php?id=".(int)$_GET['fid']);
+if(isset($_GET['fid']) && (int)$_GET['fid'] > 0 && !isset($_GET['action']))
+	die(header("Location: forum.php?id=".(int)$_GET['fid']));
 else if(isset($_GET['tid']) && (int)$_GET['tid'] > 0)
-	header("Location: thread.php?id=".(int)$_GET['tid']);
+	die(header("Location: thread.php?id=".(int)$_GET['tid']));
 else if(isset($_GET['uid']) && (int)$_GET['uid'] > 0)
-	header("Location: profile.php?id=".(int)$_GET['uid']);
+	die(header("Location: profile.php?id=".(int)$_GET['uid']));
 else if(isset($_GET['pid']) && (int)$_GET['pid'] > 0)
-	header("Location: thread.php?pid=".(int)$_GET['pid']."#".(int)$_GET['pid']);
+	die(header("Location: thread.php?pid=".(int)$_GET['pid']."#".(int)$_GET['pid']));
 
 include("lib/common.php");
 
@@ -21,9 +23,11 @@ $newLastHour = FetchResult("select count(*) from posts where date > ".(time() - 
 $stats .= "<br />".Plural($newToday,"new post")." today, ".$newLastHour." last hour";
 
 $numUsers = FetchResult("select count(*) from users");
+$numActive = FetchResult("select count(*) from users where lastposttime > ".(time() - 2592000)); //30 days
+$percent = ceil((100 / $numUsers) * $numActive);
 $rLastUser = Query("select id,name,displayname,powerlevel,sex from users order by regdate desc limit 1");
 $lastUser = Fetch($rLastUser);
-$last = Plural($numUsers,"registered user")."<br />Newest: ".UserLink($lastUser);
+$last = Plural($numUsers,"registered user").", ".$numActive." active (".$percent."%)<br />Newest: ".UserLink($lastUser);
 
 $onlineUsers = OnlineUsers();
 
@@ -32,28 +36,20 @@ if($pl == -1) $pl = 0;
 
 if($loguserid && ($_GET['action'] == "markallread" || $_GET['action'] == "markasread" && isset($_GET['fid'])))
 {
-	$postread = readpostread($loguserid);
-	if($_GET['action'] == "markasread" && isset($_GET['fid']))
-		$rThreads = Query("select * from threads where forum=".(int)$_GET['fid']);
-	else
-		$rThreads = Query("select * from threads");
-	while($thread = Fetch($rThreads))
-	{
-		$tid = $thread['id'];
-		if($thread['lastpostdate'] > $postread[$tid])
-		{
-			$rRead = Query("delete from threadsread where id=".$loguserid." and thread=".$tid);
-			$rRead = Query("insert into threadsread (id,thread,date) values (".$loguserid.", ".$tid.", ".time().")");
-		}
-	}
-	header('Location: index.php');
+	$where = ($_GET['action'] == 'markallread') ? "" : " WHERE threads.forum=".(int)$_GET['fid'];	
+	Query("REPLACE INTO threadsread (id,thread,date) SELECT ".$loguserid.", threads.id, ".time()." FROM threads".$where);
+	die(header('Location: index.php'));
 }
 
+// Mega-Mario: could be optimized to
+// $rBirthdays = Query("select birthday, id, name, displayname, powerlevel, sex from users where birthday>0 and from_unixtime(birthday, '%c-%e')='".date('n-j')."' order by name");
+// but then I don't know about birthday timezones and all
+// and especially why we're using gmdate()
 $rBirthdays = Query("select birthday, id, name, displayname, powerlevel, sex from users where birthday > 0 order by name");
 $birthdays = array();
 while($user = Fetch($rBirthdays))
 {
-	runBucket("manglers", "userData", $user['id']);
+	$bucket = "userMangler"; include("./lib/pluginloader.php");
 	$b = $user['birthday'];
 	if(gmdate("m-d", $b) == gmdate("m-d"))
 	{
@@ -87,83 +83,74 @@ write(
 
 	<div class=\"outline margin width100 smallFonts\" style=\"overflow: auto;\">
 		<div class=\"header0 cell2 center\" style=\"overflow: auto;\">
-			<div class=\"center\" style=\"float: left; width: 75%; border-right: 1px solid black;\">
+			<div style=\"float: left; width: 25%;\">&nbsp;<br />&nbsp;</div>
+			<div style=\"float: right; width: 25%;\">{1}</div>
+			<div class=\"center\">
 				{0}
 			</div>
-			{1}
 		</div>
 ",	$stats, $last);
 
 if($birthdaysToday)
-{
 	write("
-		<div class=\"header1 cell2\" style=\"border-top: 0px; text-align: center\">
+		<div class=\"header1 cell0\" style=\"border-top: 0px; text-align: center\">
 			Birthdays today: {0}
 		</div>", $birthdaysToday);
-}	
+write("	</div>");
 
-runBucket("writers", "userBar");
+DoPrivateMessageBar();
+$bucket = "userBar"; include("./lib/pluginloader.php");
+if($rssBar)
+{
+	write("
+	<div style=\"float: left; width: {1}px;\">&nbsp;</div>
+	<div id=\"rss\">
+		{0}
+	</div>
+", $rssBar, $rssWidth + 4);
+}
 
 write(
 "
-		<div id=\"rss\" style=\"float: right;\">
-			<a href=\"rss2.php\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed\" /></a>
-		</div>
-		<div class=\"header0 cell1 center\" style=\"overflow: auto; border-top: 0px;\">
-			&nbsp;
-			<span id=\"onlineUsers\">
-				{0}
-			</span>
-			&nbsp;
-		</div>
+	<div class=\"header0 cell1 center smallFonts outline margin\" style=\"overflow: auto;\">
+		&nbsp;
+		<span id=\"onlineUsers\">
+			{0}
+		</span>
+		&nbsp;
 	</div>
 ",	$onlineUsers);
 
-if($loguserid)
-	DoPrivateMessageBar();
-
-$rCategories = Query("select name,minpower from categories");
-$category[] = "dummy";
-while($cat = Fetch($rCategories))
-	$category[] = array("name" => $cat['name'], "minpower" => $cat['minpower']);
+$bucket = "topBar"; include("./lib/pluginloader.php");
 
 $lastCatID = -1;
-$forumsHad = array();
+$rFora = Query("	SELECT f.*, 
+						c.name cname,
+						".($loguserid ? "(NOT ISNULL(i.fid))" : "0")." ignored,
+						(SELECT COUNT(*) FROM threads t".($loguserid ? " LEFT JOIN threadsread tr ON tr.thread=t.id AND tr.id=".$loguserid : "")."
+							WHERE t.forum=f.id AND t.lastpostdate>".($loguserid ? "IFNULL(tr.date,0)" : time()-900).") numnew,
+						lu.id luid, lu.name luname, lu.displayname ludisplayname, lu.powerlevel lupowerlevel, lu.sex lusex
+					FROM forums f
+						LEFT JOIN categories c ON c.id=f.catid
+						".($loguserid ? "LEFT JOIN ignoredforums i ON i.fid=f.id AND i.uid=".$loguserid : "")."
+						LEFT JOIN users lu ON lu.id=f.lastpostuser
+					WHERE c.minpower<=".$pl." AND f.minpower<=".$pl.(($pl < 1) ? " AND f.hidden=0" : '')."
+					ORDER BY c.corder, c.id, f.forder, f.id");
 
-$rFora = Query("select * from forums order by catid, forder");
-$postread = readpostread($loguserid);
-
-$rMembers = Query("select name, displayname, id, powerlevel, sex from users");
-while($mem = Fetch($rMembers))
-	$members[$mem['id']] = $mem;
-
-$rMods = Query("select * from forummods");
+$rMods = Query("SELECT m.forum, u.id, u.name, u.displayname, u.powerlevel, u.sex FROM forummods m LEFT JOIN users u ON m.user=u.id");
 $mods = array();
 while($mod = Fetch($rMods))
-	$mods[] = $mod;
-
-$threadsRead = array();
-$rThreadsRead = Query("select id, lastpostdate, forum from threads");
-while($trd = Fetch($rThreadsRead))
-	$threadsRead[$trd['id']] = $trd;
-
-$ignored = array();
-if($loguserid)
-{
-	$rIgnores = Query("select fid from ignoredforums where uid=".$loguserid);
-	while($ignore = Fetch($rIgnores))
-		$ignored[$ignore['fid']] = TRUE;
-}
+	$mods[$mod['forum']][] = $mod;
 
 $theList = "";
 while($forum = Fetch($rFora))
 {
-	if($category[$forum['catid']]['minpower'] > $pl || ($forum['hidden'] && $pl < 1))
+	$skipThisOne = false;
+	$bucket = "forumListMangler"; include("./lib/pluginloader.php");
+	if($skipThisOne)
 		continue;
 
-	runBucket("manglers", "forumList", $forum['id']);		
-
-	if($forum['catid'] > $lastCatID)
+	if($forum['catid'] != $lastCatID)
 	{
 		$lastCatID = $forum['catid'];
 		$theList .= format(
@@ -173,39 +160,41 @@ while($forum = Fetch($rFora))
 				{0}
 			</th>
 		</tr>
-", $category[$lastCatID]['name']);
+", $forum['cname']);
 	}
 
 	$forum['description'] = str_replace("[trash]","",$forum['description']);
 	$newstuff = 0;
 	$NewIcon = "";
 	$localMods = "";
-	if(!$ignored[$forum['id']])
-		foreach($threadsRead as $trd)
-			if($trd['forum'] == $forum['id'] && $trd['lastpostdate'] > $postread[$trd['id']])
-				$newstuff++; //adding counters to the NEW part was easy -- this used to just set it to TRUE.
-	
-	$ignoreClass = $ignored[$forum['id']] ? " class=\"ignored\"" : "";
 
-	if((!$loguserid && $forum['lastpostdate'] > time() - 900) || ($loguserid && $newstuff))
+	$newstuff = $forum['ignored'] ? 0 : $forum['numnew'];
+	$ignoreClass = $forum['ignored'] ? " class=\"ignored\"" : "";
+
+	if ($newstuff > 0)
 		$NewIcon = "<img src=\"img/status/new.png\" alt=\"New!\"/>".$newstuff;
 
-	foreach($mods as $mod)
-		if($mod['forum'] == $forum['id'])
-			$localMods .= UserLink($members[$mod['user']]). ", ";
+	if ($mods[$forum['id']])
+	{
+		foreach($mods[$forum['id']] as $user)
+		{
+			$bucket = "userMangler"; include("./lib/pluginloader.php");
+			$localMods .= UserLink($user). ", ";
+		}
+	}
 
 	if($localMods)
 		$localMods = "<br /><small>Moderated by: ".substr($localMods,0,strlen($localMods)-2)."</small>";
 
-	if(array_key_exists($forum['id'], $forumsHad))
-		continue;
-
 	if($forum['lastpostdate'])
 	{
+		$user = array('id'=>$forum['luid'], 'name'=>$forum['luname'], 'displayname'=>$forum['ludisplayname'], 'powerlevel'=>$forum['lupowerlevel'], 'sex'=>$forum['lusex']);
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
+		
 		$lastLink = "";
 		if($forum['lastpostid'])
 			$lastLink = "<a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
-		$lastLink = format("<span class=\"nom\">{0}<br />by </span>{1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($members[$forum['lastpostuser']]), $lastLink);
+		$lastLink = format("<span class=\"nom\">{0}<br />by </span>{1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($user), $lastLink);
 	}
 	else
 		$lastLink = "----";
@@ -228,10 +217,10 @@ while($forum = Fetch($rFora))
 					{4}
 				</span>
 			</td>
-			<td class=\"center\">
+			<td class=\"center cell2\">
 				{5}
 			</td>
-			<td class=\"center\">
+			<td class=\"center cell2\">
 				{6}
 			</td>
 			<td class=\"smallFonts center\">
@@ -240,7 +229,6 @@ while($forum = Fetch($rFora))
 		</tr>
 ",	$NewIcon, $forum['id'], $forum['title'], $forum['description'], $localMods,
 	$forum['numthreads'], $forum['numposts'], $lastLink, $ignoreClass);
-	$forumsHad[$forum['id']] = $forum['name'];
 }
 write(
 "
@@ -255,13 +243,5 @@ write(
 	{0}
 </table>
 ",	$theList);
-
-function readpostread($userid)
-{
-	$postreads = Query("select * from threadsread where id=".$userid);
-	while($read1 = Fetch($postreads))
-		$postread[$read1['thread']] = $read1['date'];
-	return $postread;
-}
 
 ?>

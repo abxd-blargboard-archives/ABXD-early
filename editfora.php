@@ -1,156 +1,351 @@
 <?php
-//  AcmlmBoard XD - Forum list editing tool
-//  Access: administrators
+//Category/forum editor -- By Nikolaj
+$noAutoHeader = true;
+include('lib/common.php');
+$title = "Edit forums/categories";
 
-include("lib/common.php");
+if ($loguser['powerlevel'] < 3) Kill("You're not allowed to access the category editor.");
 
-AssertForbidden("editForum");
-
-if($loguser['powerlevel'] < 3)
-	Kill("You must be an administrator to edit the forum list.");
-
-if($_POST['action'] == "Move")
-{
-	$qForum = "update forums set forder=".(int)$_POST['order'].", catid=".(int)$_POST['category']." where id=".(int)$_POST['fid']." limit 1";
+$noFooter = true;
+if ($_GET['updateforum']) {
+	$id = (int)$_GET['id'];
+	$title = $_GET['title'];
+	$description = $_GET['description'];
+	$category = (int)$_GET['category'];
+	$forder = (int)$_GET['forder'];
+	$minpower = (int)$_GET['minpower'];
+	$minpowerthread = (int)$_GET['minpowerthread'];
+	$minpowerreply = (int)$_GET['minpowerreply'];
+	$qForum = "UPDATE forums SET title = '".justEscape($title)."', description = '".justEscape($description)."', catid = ".$category.", forder = ".$forder.", minpower = ".$minpower.", minpowerthread = ".$minpowerthread.", minpowerreply = ".$minpowerreply." WHERE id = ".$id;
+	Query($qForum);
+	die("Change OK.");
+}
+else if ($_GET['editforum']) {
+	$id = (int)$_GET['editforum'];
+	$qForum = "SELECT * FROM forums WHERE id=".$id;
 	$rForum = Query($qForum);
-	Alert("Forum moved.","Notice");
-} elseif($_POST['action'] == "Add")
-{
-	$qForum = "insert into forums (title, description, catid, forder) values ('".justEscape($_POST['title'])."', '".justEscape($_POST['description'])."', ".(int)$_POST['category'].", ".(int)$_POST['order'].")";
-	$rForum = Query($qForum);
-	Alert("Forum added.","Notice");
-} elseif($_POST['action'] == "Remove")
-{
-	$qForum = "select * from forums where id=".(int)$_POST['fid'];
-	$rForum = Query($qForum);
+	if (!NumRows($rForum)) {
+		Kill("Forum not found.");
+	}
 	$forum = Fetch($rForum);
-	write(
-"
-	<div class=\"outline margin center width50\" style=\"margin: 0px auto 16px;\">
-		<div class=\"errort\"><strong>Confirm deletion of \"{0}\"</strong></div>
-		<div class=\"errorc cell2\">
-			<form action=\"editfora.php\" method=\"post\">
-				<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\" />
-				<input type=\"hidden\" name=\"fid\" value=\"{1}\" />
-			</form>
-		</div>
-	</div>
-", $forum['title'], (int)$forum['id']);
+	$qCats = "SELECT * FROM categories";
+	$rCats = Query($qCats);
+	if (!NumRows($rCats))
+		$cSelect = "No categories...";
+	else {
+		$cats = array();
+		while ($cat = Fetch($rCats))
+			$cats[$cat['id']] = $cat;
+	}
+	
+	Write('
+	<table class="outline margin">
+		<tr class="header1">
+			<th colspan="2">
+				Edit forum
+			</th>
+		</tr>
+		<tr class="cell1">
+			<td style="width: 25%;">
+				Title
+			</td>
+			<td>
+				<input type="text" style="width: 98%;" id="title" value="{0}" />
+			</td>
+		</tr>
+		<tr class="cell1">
+			<td>
+				Description
+			</td>
+			<td>
+				<input type="text" style="width: 98%;" id="description" value="{1}" />
+			</td>
+		</tr>
+		<tr class="cell0">
+			<td>
+				Category
+			</td>
+			<td>
+				{2}
+			</td>
+		</tr>
+		<tr class="cell1">
+			<td>
+				Listing order
+			</td>
+			<td>
+				<input type="text" size="2" id="forder" value="{7}" />
+				<img src="img/icons/icon5.png" title="Forums are sorted by listing order first, then by ID. If all forums in a category have their listing order set to 0, they will therefore be sorted by ID only." alt="[?]" />
+			</td>
+		</tr>
+		<tr class="cell0">
+			<td>
+				Powerlevel required
+			</td>
+			<td>
+				{3}
+				to view
+				<br />
+				{4}
+				to post threads
+				<br />
+				{5}
+				to reply
+			</td>
+		</tr>
+		<tr class="cell2">
+			<td>
+				&nbsp;
+			</td>
+			<td>
+				<button onclick="changeForumInfo({6})">
+					Update
+				</button>
+				<button onclick="deleteForum({6})" {8}>
+					Delete
+				</button>
+			</td>
+		</tr>
+	</table>', $forum['title'], $forum['description'], MakeCatSelect('cat', $cats, $forum['catid']), PowerSelect('minpower', $forum['minpower']), PowerSelect("minpowerthread", $forum['minpowerthread']), PowerSelect('minpowerreply', $forum['minpowerreply']), $forum['id'], $forum['forder'], $forum['numthreads'] > 0 ? 'disabled="disabled"' : '');
+	
+	die();
 }
-elseif($_POST['action'] == "Yes, do as I say.")
+else if ($_GET['addforum'] == 2) {
+	$title = $_GET['title'];
+	$description = $_GET['description'];
+	$category = (int)$_GET['category'];
+	$forder = (int)$_GET['forder'];
+	$minpower = (int)$_GET['minpower'];
+	$minpowerthread = (int)$_GET['minpowerthread'];
+	$minpowerreply = (int)$_GET['minpowerreply'];
+
+	$newID = FetchResult("SELECT id+1 FROM forums WHERE (SELECT COUNT(*) FROM forums f2 WHERE f2.id=forums.id+1)=0 ORDER BY id ASC LIMIT 1");
+	if($newID < 1) $newID = 1;
+
+	$qForum = "INSERT INTO forums (`id`, `title`, `description`, `catid`, `forder`, `minpower`, `minpowerthread`, `minpowerreply`) VALUES (".$newID.", '".justEscape($title)."', '".justEscape($description)."', ".$category.", ".$forder.", ".$minpower.", ".$minpowerthread.", ".$minpowerreply.")";
+	Query($qForum);
+	die("Added OK.");
+}
+else if ($_GET['addforum'] == 1) {
+	$qCats = "SELECT * FROM categories";
+	$rCats = Query($qCats);
+	if (!NumRows($rCats))
+		$cSelect = "No categories...";
+	else {
+		$cats = array();
+		while ($cat = Fetch($rCats))
+			$cats[$cat['id']] = $cat;
+	}
+	
+	Write('
+	<table class="outline margin">
+		<tr class="header1">
+			<th colspan="2">
+				Add forum
+			</th>
+		</tr>
+		<tr class="cell1">
+			<td style="width: 25%;">
+				Title
+			</td>
+			<td>
+				<input type="text" style="width: 98%;" id="title" value="New forum" />
+			</td>
+		</tr>
+		<tr class="cell1">
+			<td>
+				Description
+			</td>
+			<td>
+				<input type="text" style="width: 98%;" id="description" value="" />
+			</td>
+		</tr>
+		<tr class="cell0">
+			<td>
+				Category
+			</td>
+			<td>
+				{0}
+			</td>
+		</tr>
+		<tr class="cell1">
+			<td>
+				Listing order
+			</td>
+			<td>
+				<input type="text" size="2" id="forder" value="0" />
+				<img src="img/icons/icon5.png" title="Forums are sorted by listing order first, then by ID. If all forums in a category have their listing order set to 0, they will therefore be sorted by ID only." alt="[?]" />
+			</td>
+		</tr>
+		<tr class="cell0">
+			<td>
+				Powerlevel required
+			</td>
+			<td>
+				{1}
+				to view
+				<br />
+				{2}
+				to post threads
+				<br />
+				{3}
+				to reply
+			</td>
+		</tr>
+		<tr class="cell2">
+			<td>
+				&nbsp;
+			</td>
+			<td>
+				<button onclick="addForum()">
+					Add forum
+				</button>
+				<button onclick="document.getElementById(\'editcontent\').innerText=\'\'">
+					Cancel
+				</button>
+			</td>
+		</tr>
+	</table>', MakeCatSelect('cat', $cats, 1), PowerSelect('minpower', 0), PowerSelect("minpowerthread", 0), PowerSelect('minpowerreply', 0));
+	
+	die();
+}
+else if ($_GET['deleteforum'])
 {
-	$qForum = "delete from forums where id=".(int)$_POST['fid'];
+	$id = (int)$_GET['deleteforum'];
+	$qForum = "SELECT * FROM forums WHERE id=".$id;
 	$rForum = Query($qForum);
-	Alert("Forum removed.","Notice");
+	if (!NumRows($rForum))
+		die("No such forum.");
+	$forum = Fetch($rForum);
+	if($forum['numthreads'] > 0)
+		die("Forum has threads. Move those first.");
+	Query("DELETE FROM `forums` WHERE `id` = ".$id);
+	die("Deleted OK.");
 }
-elseif($_POST['action'] == "Edit")
+else if ($_GET['action'] == "forumTable")
 {
-	$qForum = "update forums set title='".justEscape($_POST['title'])."', description='".justEscape($_POST['description'])."' where id=".(int)$_POST['fid']." limit 1";
-	$rForum = Query($qForum);
-	Alert("Forum edited.","Notice");
+	$returnForumTable = true;	
 }
 
-$thelist = "";
-$qCategories = "select * from categories";
-$rCategories = Query($qCategories);
-if(NumRows($rCategories))
-{
-	while($category = Fetch($rCategories))
-	{
-		$qFora = "select * from forums where catid=".(int)$category['id']." order by forder";
-		$rFora = Query($qFora);
-		if(NumRows($rFora))
-		{
-			while($forum = Fetch($rFora))
-			{
-				$localMods = "";
-				$qMods = "select * from forummods where forum=".(int)$forum['id'];
-				$rMods = Query($qMods);
-				if(NumRows($rMods))
-				{
-					while($mod = Fetch($rMods))
-					{
-						$qMod = "select name, id, powerlevel, sex from users where id=".$mod['user'];
-						$rMod = Query($qMod);
-						$mod2 = Fetch($rMod);
-						$localMods .= UserLink($mod2).", ";
-					}
-					$localMods = "Moderated by: ".substr($localMods,0,strlen($localMods)-2);
-				}
-				else
-					$localMods = "No mods";
-
-				$thelist .= format(
-"
-		<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
-
-			<div style=\"float: left; width: 60%;\">
-				<form action=\"editfora.php\" method=\"post\">
-					<input type=\"text\" name=\"title\" value=\"{0}\" style=\"width: 70%;\" />
-					<input type=\"submit\" name=\"action\" value=\"Edit\" /><br />
-					<input type=\"text\" name=\"description\" style=\"width: 90%;\" value=\"{1}\" />
-					<input type=\"hidden\" name=\"fid\" value=\"{2}\" /><br/>
-					<small>{3} (<a href=\"managemods.php\">Edit</a>) &bull; {4} thread(s), {5} post(s).</small>
-				</form>
-			</div>
-
-			<form action=\"editfora.php\" method=\"post\">
-				{7}
-				 <input type=\"text\" name=\"order\" value=\"{6}\" size=\"2\" maxlength=\"2\" /><br />
-				<input type=\"submit\" name=\"action\" value=\"Move\" /> 
-				<input type=\"submit\" name=\"action\" value=\"Remove\" />
-				<input type=\"hidden\" name=\"fid\" value=\"{2}\" />
-			</form>
-
-		</div>
-",	htmlval($forum['title']), htmlval($forum['description']), $forum['id'], $localMods,
-	$forum['numthreads'], $forum['numposts'], $forum['forder'],
-	MakeOptions($forum['catid']));
-			}
+$cats = array();
+$qCats = "SELECT * FROM categories ORDER BY corder, id";
+$rCats = Query($qCats);
+if (NumRows($rCats)) {
+	while ($cat = Fetch($rCats)) {
+		$cats[$cat['id']] = $cat;
+	}
+	$qForums = "SELECT * FROM forums ORDER BY forder, id";
+	$rForums = Query($qForums);
+	$forums = array();
+	if (NumRows($rForums)) {
+		while ($forum = Fetch($rForums)) {
+			$forums[$forum['id']] = $forum;
 		}
 	}
-	write(
-"
-	<div class=\"outline width50 margin\">
-		<div class=\"errort\"><strong>Forum list</strong></div>
-		{0}
-	</div>
-",	$thelist);
+}
+if ($cats) {
+	$tbl = Format('
+<div id="editcontent" style="float: right; width: 45%;">
+	&nbsp;
+</div>
+<div id="flist">
+<table class="outline margin" style="width: 45%;">');
+
+$ftbl = Format('
+	<tr class="header1">
+		<th>
+			Edit forums
+		</th>
+	</tr>');
+	foreach ($forums as $forum) {
+		$cats[$forum['catid']]['forums'][$forum['id']] = $forum;
+	}
+	foreach ($cats as $cat) {
+		$ftbl .= Format('
+	<tbody id="cat{1}" class="c">
+		<tr class="cell{2}">
+			<td class="c">
+				<strong>{0}</strong>
+			</td>
+		</tr>', $cat['name'], $cat['id'], cell());
+		if(isset($cat['forums'])) //<Kawa> empty categories look BAD.
+		{
+			foreach ($cat['forums'] as $cf) {
+				$ftbl .= Format('
+		<tr class="cell{3}" style="cursor: hand;">
+			<td style="padding-left: 24px;{4}" class="f" onclick="pickForum({1});" id="forum{1}">
+				{0}<br />
+				<small style="opacity: 0.75;">{2}</small>
+			</td>
+		</tr>', $cf['title'], $cf['id'], $cf['description'], cell(), ($_GET['s'] == $cf['id'] ? ' outline: 1px solid #888;"' : ''));
+			}
+		}
+		$ftbl .= Format("
+	</tbody>");
+	}
+	
+	$ftbl .= Format('
+	<tr class="cell2">
+		<td>
+			<span style="float: right;">
+				<button onclick="$(\'#editcontent\').load(\'./editfora.php?addforum=1\');">Add Forum</button>
+			</span>{0}
+		</td>
+	</tr>', (!$_GET['n'] ? '
+			<span id="hint">
+				Hint: Click a forum or a category to select it.
+			</span>' : ''));
+$tbl2 .= Format('
+</table>
+</div>');
+}
+if (!$returnForumTable) {
+	$noFooter = false;
+	include('lib/header.php');
+}
+Write("{0}{1}{2}", $tbl, $ftbl, $tbl2);
+
+
+function cell() {
+	global $cell;
+	$cell = ($cell == 1 ? 0 : 1);
+	return $cell;
 }
 
-write(
-"
-	<form action=\"editfora.php\" method=\"post\">
-		<div class=\"outline width50 margin\">
-			<div class=\"errort\"><strong>Add a Forum</strong></div>
-			<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
-				<div style=\"float: left; width: 60%;\">
-					<input type=\"text\" name=\"title\" style=\"width: 70%;\" /><br/>
-					<input type=\"text\" name=\"description\" style=\"width: 90%;\" />
-				</div>
-				{0}
- 				<input type=\"text\" name=\"order\" value=\"0\" size=\"2\" maxlength=\"2\" /> 
-				{1}
-				<input type=\"submit\" name=\"action\" value=\"Add\" /> 
-			</div>
-		</div>
-	</form>
-
-	<p>
-		For more complex things, try PMA. This is just a toy-like quick access.
-	</p>
-",	MakeOptions(-1), $levels);
-
-function MakeOptions($catid)
-{
-	$sel[$catid] = " selected=\"true\"";
-	$qFora = "select id,name from categories";
-	$rFora = Query($qFora);
-	$result = "<select name=\"category\" size=\"1\">";
-	while($forum = Fetch($rFora))
-		$result .= "<option value=\"".$forum['id']."\"".$sel[$forum['id']]."\>".$forum['name']."</option>";
-	$result .= "</select>";
-	return $result;
+function MakeCatSelect($i, $o, $v) {
+	$r = '
+			<select id="category">';
+	foreach ($o as $opt) {
+		$r .= '
+				<option value="'.$opt['id'].'"'.($v == $opt['id'] ? ' selected="selected"' : '').'>
+					'.$opt['name'].'
+				</option>';
+	}
+	$r .= '
+			</select>';
+	return $r;
+}
+function PowerSelect($id, $s) {
+	$r = Format('
+				<select id="{0}">
+	', $id);
+	$powers = array(-1=>"Banned", 0=>"Regular", 1=>"Local mod", 2=>"Full mod", 3=>"Admin");
+	foreach ($powers as $k => $v) {
+		$r .= Format('
+					<option value="{0}"{2}>{1}</option>
+		', $k, $v, ($k == $s ? ' selected="selected"' : ''));
+	}
+	$r .= '
+				</select>';
+	return $r;
 }
 
-?>
+//Sort array by values in sub-arrays
+//This will not work if the values in the sub-arrays are the same, but since this is made for ordering forums anyway, who cares?
+function sort_by_order($array, $key, $order_column = "forder") {
+	$r = array();
+	foreach ($array as $k => $v) {
+		$r[$v[$order_column]] = $v;
+	}
+	return $r;
+}
