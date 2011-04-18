@@ -2,15 +2,19 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 	<title>[[BOARD TITLE HERE]]</title>
-	<meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
+	<meta http-equiv="Content-Type" content="text/html; CHARSET=windows-1252" />
 	<meta http-equiv="X-UA-Compatible" content="IE=9" />
 	<meta name="description" content="<?php print $metaDescription; ?>" />
 	<meta name="keywords" content="<?php print $metaKeywords; ?>" />
 	<link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="css/common.css" />
 	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" id="theme_css" />
-	<link rel="alternate" type="application/rss+xml" title="RSS feed" href="rss2.php" />
 	<script type="text/javascript" src="lib/tricks.js"></script>
+	<script type="text/javascript" src="lib/jQuery.js"></script>
+	<?php
+		$bucket = "pageHeader"; include("./lib/pluginloader.php");
+		$bucket = "footer"; include("./lib/pluginloader.php");
+	?>
 </head>
 <body style="font-size: <?php print $loguser['fontsize']; ?>%;">
 	<div class="outline margin width100" id="header">
@@ -22,7 +26,9 @@
 						<tr>
 							<?php if($misc['porabox']) { ?>
 							<td style="border: 0px none;">
-								<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" id="theme_banner" style="padding: 8px;" />
+								<a href="./">
+									<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" id="theme_banner" style="padding: 8px;" />
+								</a>
 							</td>
 							<td style="border: 0px none;">
 								<div class="PoRT nom">
@@ -30,7 +36,7 @@
 										<strong><?php print $misc['poratitle']; ?></strong>
 									</div>
 									<div class="errorc cell2 left">
-										<?php print $misc['porabox']; ?>
+										<?php print CleanUpPost($misc['porabox'], "", true, true); ?>
 									</div>
 								</div>
 							</td>
@@ -45,7 +51,7 @@
 			</tr>
 			<tr class="cell1">
 				<td rowspan="2" class="smallFonts" style="text-align: center; width: 10%;">
-					Views: <?php print number_format($misc['views'])."\n"; ?>
+					Views: <span id="viewCount"><?php print number_format($misc['views']); ?></span>
 				</td>
 				<td class="smallFonts" style="text-align: center; width: 80%;">
 					<ul class="pipemenu">
@@ -58,10 +64,9 @@
 								print "<li><a href=\"uploader.php\">Uploader</a></li>";
 							if(IsAllowed("viewMembers"))
 								print "<li><a href=\"memberlist.php\">Member list</a></li>";
-							print "<li><a href=\"groups.php\">Groups</a></li>";
 							if(IsAllowed("viewRanks"))
 								print "<li><a href=\"ranks.php\">Ranks</a></li>";
-							if(IsAllowed("viewCalendar"))
+							if(IsAllowed("viewCalendar") && !$isBot)
 								print "<li><a href=\"calendar.php\">Calendar</a></li>";
 							if(IsAllowed("viewAvatars"))
 								print "<li><a href=\"avatarlibrary.php\">Avatars</a></li>";
@@ -69,8 +74,9 @@
 								print "<li><a href=\"online.php\">Online users</a></li>";
 							if(IsAllowed("search"))
 								print "<li><a href=\"search.php\">Search</a></li>";
+							print "<li><a href=\"lastposts.php\">Last posts</a></li>";
 
-							runBucket("headers", "top");
+							$bucket = "topMenu"; include("./lib/pluginloader.php");
 						?>
 					</ul>
 				</td>
@@ -94,7 +100,7 @@
 							if(IsAllowed("editMoods"))
 								print "<li><a href=\"editavatars.php\">Mood avatars</a></li>";
 
-							runBucket("headers", "bottom");
+							$bucket = "bottomMenu"; include("./lib/pluginloader.php");
 
 							if(!isset($_POST['id']) && isset($_GET['id']))
 								$_POST['id'] = (int)$_GET['id'];
