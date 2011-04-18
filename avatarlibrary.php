@@ -8,8 +8,9 @@ $title = "Avatar library";
 
 AssertForbidden("viewAvatars");
 
-if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null value we care about.
+if(isset($_GET['rebuild'])) //Now no longers requires an actual value.
 {
+	$avalib = array();
 	//Prepare file tree...
 	$library = @opendir("img/avatars/library"); //in some PHP setups, you get an ugly "invalid argument" message here on fail.
 	if($library === FALSE)
@@ -18,6 +19,7 @@ if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null va
 	while(FALSE !== ($folder = readdir($library)))
 	{
 		if($folder[0] == ".") continue;
+		if(substr($folder,-4) == ".txt") continue;
 		$fol = opendir("img/avatars/library/".$folder);
 		$thisFolder = array();
 		//Loop through folder images...
@@ -32,7 +34,10 @@ if($_GET['rebuild']) //No need to bother sanitizing this -- it's the non-null va
 		//Add this branch to the file tree...
 		$avalib[] = array("name"=>$folder, "content"=>$thisFolder);
 	}
+	if(count($avalib) == 0)
+		Kill("There was nothing to index. Make sure there are actually images in the avatar library directory and try again.");
 	file_put_contents("avalib.txt", serialize($avalib));
+	Alert("The avatar library has been rebuilt", "All done");
 }
 
 //Because it seems faster to just slurp in a single file than to do a whole folder scan |3
