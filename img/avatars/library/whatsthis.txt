@@ -1,0 +1,1 @@
+This directory is used to store the Avatar Library images. Sets are collected in subdirectories, and you can find a bunch of them at http://helmet.kafuka.org/thepile/Avatar_Library.
