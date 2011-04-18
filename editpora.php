@@ -53,7 +53,7 @@ write(
 					Content (HTML)
 				</td>
 				<td style=\"width: 80%;\">
-					<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\">{3}</textarea>
+					<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\" onkeyup=\"startPoraUpdate()\">{3}</textarea>
 				</td>
 			</tr>
 			<tr class=\"cell2\">
@@ -64,8 +64,5 @@ write(
 			</tr>
 		</table>
 	</form>
-	<script type=\"text/javascript\">
-		window.addEventListener(\"load\",  startPoraUpdate, false);
-	</script>
 ",	$misc['poratitle'], $misc['porabox'], htmlval($misc['poratitle']), htmlval($misc['porabox']));
 ?>
