@@ -27,14 +27,18 @@ include("lib/snippets.php");
 include("lib/settings.php");
 $logopic = "img/themes/default/logo.png";
 $overallTidy = 0;
-$misc['poratitle'] = "Installing&hellip;";
-$misc['porabox'] = "Hold onto your hat.";
+unset($misc['porabox']);
 $title = "Installation";
 //ob_start("DoFooter");
 $timeStart = usectime();
 include("lib/feedback.php");
 include("lib/header.php");
 include("lib/write.php");
+
+if(is_file("lib/database.php"))
+	include("lib/database.php");
+else
+	$dbserv = "localhost";
 
 if(isset($_GET['delete']))
 {
@@ -45,6 +49,32 @@ if(isset($_GET['delete']))
 
 if(!isset($_POST['action']))
 {
+	//Begin Pyra-proofing...
+	$test = @fopen("test.txt", "w");
+	if($test === FALSE)
+		Kill(format("PHP does not seem to have write access to this directory ({0}). This is required for proper functionality. Please contact your hosting provider for information on how to make the current directory writable.", $_SERVER['DOCUMENT_ROOT']), "Filesystem permission error");
+	else
+	{
+		fclose($test);
+		unlink("test.txt");
+	}
+	$test = @fopen("lib/test.txt", "w");
+	if($test === FALSE)
+		Kill(format("PHP does not seem to have write access to the /{1} directory ({0}{1}). This is required for proper functionality. Please contact your hosting provider for information on how to make that directory writable.", $_SERVER['DOCUMENT_ROOT'], "lib"), "Filesystem permission error");
+	else
+	{
+		fclose($test);
+		unlink("lib/test.txt");
+	}
+	$test = @fopen("img/avatars/test.txt", "w");
+	if($test === FALSE)
+		Kill(format("PHP does not seem to have write access to the /{1} directory ({0}{1}). This is required for proper functionality. Please contact your hosting provider for information on how to make that directory writable.", $_SERVER['DOCUMENT_ROOT'], "img/avatars"), "Filesystem permission error");
+	else
+	{
+		fclose($test);
+		unlink("img/avatars/test.txt");
+	}
+
 	write(
 "
 	<form action=\"install.php\" method=\"post\">
@@ -59,7 +89,7 @@ if(!isset($_POST['action']))
 					<label for=\"dbs\">Database server</label>
 				</td>
 				<td class=\"cell0\">
-					<input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" value=\"localhost\" />
+					<input type=\"text\" id=\"dbs\" name=\"dbserv\" style=\"width: 98%;\" value=\"{0}\" />
 				</td>
 			</tr>
 			<tr>
@@ -67,7 +97,7 @@ if(!isset($_POST['action']))
 					<label for=\"dbn\">Database name</label>
 				</td>
 				<td class=\"cell0\">
-					<input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\" />
+					<input type=\"text\" id=\"dbn\" name=\"dbname\" style=\"width: 98%;\" value=\"{3}\" />
 				</td>
 			</tr>
 			<tr>
@@ -75,7 +105,7 @@ if(!isset($_POST['action']))
 					<label for=\"dun\">Database user name</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\" />
+					<input type=\"text\" id=\"dun\" name=\"dbuser\" style=\"width: 98%;\" value=\"{1}\" />
 				</td>
 			</tr>
 			<tr>
@@ -83,7 +113,7 @@ if(!isset($_POST['action']))
 					<label for=\"dpw\">Database user password</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\" />
+					<input type=\"password\" id=\"dpw\" name=\"dbpass\" style=\"width: 98%;\" value=\"{2}\" />
 				</td>
 			</tr>
 			<tr>
@@ -111,7 +141,7 @@ if(!isset($_POST['action']))
 			</tr>
 		</table>
 	</form>
-");
+", $dbserv, $dbuser, $dbpass, $dbname);
 
 }
 else if($_POST['action'] == "Install")
@@ -122,11 +152,13 @@ else if($_POST['action'] == "Install")
 	$dbuser = $_POST['dbuser'];
 	$dbpass = $_POST['dbpass'];
 	$dbname = $_POST['dbname'];
-	mysql_connect($dbserv, $dbuser, $dbpass) or Kill("Could not connect to database.");
-	mysql_select_db($dbname) or Kill("Could not select database.");
+	//2005: no such server
+	//1045: no such user
+	@mysql_connect($dbserv, $dbuser, $dbpass) or Kill(mysql_errno() == 2005 ? format("Could not connect to any database server at {0}. Usually, the database server runs on the same system as the web server, in which case \"localhost\" would suffice. If not, the server could be (temporarily) offline, nonexistant, or maybe you entered a full URL instead of just a hostname (\"http://www.mydbserver.com\" instead of just \"mydb.com\").", $dbserv) : format("The database server has rejected your username and/or password."), "Database connectivity error");
+	mysql_select_db($dbname) or Kill(format("Could not select database \"{0}\". Even though we could connect to the database server, there does not seem to be a database by that name on that server. Perhaps you forgot to add it before trying to install?", $dbname), "Database selection error");
 
 	print "Writing database configuration file&hellip;<br />";
-	$dbcfg = fopen("lib/database.php", "w+") or Kill("Could not open \"lib/database.php\" for writing.");
+	$dbcfg = @fopen("lib/database.php", "w+") or Kill(format("Could not open \"lib/{0}.php\" for writing. This has been checked for earlier, so if you see this error now, something very strange is going on.", "database"), "Mysterious filesystem permission error");
 	fwrite($dbcfg, "<?php\n");
 	fwrite($dbcfg, "//  AcmlmBoard XD support - Database settings\n\n");
 	fwrite($dbcfg, "\$dbserv = \"".$dbserv."\";\n");
@@ -139,61 +171,99 @@ else if($_POST['action'] == "Install")
 	print "Detecting Tidy support&hellip; ";
 	$tidy = (int)function_exists('tidy_repair_string');
 	if($tidy)
-	{
 		print "available.<br />";
-		print "Writing board configuration file&hellip;<br />";
-		include("lib/settings.php");
-		$hax = fopen("lib/settings.php", "w");
-		fputs($hax, "<?php\n");
-		fputs($hax, "//Generated and parsed by the Board Settings admin panel.\n");
-		fputs($hax, "\n");
-		fputs($hax, "//Settings\n");
-		fputs($hax, "\$boardname = \"".prepare($boardname)."\";\n");
-		fputs($hax, "\$logoalt = \"".prepare($logoalt)."\";\n");
-		fputs($hax, "\$logotitle = \"".prepare($logotitle)."\";\n");
-		fputs($hax, "\$dateformat = \"".prepare($dateformat)."\";\n");
-		fputs($hax, "\$autoLockMonths = ".(int)$autoLockMonths.";\n");
-		fputs($hax, "\$warnMonths = ".(int)$warnMonths.";\n");
-		fputs($hax, "\$customTitleThreshold = ".(int)$customTitleThreshold.";\n");
-		fputs($hax, "\$viewcountInterval = ".(int)$viewcountInterval.";\n");
-		fputs($hax, "\$overallTidy = ".(int)$tidy.";\n");
-		fputs($hax, "\$noAjax = ".(int)$noAjax.";\n");
-		fputs($hax, "\$noGuestLayouts = ".(int)$noGuestLayouts.";\n");
-		fputs($hax, "\$theWord = \"".prepare($theWord)."\";\n");
-		fputs($hax, "\$systemUser = ".(int)$systemUser.";\n");
-		fputs($hax, "\$minWords = ".(int)$minWords.";\n");
-		fputs($hax, "\$minSeconds = ".(int)$minSeconds.";\n");
-		fputs($hax, "\$uploaderCap = ".(int)$uploaderCap.";\n");
-		fputs($hax, "\$uploaderWhitelist = \"".prepare($uploaderWhitelist)."\";\n");
-		fputs($hax, "\n");
-		fputs($hax, "//Hacks\n");
-		fputs($hax, "\$hacks['forcetheme'] = \"".prepare($hacks['forcetheme'])."\";\n");
-		fputs($hax, "\$hacks['themenames'] = ".(int)$hacks['themenames'].";\n");
-		fputs($hax, "\$hacks['postfilter'] = ".(int)$hacks['postfilter'].";\n");
-		fputs($hax, "\n");
-		fputs($hax, "//Profile Preview Post\n");
-		fputs($hax, "\$profilePreviewText = \"".prepare($profilePreviewText, "\\\"")."\";\n");
-		fputs($hax, "\n");
-		fputs($hax, "//Meta\n");
-		fputs($hax, "\$metaDescription = \"The owner of this ABXD board was too lazy to edit the description field. Kill him.\";\n");
-		fputs($hax, "\$metaKeywords = \"abxd,acmlmboard\";\n");
-		fputs($hax, "?>");
-		fclose($hax);
-	}
 	else
-	{
 		print "not available.<br />";
-	}
 
 	include("lib/mysql.php");
+	$shakeIt = false;
+	if(!is_file("lib/salt.php"))
+		$shakeIt = true;
+	$miscStat = Query("show table status from ".$dbname." like 'misc'");
+	if(NumRows($miscStat) == 0)
+		$shakeIt = true;
+	else
+	{
+		$shakeIt = false;
+		$misc = Fetch(Query("select * from misc"));
+		if($misc['version'] < 220)
+		{
+			$shakeIt = true;
+			$sltf = @fopen("lib/salt.php", "w+") or Kill(format("Could not open \"lib/{0}.php\" for writing. This has been checked for earlier, so if you see this error now, something very strange is going on.", "salt"), "Mysterious filesystem permission error");
+			fwrite($sltf, "<?php \$salt = \"sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH\" ?>\n");
+			fclose($sltf);
+		}
+	}
+	if($shakeIt)
+	{
+		print "Generating security salt&hellip;<br />";
+		$cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRQSTUVWXYZ0123456789";
+		$salt = "";
+		$chct = strlen($cset) - 1;
+		while (strlen($salt) < 16)
+			$salt .= $cset[mt_rand(0, $chct)];
+		$sltf = @fopen("lib/salt.php", "w+") or Kill(format("Could not open \"lib/{0}.php\" for writing. This has been checked for earlier, so if you see this error now, something very strange is going on.", "salt"), "Mysterious filesystem permission error");
+		fwrite($sltf, "<?php \$salt = \"".$salt."\" ?>\n");
+		fclose($sltf);
+	}
+	
+		
+	print "Writing board configuration file&hellip;<br />";
+	include("lib/settings.php");
+	$hax = @fopen("lib/settings.php", "w") or Kill(format("Could not open \"lib/{0}.php\" for writing. This has been checked for earlier, so if you see this error now, something very strange is going on.", "settings"), "Mysterious filesystem permission error");
+	fputs($hax, "<?php\n");
+	fputs($hax, "//Generated and parsed by the Board Settings admin panel.\n");
+	fputs($hax, "\n");
+	fputs($hax, "//Settings\n");
+	fputs($hax, "\$boardname = \"".prepare($boardname)."\";\n");
+	fputs($hax, "\$logoalt = \"".prepare($logoalt)."\";\n");
+	fputs($hax, "\$logotitle = \"".prepare($logotitle)."\";\n");
+	fputs($hax, "\$dateformat = \"".prepare($dateformat)."\";\n");
+	fputs($hax, "\$autoLockMonths = ".(int)$autoLockMonths.";\n");
+	fputs($hax, "\$warnMonths = ".(int)$warnMonths.";\n");
+	fputs($hax, "\$customTitleThreshold = ".(int)$customTitleThreshold.";\n");
+	fputs($hax, "\$viewcountInterval = ".(int)$viewcountInterval.";\n");
+	fputs($hax, "\$overallTidy = ".(int)$tidy.";\n");
+	fputs($hax, "\$noAjax = ".(int)$noAjax.";\n");
+	fputs($hax, "\$noGuestLayouts = ".(int)$noGuestLayouts.";\n");
+	fputs($hax, "\$theWord = \"".prepare($theWord)."\";\n");
+	fputs($hax, "\$systemUser = ".(int)$systemUser.";\n");
+	fputs($hax, "\$minWords = ".(int)$minWords.";\n");
+	fputs($hax, "\$minSeconds = ".(int)$minSeconds.";\n");
+	fputs($hax, "\$uploaderCap = ".(int)$uploaderCap.";\n");
+	fputs($hax, "\$uploaderMaxFileSize = ".(int)$uploaderMaxFileSize.";\n");
+	fputs($hax, "\$uploaderWhitelist = \"".prepare($uploaderWhitelist)."\";\n");
+	fputs($hax, "\$mailResetFrom = \"".prepare($mailResetFrom)."\";\n");
+	fputs($hax, "\$lastPostsTimeLimit = ".(int)$lastPostsTimeLimit.";\n");
+	fputs($hax, "\n");
+	fputs($hax, "//Hacks\n");
+	fputs($hax, "\$hacks['forcetheme'] = \"".prepare($hacks['forcetheme'])."\";\n");
+	fputs($hax, "\$hacks['themenames'] = ".(int)$hacks['themenames'].";\n");
+	fputs($hax, "\$hacks['postfilter'] = ".(int)$hacks['postfilter'].";\n");
+	fputs($hax, "\n");
+	fputs($hax, "//Profile Preview Post\n");
+	fputs($hax, "\$profilePreviewText = \"".prepare($profilePreviewText, "\\\"")."\";\n");
+	fputs($hax, "\n");
+	fputs($hax, "//Meta\n");
+	fputs($hax, "\$metaDescription = \"".prepare($metaDescription)."\";\n");
+	fputs($hax, "\$metaKeywords = \"".prepare($metaKeywords)."\";\n");
+	fputs($hax, "\n");
+	fputs($hax, "//RSS\n");
+	fputs($hax, "\$feedname = \"".prepare($feedname)."\";\n");
+	fputs($hax, "\$rssblurb = \"".prepare($rssblurb)."\";\n");
+	fputs($hax, "\n");
+	fputs($hax, "?>");
+	fclose($hax);
+
 	print "Creating/updating tables&hellip;<br />";
-	Query("DROP TABLE IF EXISTS `smilies`");
+	//Query("DROP TABLE IF EXISTS `smilies`");
 	Upgrade();
 	
 	print "Adding bare neccesities&hellip;<br />"; 
 	$misc = Query("select * from misc");
 	if(NumRows($misc) == 0)
 		Query("INSERT INTO `misc` (`views`, `hotcount`, `porabox`, `poratitle`, `milestone`, `maxuserstext`) VALUES (0, 30, 'You might want to download the geolocation<br />table and some avatar sets from the same<br />place you got this forum software:<br /><br /><a href=\"http://helmet.kafuka.org/thepile/ABXD\">ABXD page on The Pile</a><br /><br />Then, <a href=\"editpora.php\">edit this panel</a>.', 'Points of Required Attention', 'Nothing yet.', 'Nobody yet.');");
+	Query("UPDATE `misc` SET `version` = 220");
 	$smilies = Query("select * from smilies");
 	if(NumRows($smilies) == 0)
 		Query("
@@ -215,7 +285,6 @@ else if($_POST['action'] == "Install")
 	('^_^', 'cute.png'),
 	('^^;;;', 'cute2.png'),
 	('>_<', 'yuck.png'),
-	('\xC2\xAC_\xC2\xAC', 'eyeshift.png'),
 	('<_<', 'shiftleft.png'),
 	('>_>', 'shiftright.png'),
 	('@_@', 'dizzy.png'),
@@ -247,6 +316,9 @@ else if($_POST['action'] == "Install")
 	(':XD:', 'xd.png'),
 	(':yum:', 'yum.png');
 ");
+	print "Reticulating uploader and usercomments where needed&hellip;<br />";
+	Query("update `uploader` set `date` = `id` where `date` = 0;");
+	Query("update `usercomments` set `date` = `id` where `date` = 0;");
 
 	//Import("installTables.sql");
 	if($_POST['addbase'])
@@ -382,7 +454,7 @@ function Upgrade()
 				if(!in_array($fieldName, $foundFields))
 				{
 					print " \"".$fieldName."\" missing&hellip;";
-					Query("ALTER TABLE `".$table."` ADD `".$fieldName."` ".$wantedType);
+					Query("ALTER TABLE `".$table."` ADD `".$fieldName."` ".$type);
 					$changes++;
 				}
 			}
