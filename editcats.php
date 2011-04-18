@@ -11,7 +11,9 @@ if($loguser['powerlevel'] < 3)
 
 elseif($_POST['action'] == "Add")
 {
-	$qCategory = "insert into categories (name, minpower) values ('".justEscape($_POST['name'])."', ".(int)$_POST['minpower'].")";
+	$newID = FetchResult("SELECT id+1 FROM categories WHERE (SELECT COUNT(*) FROM categories c2 WHERE c2.id=categories.id+1)=0 ORDER BY id ASC LIMIT 1");
+	if($newID < 1) $newID = 1;
+	$qCategory = "insert into categories (id, name, corder, minpower) values (".$newID.", '".justEscape($_POST['name'])."', ".(int)$_POST['corder'].", ".(int)$_POST['minpower'].")";
 	$rCategory = Query($qCategory);
 	Alert("Category added.","Notice");
 } elseif($_POST['action'] == "Remove")
@@ -40,7 +42,7 @@ elseif($_POST['action'] == "Yes, do as I say.")
 }
 elseif($_POST['action'] == "Edit")
 {
-	$qCategory = "update categories set name='".justEscape($_POST['name'])."', minpower=".(int)$_POST['minpower']." where id=".(int)$_POST['cid']." limit 1";
+	$qCategory = "update categories set name='".justEscape($_POST['name'])."', corder=".(int)$_POST['corder'].", minpower=".(int)$_POST['minpower']." where id=".(int)$_POST['cid']." limit 1";
 	$rCategory = Query($qCategory);
 	Alert("Category edited.","Notice");
 }
@@ -61,6 +63,7 @@ if(NumRows($rCategories))
 			<form action=\"editcats.php\" method=\"post\">
 				<input type=\"text\" name=\"name\" class=\"width50\" value=\"{0}\" />
 				{1}
+				<input type=\"text\" name=\"corder\" size=\"2\" value=\"{3}\" />
 				<input type=\"submit\" name=\"action\" value=\"Edit\" />
 				<input type=\"submit\" name=\"action\" value=\"Remove\" />
 				<input type=\"hidden\" name=\"cid\" value=\"{2}\" />
@@ -68,7 +71,7 @@ if(NumRows($rCategories))
 		</div>
 ",	htmlval($category['name']),
 	MakeSelect("minpower",$category['minpower'],$levels),
-	$category['id']);
+	$category['id'], $category['corder']);
 	}
 }
 
@@ -84,6 +87,7 @@ write(
 			<div class=\"errorc left cell1\" style=\"clear: both; overflow: auto;\">
 				<input type=\"text\" name=\"name\" class=\"width50\" />
 				{1}
+				<input type=\"text\" name=\"corder\" size=\"2\" value=\"0\" />
 				<input type=\"submit\" name=\"action\" value=\"Add\" />
 			</div>
 		</div>
