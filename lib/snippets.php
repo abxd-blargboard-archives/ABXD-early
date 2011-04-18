@@ -3,6 +3,29 @@
 
 include_once("write.php");
 
+function OptimizeLayouts($text)
+{
+	$bucket = array();
+
+	// Save the tags in the temp array and remove them from where they were originally
+	$regexps = array("@<style(.*?)</style(.*?)>(\r?\n?)@si", "@<link(.*?)>(\r?\n?)@si", "@<script(.*?)</script(.*?)>(\r?\n?)@si");
+	foreach ($regexps as $regexp)
+	{
+		preg_match_all($regexp, $text, $temp, PREG_PATTERN_ORDER);
+		$text = preg_replace($regexp, "", $text);
+		$bucket = array_merge($bucket, $temp[0]);
+	}
+
+	// Remove duplicates
+	$bucket = array_unique($bucket);
+
+	// Put the tags back
+	$newStyles = "<!-- head tags -->".implode("", $bucket)."<!-- /head tags -->";
+	$text = str_replace("</head>", $newStyles."</head>", $text);
+	$text = str_replace("<recaptcha", "<script", $text);
+	return $text;
+}
+
 function usectime()
 {
 	$t=gettimeofday();
@@ -33,15 +56,18 @@ function HisHer($user)
 
 function DoFooter($buffer)
 {
-	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title, $dblink, $footerExtensions;
-	
+	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title, $dblink, $ajax, $footerButtons, $footerExtensionsA, $footerExtensionsB;
+
 	if(!$noFooter)
 	{
+		//if(function_exists("runBucket")) runBucket("footerButtons");
+		
 		$footer = format(
 "
 		<div class=\"footer\">
-			AcmlmBoard XD by Kawa, Arbe, Mega-Mario et al &mdash; version 2.1<br />
-			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br/>
+			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2<span style=\"opacity: 0.5;\">.2</span><br />
+			By Kawa, Mega-Mario, Nikolaj, et al<br />
+			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br />
 			Page rendered in {0} seconds with {1}.<br />
 
 			<a href=\"http://validator.w3.org/check?uri=referer\">
@@ -53,21 +79,24 @@ function DoFooter($buffer)
 			<a href=\"http://helmet.kafuka.org/thepile/ABXD\">
 				<img src=\"img/getabxd.png\" alt=\"Get a copy for yourself\" />
 			</a>
-
+			{2}
 		</div>
 	</div>
 </body>
 </html>
-",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"));
-		runBucket("footers");	
+",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"), $footerButtons);
+		//if(function_exists("runBucket")) runBucket("footers");
 	}
-	
+			
 	$boardTitle = $boardname;
 	if($title != "")
 		$boardTitle .= " &raquo; ".$title;
-	
-	$raw = $buffer.$footerExtensions.$footer;
+
+	$raw = $buffer.$footerExtensionsA.$footer.$footerExtensionsB;
 	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
+	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
+	if(!$ajax)
+		$raw = OptimizeLayouts($raw);
 
 	mysql_close($dblink);
 
@@ -93,8 +122,8 @@ function DoFooter($buffer)
 		"new-blocklevel-tags"=>"video",
 	);
 
-	if(function_exists(OptimizeLayouts))
-		$raw = OptimizeLayouts($raw);
+	//if(function_exists(OptimizeLayouts))
+	//	$raw = OptimizeLayouts($raw);
 	$clean = tidy_repair_string($raw, $tidyConfig);
 
 	$clean = str_replace("class=\"required", "required=\"required\" class=\"", $clean);
@@ -195,9 +224,11 @@ function UserLink($user, $field = "id")
 	}
 	
 	$levels = array(-1 => " [banned]", 0 => "", 1 => " [local mod]", 2 => " [full mod]", 3 => " [admin]", 4 => " [root]", 5 => " [sys]");
-
-	return format("<a href=\"profile.php?id={0}\"><span{1} title=\"{3} ({0}){4}\">{2}</span></a>", $user[$field], $classing, $fname, $user['name'], $levels[$user['powerlevel']]);
-	//return "<a href=\"profile.php?id=".$user[$field]."\"".$classing.">".$fname."</a>";
+	
+	$bucket = "userLink"; include('lib/pluginloader.php');
+	
+	$userlink = format("<a href=\"profile.php?id={0}\"><span{1} title=\"{3} ({0}){4}\">{2}</span></a>", $user[$field], $classing, $fname, str_replace(" ", "&nbsp;", $user['name']), $levels[$user['powerlevel']]);
+	return $userlink;
 }
 
 function CanMod($userid, $fid)
@@ -221,15 +252,28 @@ function MakeCrumbs($path, $links)
 	{
 		$link = str_replace("&","&amp;",$link);
 		if($link)
-			$crumbs .= "<a href=\"".$link."\">".$text."</a> &raquo; ";
+		{
+			$sep = strpos($text, '<TAGS>');
+			if ($sep === FALSE)
+			{
+				$title = $text;
+				$tags = '';
+			}
+			else
+			{
+				$title = substr($text, 0, $sep);
+				$tags = ' '.substr($text, $sep+6);
+			}
+			$crumbs .= "<a href=\"".$link."\">".$title."</a>".$tags." &raquo; ";
+		}
 		else
-			$crumbs .= $text. " &raquo; ";
+			$crumbs .= str_replace('<TAGS>', '', $text). " &raquo; ";
 	}
 	$crumbs = substr($crumbs, 0, strlen($crumbs) - 8);
 	
 	write(
 "
-<div class=\"margin outline cell2\">
+<div class=\"margin\">
 	<div style=\"float: right;\">
 		<ul class=\"pipemenu smallFonts\">
 			{0}
@@ -255,7 +299,7 @@ function DoPrivateMessageBar()
 
 	if($loguserid)
 	{
-		$qUnread = "select count(*) from pmsgs where userto = ".$loguserid." and msgread=0";
+		$qUnread = "select count(*) from pmsgs where userto = ".$loguserid." and msgread=0 and drafting=0";
 		$unread= FetchResult($qUnread);
 		$content = "";
 		if($unread)
@@ -283,9 +327,10 @@ function DoPrivateMessageBar()
 ",	$content != "" ? "also" : "", $loguserid);		
 		}
 
-		write(
+		if($content)
+			write(
 "
-	<div {0} class=\"outline margin cell1 smallFonts\">
+	<div {0} class=\"outline margin header0 cell0 smallFonts\">
 		{1}
 	</div>
 ", $pmNotice, $content);
@@ -300,7 +345,7 @@ function DoSmileyBar($taname = "text")
 	
 	write(
 "
-	<div class=\"PoRT margin\" style=\"width: 180px;\">
+	<div class=\"PoRT margin\" style=\"width: 90%\">
 		<div class=\"errort\">
 			<strong>Smilies</strong>
 		</div>
@@ -326,7 +371,7 @@ function DoSmileyBar($taname = "text")
 function DoPostHelp()
 {
 ?>
-	<div class="PoRT margin" style="width: 180px;">
+	<div class="PoRT margin" style="width: 90%;">
 		<div class="errort"><strong>Post help</strong></div>
 		<div class="errorc left cell0">
 			<button class="expander" id="postHelpExpand" onclick="expandPostHelp();">&#x25BC;</button>
@@ -343,31 +388,26 @@ function DoPostHelp()
 				[spoiler=&hellip;]&hellip;[/spoiler] <br />
 				[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
 				[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, irc, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
+				<?php $bucket = "postHelpPresentation"; include("./lib/pluginloader.php"); ?>
 				<br />
 				<h4>Links</h4>
 				[img]http://&hellip;[/img] &mdash; insert image <br />
 				[url]http://&hellip;[/url] <br />
 				[url=http://&hellip;]&hellip;[/url] <br />
 				>>&hellip; &mdash; link to post by ID <br />
-				[trope]&hellip;[/trope] &mdash; link to trope <br />
-				[trope=&hellip;]&hellip;[/trope] <br/>
-				[wiki]&hellip;[/wiki] &mdash; link to Wikipedia <br/>
-				[wiki=&hellip;]&hellip;[/wiki] <br/>
 				[user=##] &mdash; link to user's profile by ID <br />
+				<?php $bucket = "postHelpLinks"; include("./lib/pluginloader.php"); ?>
 				<br />
 				<h4>Quotations</h4>
 				[quote]&hellip;[/quote] &mdash; untitled quote<br />
 				[quote=&hellip;]&hellip;[/quote] &mdash; "Posted by &hellip;"<br />
 				[quote="&hellip;" id="&hellip;"]&hellip;[/quote] &mdash; "Post by &hellip;" with link by post ID<br />
+				<?php $bucket = "postHelpQuotations"; include("./lib/pluginloader.php"); ?>
 				<br />
 				<h4>Embeds</h4>
-				[youtube]&hellip;[/youtube] &mdash; video ID only please <br />
-				[video]&hellip;[/video] &mdash; requires URL to mp4 or ogv file <br />
-				[tindeck]&hellip;[/tindeck] &mdash; link to a song on <a href="http://tindeck.com">Tindeck</a>, song ID only <br />
-				[swf ## ##]&hellip;[/swf] &mdash; insert SWF clip<br />
-				[svg ## ##]&hellip;[/svg] &mdash; insert SVG image<br />
-				<br />
+				<?php $bucket = "postHelpEmbeds"; include("./lib/pluginloader.php"); ?>
 			</div>
+			<br />
 			Most plain HTML also allowed
 		</div>
 	</div>
@@ -379,7 +419,7 @@ function OnlineUsers($forum = 0)
 	$forumClause = "";
 	$browseLocation = " online";
        
-	if ($forum)
+	if($forum)
 	{
 		$forumClause = " and lastforum=".$forum;
 		$forumName = FetchResult("SELECT title FROM forums WHERE id=".$forum);
@@ -389,12 +429,13 @@ function OnlineUsers($forum = 0)
 	$rOnlineUsers = Query("select id,name,displayname,sex,powerlevel,lastactivity,lastposttime,minipic from users where (lastactivity > ".(time()-300)." or lastposttime > ".(time()-300).")".$forumClause." order by name");
 	$onlineUsers = "";
 	$onlineUserCt = 0;
-	while($onlineUser = Fetch($rOnlineUsers))
+	while($user = Fetch($rOnlineUsers))
 	{
-		$loggedIn = ($onlineUser['lastpost'] <= $onlineUser['lastview']);
-		$userLink = UserLink($onlineUser);
-		if($onlineUser['minipic'])
-			$userLink = "<img src=\"".$onlineUser['minipic']."\" alt=\"\" class=\"minipic\" />&nbsp;".$userLink;
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
+		$loggedIn = ($user['lastpost'] <= $user['lastview']);
+		$userLink = UserLink($user);
+		if($user['minipic'])
+			$userLink = "<a href=\"profile.php?id=".$user['id']."\"><img src=\"".$user['minipic']."\" alt=\"\" class=\"minipic\"></a>&nbsp;".$userLink;
 		if(!$loggedIn)
 			$userLink = "(".$userLink.")";
 		$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;
