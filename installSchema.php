@@ -4,7 +4,7 @@ $genericInt = "int(11) NOT NULL DEFAULT '0'";
 $smallerInt = "int(8) NOT NULL DEFAULT '0'";
 $bool = "tinyint(1) NOT NULL DEFAULT '0'";
 $notNull = " NOT NULL DEFAULT ''";
-$text = "text NOT NULL";
+$text = "text NULL"; //NOT NULL breaks in certain versions/settings.
 $var128 = "varchar(128)".$notNull;
 $var256 = "varchar(256)".$notNull;
 $var1024 = "varchar(1024)".$notNull;
@@ -29,6 +29,7 @@ $tables = array
 			"id" => $AI,
 			"name" => $var256,
 			"minpower" => $smallerInt,
+			"corder" => $smallerInt,
 		),
 		"special" => $keyID
 	),
@@ -61,6 +62,7 @@ $tables = array
 		),
 		"special" => $keyID.", key `catid` (`catid`)"
 	),
+/*
 	"groupaffiliations" => array
 	(
 		"fields" => array
@@ -82,6 +84,7 @@ $tables = array
 		),
 		"special" => $keyID
 	),
+*/
 	"guests" => array
 	(
 		"fields" => array
@@ -136,6 +139,7 @@ $tables = array
 	(
 		"fields" => array
 		(
+			"version" => $genericInt,
 			"views" => $genericInt,
 			"hotcount" => $genericInt,			
 			"porabox" => $text,
@@ -307,7 +311,7 @@ $tables = array
 			"lastpostid" => $genericInt,
 			"closed" => $bool,
 			"sticky" => $bool,
-			"poll" => $bool,
+			"poll" => $genericInt,
 		),
 		"special" => $keyID.", key `forum` (`forum`), key `user` (`user`), key `sticky` (`sticky`), key `pollid` (`poll`), key `lastpostdate` (`lastpostdate`)"
 	),
@@ -318,7 +322,8 @@ $tables = array
 			"id" => $genericInt,
 			"thread" => $genericInt,
 			"date" => $genericInt,
-		)
+		),
+		"special" => "primary key (`id`, `thread`)"
 	),
 	"uploader" => array
 	(
@@ -328,6 +333,7 @@ $tables = array
 			"filename" => "varchar(512)".$notNull,
 			"description" => $var1024,
 			"user" => $genericInt,
+			"date" => $genericInt,
 			"private" => $bool,
 		),
 		"special" => $keyID
@@ -340,6 +346,7 @@ $tables = array
 			"uid" => $genericInt,
 			"cid" => $genericInt,
 			"text" => $text,
+			"date" => $genericInt,
 		),
 		"special" => $keyID
 	),
@@ -351,6 +358,7 @@ $tables = array
 			"name" => "varchar(32)".$notNull,
 			"displayname" => "varchar(32)".$notNull,
 			"password" => $var256,
+			"pss" => "varchar(16)".$notNull,
 			"powerlevel" => $smallerInt,
 			"posts" => $genericInt,
 			"regdate" => $genericInt,
