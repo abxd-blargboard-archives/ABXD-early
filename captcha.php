@@ -3,7 +3,7 @@
  *
  *	--->	http://www.phpcaptcha.org	<---
  *
- * and extract it into a securimage folder.
+ * and extract it into a /securimage folder.
  */
 
 include 'securimage/securimage.php';

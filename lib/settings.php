@@ -10,7 +10,7 @@ $autoLockMonths = 4;
 $warnMonths = 0;
 $customTitleThreshold = 100;
 $viewcountInterval = 10000;
-$overallTidy = 1;
+$overallTidy = 0;
 $noAjax = 0;
 $noGuestLayouts = 1;
 $theWord = "";
@@ -18,8 +18,10 @@ $systemUser = 0;
 $minWords = 2;
 $minSeconds = 30;
 $uploaderCap = 32;
-$personalCap = 4;
+$uploaderMaxFileSize = 2;
 $uploaderWhitelist = "png gif jpg jpeg txt css zip rar 7z ogg mp3 swf ogv mp4 webm svg";
+$mailResetFrom = "noreply@example.net";
+$lastPostsTimeLimit = 72;
 
 //Hacks
 $hacks['forcetheme'] = "";
@@ -35,4 +37,9 @@ This has to be one of the [b]longest[/b] preview messages ever seen in an AcmlmB
 //Meta
 $metaDescription = "The owner of this ABXD board was too lazy to edit the description field. Kill him.";
 $metaKeywords = "abxd,acmlmboard";
+
+//RSS
+$feedname = "New ABXD Feed";
+$rssblurb = "The latest replies on the board.";
+
 ?>
