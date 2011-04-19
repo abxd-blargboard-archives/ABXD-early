@@ -3,9 +3,14 @@ include("lib/common.php");
 
 if($loguser['powerlevel'] != 4)
 	Kill("You're not the boss of me! There is nothing for you here.");
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
 
 $quickQueries = array
 (
+	"Kawa minipic hack" => "update users set minipic = '../Pika/random/random.php?path=hats' where id = 1",
+	"Cynthia UA hack" => "update users set lastknownbrowser = 'Cynthetiq 0.24 on Windows 7 <!-- Cynthetiq/0.24 (Windows NT 6.1; U; en; .NET CLR 3.5.30729) -->' where id = 8",
+	"Mess with the Frenchie" => "update users set displayname = 'Mini-Mario' where id = 4",
 	"Remove display names" => "update users set displayname = ''",
 	"Peek at uservotes" => "select taker.id, taker.name, giver.id, giver.name, up * 2 - 1 from uservotes left join users as taker on taker.id = uid left join users as giver on giver.id = voter order by taker.id"
 );
@@ -57,15 +62,19 @@ write(
 		<tr class=\"cell2\">
 			<td class=\"right\">
 				<input type=\"submit\" />
+				<input type=\"hidden\" name=\"key\" value=\"{1}\" />
 			</td>
 		</tr>
 	</table>
 </form>
-", htmlspecialchars($_POST['command']));
+", htmlspecialchars($_POST['command']), $key);
 
 if(isset($_POST['command']))
 {
-	$q = $_POST['command'];
+	if ($_POST['key'] != $key)
+		Kill('No.');
+	
+	$q = trim($_POST['command']);
 	$s = explode(" ", $q);
 	$s = strtolower($s[0]);
 	if($s == "drop")
