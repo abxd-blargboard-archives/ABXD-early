@@ -53,9 +53,10 @@ if(NumRows($rCategories))
 } else
 	Kill("Unknown category ID.");
 
-$thread['title'] = htmlspecialchars($thread['title']);
+//$thread['title'] .= " ".ParseThreadTags($thread['title']);
+$tags = ParseThreadTags($thread['title']);
+$thread['title'] = strip_tags($thread['title']);
 $title = $thread['title'];
-$thread['title'] .= " ".ParseThreadTags($thread['title']);
 
 $qViewCounter = "update threads set views=".($thread['views']+1)." where id=".$tid." limit 1";
 $rViewCounter = Query($qViewCounter);
@@ -69,34 +70,43 @@ if(isset($_GET['vote']))
 		Kill("Poll's closed!");
 	if($thread['poll'])
 	{
-		$poll = Fetch(Query("select * from poll where id=".$thread['poll']));
-		if($poll['doublevote'])
+		$vote = (int)$_GET['vote'];
+		
+		$token = hash('sha256', "{$vote},{$loguserid},{$salt}");
+		if ($token != $_GET['token'])
+			Kill("Invalid token.");
+		
+		$doublevote = FetchResult("select doublevote from poll where id=".$thread['poll']);
+		if($doublevote)
 		{
 			//Multivote.
-			$rCheck = Query("select * from pollvotes where poll=".$thread['poll']." and choice=".(int)$_GET['vote']." and user=".$loguserid);
-			if(NumRows($rCheck))
-				$rCheck = Query("delete from pollvotes where  poll=".$thread['poll']." and choice=".(int)$_GET['vote']." and user=".$loguserid);		
+			$existing = FetchResult("select count(*) from pollvotes where poll=".$thread['poll']." and choice=".$vote." and user=".$loguserid);
+			if ($existing)
+				Query("delete from pollvotes where poll=".$thread['poll']." and choice=".$vote." and user=".$loguserid);
 			else
-				$rPoll = Query("insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")");
+				Query("insert into pollvotes (poll, choice, user) values (".$thread['poll'].", ".$vote.", ".$loguserid.")");
 		}
 		else
 		{
 			//Single vote only?
 			//Remove any old votes by this user on this poll, then add a new one.
-			$rCheck = Query("select * from pollvotes where poll=".$thread['poll']." and user=".$loguserid);
-			if(NumRows($rCheck))
-				$rCheck = Query("delete from pollvotes where  poll=".$thread['poll']." and user=".$loguserid);
-			$rPoll = Query("insert into pollvotes (poll, choice, user) values (".(int)$thread['poll'].", ".(int)$_GET['vote'].", ".(int)$loguserid.")");
+			Query("delete from pollvotes where poll=".$thread['poll']." and user=".$loguserid);
+			Query("insert into pollvotes (poll, choice, user) values (".$thread['poll'].", ".$vote.", ".$loguserid.")");
 		}
 	}
 	else
 		Kill("This is not a poll.");
 }
 
+if(!$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
+	$replyWarning = " onclick=\"if(!confirm('Are you sure you want to reply to this old thread? This will move it to the top of the list. Please only do this if you have something new and relevant to share about this thread\'s topic that is not better placed in a new thread.')) return false;\"";
+if($thread['closed'])
+	$replyWarning = " onclick=\"if(!confirm('This thread is actually closed. Are you sure you want to abuse your staff position to post in a closed thread?')) return false;\"";
+
 if($loguser['powerlevel'] == -1)
 	$links .= "<li>You're banned.</li>";
 elseif(IsAllowed("makeReply", $tid) && (!$thread['closed'] || $loguser['powerlevel'] > 2))
-	$links .= "<li><a href=\"newreply.php?id=".$tid."\">Post Reply</a></li>";
+	$links .= "<li><a href=\"newreply.php?id=".$tid."\"".$replyWarning.">Post Reply</a></li>";
 elseif(IsAllowed("makeReply", $tid))
 	$links .= "<li>Thread closed.</li>";
 if(CanMod($loguserid,$forum['id']) && IsAllowed("editThread", $tid))
@@ -124,23 +134,10 @@ if($isBot)
 
 //$links = substr($links, 0, strlen($links) - 2);
 
-write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (forum)\" href=\"rss2.php?forum={0}\" />", $fid);
-write("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed (thread)\" href=\"rss2.php?thread={0}\" />", $tid);
-write(
-"
-	<div id=\"rss\" style=\"float: right;\">
-		<a href=\"rss2.php?thread={0}\"><img src=\"img/feed.png\" alt=\"RSS Feed\" title=\"RSS Feed for this thread\" /></a>
-	</div>
-", $tid);
-
 $onlineUsers = OnlineUsers($fid);
 
-write(
-"
-	<script type=\"text/javascript\">
-			window.addEventListener(\"load\",  hookUpControls, false);
-	</script>
-");
+DoPrivateMessageBar();
+
 if(!$noAjax)
 	write(
 "
@@ -150,16 +147,36 @@ if(!$noAjax)
 		onlineFID = {0};
 		window.addEventListener(\"load\",  startOnlineUsers, false);
 	</script>
-	<div class=\"header0 cell1 center outline smallFonts\" style=\"overflow: auto;\">
+", $fid, $onlineUsers);
+
+$bucket = "userBar"; include("./lib/pluginloader.php");
+if($rssBar)
+{
+	write("
+	<div style=\"float: left; width: {1}px;\">&nbsp;</div>
+	<div id=\"rss\">
+		{0}
+	</div>
+", $rssBar, $rssWidth + 4);
+}
+
+write(
+"
+	<div class=\"header0 cell1 center outline smallFonts margin\" style=\"overflow: auto;\">
 		&nbsp;
 		<span id=\"onlineUsers\">
-			{1}
+			{0}
 		</span>
 		&nbsp;
 	</div>
-", $fid, $onlineUsers);
+", $onlineUsers);
 
-DoPrivateMessageBar();
+write(
+"
+	<script type=\"text/javascript\">
+			window.addEventListener(\"load\",  hookUpControls, false);
+	</script>
+");
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
 
@@ -210,7 +227,10 @@ if($thread['poll'])
 
 			$cellClass = ($cellClass+1) % 2;
 			if($loguserid && !$thread['closed'] && IsAllowed("vote"))
-				$label = format("{0} <a href=\"thread.php?id={1}&amp;vote={2}\">{3}</a>", $pc[$pops], $thread['id'], $pops, $option['choice']);
+			{
+				$token = hash('sha256', "{$pops},{$loguserid},{$salt}");
+				$label = format("{0} <a href=\"thread.php?id={1}&amp;vote={2}&amp;token={4}\">{3}</a>", $pc[$pops], $thread['id'], $pops, $option['choice'], $token);
+			}
 			else
 				$label = format("{0} {1}", $pc[$pops], $option['choice']);
 			
@@ -281,7 +301,8 @@ if(isset($_GET['from']))
 	$from = $_GET['from'];
 else
 	if(isset($pid))
-		$from = (floor(FetchResult("select count(*) from posts where thread=".$tid." and id < ".$pid) / $ppp)) * $ppp;
+		//$from = (floor(FetchResult("select count(*) from posts where thread=".$tid." and id < ".$pid) / $ppp)) * $ppp;
+		$from = (floor(FetchResult("SELECT COUNT(*) FROM posts WHERE thread=".$tid." AND date<=".$post['date']." AND id!=".$pid) / $ppp)) * $ppp;
 	else
 		$from = 0;
 
@@ -338,6 +359,9 @@ if(NumRows($rPosts))
 {
 	while($post = Fetch($rPosts))
 	{
+		$user = $post;
+		$bucket = "userMangler"; include("./lib/pluginloader.php");
+		$post = $user;
 		//$poster = $post;
 		//$poster['id'] = $post['uid'];
 		$post['activity'] = $activity[$post['uid']];
@@ -346,7 +370,7 @@ if(NumRows($rPosts))
 	}
 }
 
-if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['powerlevel'] >= $category['minpower'] && (!$thread['closed'] || $loguser['powerlevel'] > 0))
+if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['powerlevel'] >= $category['minpower'] && (!$thread['closed'] || $loguser['powerlevel'] > 0) && !isset($replyWarning))
 {
 	//Quick reply goes here		
 	if(CanMod($loguserid, $fid))
@@ -376,22 +400,16 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 	<form action=\"newreply.php\" method=\"post\">
 		<table class=\"outline margin width75\" style=\"margin: 4px auto;\" id=\"quickreply\">
 			<tr class=\"header1\">
-				<th colspan=\"2\" onclick=\"expandTable('quickreply', this)\" style=\"cursor: pointer;\">
+				<th onclick=\"expandTable('quickreply', this)\" style=\"cursor: pointer;\">
 					Quick-E Post&trade;
 				</th>
 			</tr>
 			<tr class=\"cell0\" style=\"display: none;\">
 				<td>
-					<label for=\"text\">
-						Post
-					</label>
-				</td>
-				<td>
 					<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{3}</textarea>
 				</td>
 			</tr>
 			<tr class=\"cell2\" style=\"display: none;\">
-				<td></td>
 				<td>
 					<input type=\"submit\" name=\"action\" value=\"Post\" /> 
 					<input type=\"submit\" name=\"action\" value=\"Preview\" />
