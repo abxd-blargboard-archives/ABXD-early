@@ -6,8 +6,25 @@ if(ini_get('register_globals'))
 
 if(!is_file("lib/database.php"))
 	die("You should <a href=\"install.php\">install</a> the board database first.");
+	
+// Deslash GPC variables if we have magic quotes on
+if (get_magic_quotes_gpc())
+{
+	function AutoDeslash($val)
+	{
+		if (is_array($val))
+			return array_map('AutoDeslash', $val);
+		else if (is_string($val))
+			return stripslashes($val);
+	}
+	
+	$_REQUEST = array_map('AutoDeslash', $_REQUEST);
+	$_GET = array_map('AutoDeslash', $_GET);
+	$_POST = array_map('AutoDeslash', $_POST);
+	$_COOKIE = array_map('AutoDeslash', $_COOKIE);
+}
 
-$salt = "sAltlOlscuZdSfjdSDhfjguvDigEnfjFjfjkDH";
+include("salt.php");
 
 include("settings.php");
 include("snippets.php");
@@ -22,7 +39,7 @@ if(!isset($title))
 //WARNING: These things need to be kept in a certain order of execution.
 
 include("mysql.php");
-include("supersqlescape.php");
+//include("supersqlescape.php");
 include("feedback.php");
 
 $thisURL = $_SERVER['SCRIPT_NAME'];
@@ -59,27 +76,34 @@ if(!isset($noAutoHeader))
 
 function justEscape($text)
 {
-	if(get_magic_quotes_gpc())
-		return mysql_real_escape_string(stripslashes($text));
-	else
-		return mysql_real_escape_string($text);
+	return mysql_real_escape_string($text);
 }
 
 function deSlashMagic($text)
 {
-	if(get_magic_quotes_gpc())
-		return stripslashes($text);
-	else
-		return $text;
+	return $text;
 }
 
 //Simple version -- may expand later.
 function CheckTableBreaks($text)
 {
 	$text = strtolower($text);
-	$openers = substr_count($text, "<table") + substr_count($text, "<div");
-	$closers = substr_count($text, "</table>") + substr_count($text, "</div>");
-	return ($openers != $closers);
+//	$openers = substr_count($text, "<table") + substr_count($text, "<div") + substr_count($text, "[quote");
+//	$closers = substr_count($text, "</table>") + substr_count($text, "</div>") + substr_count($text, "[/quote]");
+//	return ($openers != $closers);
+	$tabO = substr_count($text, "<table");
+	$tabC = substr_count($text, "</table>");
+	$divO = substr_count($text, "<div");
+	$divC = substr_count($text, "</div>");
+	$quoO = substr_count($text, "[quote");
+	$quoC = substr_count($text, "[/quote]");
+	$spoO = substr_count($text, "[spoiler");
+	$spoC = substr_count($text, "[/spoiler]");
+	if($tabO != $tabC) return true;
+	if($divO != $divC) return true;
+	if($quoO != $quoC) return true;
+	if($spoO != $spoC) return true;
+	return false;
 }
 
 function htmlval($text)
@@ -126,7 +150,7 @@ function ParseThreadTags(&$title)
 	foreach($matches[1] as $tag)
 	{
 		$title = str_replace("[".$tag."]", "", $title);
-		$tag = strtolower($tag);
+		$tag = htmlentities(strip_tags(strtolower($tag)));
 		
 		//Start at a hue that makes "18" red.
 		$hash = -105;
@@ -155,9 +179,26 @@ function cdate($format, $date = 0)
 	return gmdate($format, strtotime($timeOffset, $date));
 }
 
+function GetFullURL()
+{
+	$pageURL = 'http';
+	if ($_SERVER["HTTPS"] == "on")
+		$pageURL .= "s";
+	$pageURL .= "://";
+	
+	if ($_SERVER["SERVER_PORT"] != "80")
+		$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+	else
+		$pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+
+	return $pageURL;
+}
+
 function Report($stuff, $hidden = 0)
 {
-	$here = "http://helmet.kafuka.org/nikoboard";
+	//$here = "http://helmet.kafuka.org/nikoboard";
+	$full = GetFullURL();
+	$here = substr($full, 0, strrpos($full, "/"));
 	Query("insert into reports (time,text,hidden) values (".time().", '".justEscape(str_replace("#HERE#", $here, $stuff))."', ".$hidden.")");
 	Query("delete from reports where time < ".(time() - (60*60*24*30)));
 }
@@ -274,6 +315,49 @@ function SendSystemPM($to, $message, $title)
 	print "PM sent.";
 }
 
-include("write.php");
+function Shake()
+{
+	$cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRQSTUVWXYZ0123456789";
+	$salt = "";
+	$chct = strlen($cset) - 1;
+	while (strlen($salt) < 16)
+		$salt .= $cset[mt_rand(0, $chct)];
+	return $salt;
+}
 
+function IniValToBytes($val)
+{
+    $val = trim($val);
+    $last = strtolower($val[strlen($val)-1]);
+    switch($last)
+    {
+        case 'g':
+            $val *= 1024;
+        case 'm':
+            $val *= 1024;
+        case 'k':
+            $val *= 1024;
+    }
+
+    return $val;
+}
+
+function BytesToSize($size, $retstring = '%01.2f&nbsp;%s')
+{
+	$sizes = array('B', 'KiB', 'MiB');
+	$lastsizestring = end($sizes);
+	foreach($sizes as $sizestring)
+	{
+		if($size < 1024)
+			break;
+		if($sizestring != $lastsizestring)
+			$size /= 1024;
+	}
+	if($sizestring == $sizes[0])
+		$retstring = '%01d %s'; // Bytes aren't normally fractional
+	return sprintf($retstring, $size, $sizestring);
+}
+
+include("write.php");
+$bucket = "init"; include('lib/pluginloader.php');
 ?>
