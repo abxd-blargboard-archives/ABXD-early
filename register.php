@@ -4,9 +4,7 @@
 
 $haveSecurimage = is_file("securimage/securimage.php");
 if($haveSecurimage)
-{
 	session_start();
-}
 
 $noAutoHeader = TRUE;
 include("lib/common.php");
@@ -14,16 +12,6 @@ include("lib/common.php");
 
 $backtomain = "<br /><a href=\"./\">Back to main</a> or <a href=\"register.php\">try again</a>.";
 $sexes = array("Male","Female","N/A");
-
-function CheckProxy()
-{
-	global $backtomain;
-	$f=@fopen("http://".$_SERVER['REMOTE_ADDR']."/","r");
-	$d=@fread($f,4096);
-	if(strpos($d,"Apache is working on your cPanel"))
-		Kill("You appear to be connecting from an open proxy server. If that is not the case, stop any HTTP daemons running on port 80 and retry.".$backtomain);
-	@fclose($f);
-}
 
 if(!isset($_POST['action']))
 {
@@ -89,7 +77,8 @@ if(!isset($_POST['action']))
 					<label for=\"tw\">The word</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 98%;\"  class=\"required\" />
+					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 80%;\"  class=\"required\" />
+					<img src=\"img/icons/icon5.png\" title=\"It's in the FAQ. Read it carefully and you'll find out what the word is.\" alt=\"[?]\" />
 				</td>
 			</tr>
 ");
@@ -150,8 +139,6 @@ elseif($_POST['action'] == "Register")
 			break;
 	}
 
-	//CheckProxy();
-
 	$qIP = "select lastip from users where lastip='".$_SERVER['REMOTE_ADDR']."'";
 	$rIP = Query($qIP);
 	$ipKnown = NumRows($rIP);
@@ -183,12 +170,14 @@ elseif($_POST['action'] == "Register")
 		Kill($err);
 	}
 
-	$sha = hash("sha256", $_POST['pass'].$salt, FALSE);
+	$newsalt = Shake();
+	$sha = hash("sha256", $_POST['pass'].$salt.$newsalt, FALSE);
+	$uid = FetchResult("SELECT id+1 FROM users WHERE (SELECT COUNT(*) FROM users u2 WHERE u2.id=users.id+1)=0 ORDER BY id ASC LIMIT 1");
+	if($uid < 1) $uid = 1;
 
-	$qUsers = "insert into users (name, password, regdate, lastactivity, lastip, email, sex) values ('".justEscape($_POST['name'])."', '".$sha."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].")";
+	$qUsers = "insert into users (id, name, password, pss, regdate, lastactivity, lastip, email, sex, theme) values (".$uid.", '".justEscape($_POST['name'])."', '".$sha."', '".$newsalt."', ".time().", ".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($_POST['email'])."', ".(int)$_POST['sex'].", '".$themeFiles[0]."')";
 	$rUsers = Query($qUsers);
 
-	$uid = mysql_insert_id();
 	if($uid == 1)
 		Query("update users set powerlevel = 4 where id = 1;");
 
@@ -202,7 +191,7 @@ elseif($_POST['action'] == "Register")
 		$user = Fetch($rUser);
 
 		$logdata['loguserid'] = $user['id'];
-		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt, FALSE);
+		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt.$newsalt, FALSE);
 		$logdata_s = base64_encode(serialize($logdata));
 
 		setcookie("logdata", $logdata_s, 2147483647);
