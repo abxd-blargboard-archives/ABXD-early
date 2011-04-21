@@ -8,13 +8,30 @@ include_once("filters.php");
 function LoadSmilies($byOrder = FALSE)
 {
 	global $smilies, $smiliesOrdered;
+	$smiliesR = array
+	(
+		')' => '\)',
+		'(' => '\(',
+		'/' => '\/',
+		'|' => '\|',
+		'^' => '\^',
+		'?' => '\?',
+		'[' => '\[',
+		']' => '\]',
+		'.' => '\.',
+	);
 	if($byOrder)
 	{
 		if(isset($smiliesOrdered))
 			return;
 		$rSmilies = Query("select * from smilies order by id asc");
 		$smiliesOrdered = array();
-		while($smiliesOrdered[] = Fetch($rSmilies));
+		while($smiley = Fetch($rSmilies))
+		{
+			//foreach ($smiliesR as $old => $new)
+			//	$smiley['code'] = str_replace($old, $new, $smiley['code']);
+			$smiliesOrdered[] = $smiley;
+		}
 	}
 	else
 	{
@@ -22,8 +39,23 @@ function LoadSmilies($byOrder = FALSE)
 			return;
 		$rSmilies = Query("select * from smilies order by length(code) desc");
 		$smilies = array();
-		while($smilies[] = Fetch($rSmilies));
+		while($smiley = Fetch($rSmilies))
+		{
+			foreach ($smiliesR as $old => $new)
+				$smiley['code'] = str_replace($old, $new, $smiley['code']);
+			$smilies[] = $smiley;
+		}
 	}
+}
+
+function ApplySmilies($text)
+{
+	global $smilies;
+	foreach($smilies as $s)
+	{
+		$text = preg_replace('/'.$s['code'].'/i', "<img src=\"img/smilies/".htmlentities($s['image'])."\" />", $text);
+	}
+	return $text;
 }
 
 function LoadBlocklayouts()
@@ -115,30 +147,6 @@ function MakeSpoiler($match)
 }
 */
 
-function MakeFlash($match)
-{
-	global $flashloops;
-	$flashloops++;
-	return format(
-"
-	<div class=\"swf\" style=\"width: {0}px;\">
-		<div class=\"swfmain\" id=\"swf{4}main\" style=\"width: {1}px; height: {2}px;\">
-		</div>
-		<div class=\"swfcontrol\">
-			<span class=\"swfbuttonoff\" id=\"swf{4}play\" onclick=\"startFlash({4}); return false;\">
-				&#x25BA;
-			</span>
-			<span class=\"swfbuttonon\" id=\"swf{4}stop\" onclick=\"stopFlash({4}); return false;\">
-				&#x25A0;
-			</span>
-			<span class=\"swfurl\" id=\"swf{4}url\">
-				{3}
-			</span>
-		</div>
-	</div>
-", $match[1] + 4, $match[1], $match[2], $match[3], $flashloops);
-}
-
 function GeshiCallback($matches)
 {
 	$geshi = new GeSHi(trim($matches[1]), "csharp", null);
@@ -153,41 +161,6 @@ function GeshiCallbackL($matches)
 	$geshi->set_header_type(GESHI_HEADER_NONE);
 	$geshi->enable_classes();
 	return format("<div class=\"geshi\">{0}</div>", str_replace("\n", "", $geshi->parse_code()));
-}
-
-function MakeWikipedia($matches)
-{
-	$wikiTitle = $matches[2];
-	$escaped = str_replace(" ", "_", $matches[1]);
-	return format("[url=http://en.wikipedia.org/wiki/{0}]{1}[/url]", $escaped, $wikiTitle);
-}
-
-function MakeShortWikipedia($matches)
-{
-	$wikiTitle = $matches[1];
-	$escaped = str_replace(" ", "_", $wikiTitle);
-	return format("[url=http://en.wikipedia.org/wiki/{0}]{1}[/url]", $escaped, $wikiTitle);
-}
-
-function MakeTrope($matches)
-{
-	$tropeTitle = $matches[1];
-	$tropeText = $matches[2];
-	return format("[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/{0}]{1}[/url]", $tropeTitle, $tropeText);
-}
-
-function MakeShortTrope($matches)
-{
-	$tropeTitle = $matches[1];
-	$tropeText = "";
-	for($i = 0; $i < strlen($tropeTitle); $i++)
-	{
-		if(ctype_upper($tropeTitle[$i]))
-			$tropeText .= " ";
-		$tropeText .= $tropeTitle[$i];
-	}
-	$tropeText = trim($tropeText);
-	return format("[url=http://tvtropes.org/pmwiki/pmwiki.php/Main/{0}]{1}[/url]", $tropeTitle, $tropeText);
 }
 
 function MakeUserLink($matches)
@@ -234,9 +207,10 @@ function GetSyndrome($activity)
 	return $soFar;
 }
 
+$text = "";
 function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 {
-	global $smilies;
+	global $smilies, $text;
 	LoadSmilies();
 
 	$s = $postText; //stripslashes($postText);
@@ -244,11 +218,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 
 	$s = preg_replace_callback("'\[source=(.*?)\](.*?)\[/source\]'si", "GeshiCallbackL", $s);
 	$s = preg_replace_callback("'\[source\](.*?)\[/source\]'si", "GeshiCallback", $s);
-
-	$s = preg_replace_callback("'\[trope=(.*?)\](.*?)\[/trope\]'si", "MakeTrope", $s);
-	$s = preg_replace_callback("'\[trope\](.*?)\[/trope\]'si", "MakeShortTrope", $s);
-	$s = preg_replace_callback("'\[wiki=(.*?)\](.*?)\[/wiki\]'si", "MakeWikipedia", $s);
-	$s = preg_replace_callback("'\[wiki\](.*?)\[/wiki\]'si", "MakeShortWikipedia", $s);
 
 	$s = preg_replace_callback("'\[user=([0-9]+)\]'si", "MakeUserLink", $s);
 
@@ -262,19 +231,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 					'\''."<code class=\"Code block\">".'\''
 					.'.str_replace($list,$list2,\'\\1\').\'</code>\'',$s);
 
-
-    //[blackhole89] - [svg] tag
-    $svgin="'<?xml version=\"1.0\"?>"
-          ."<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
-	  ."\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"
-	  ."<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"\\1\" height=\"\\2\" onload=\"InitSMIL(evt)\">'";
-    $svgout="'</svg>'";
-    $svglist1 = array("\\\"","\\\\","\\'");
-    $svglist2 = array("\"","\\","\'");
-    $s=preg_replace("'\[svg ([0-9]+) ([0-9]+)\](.*?)\[/svg\]'sie",
-       '\''."<embed src=\"data:image/svg+xml;base64,"
-      .'\''.".base64_encode($svgin.".'str_replace($svglist1,$svglist2,\'\\3\')'.".$svgout).".'"'
-      ."\\\" type=\\\"image/svg+xml\\\" width=".'\'\\1\' height=\'\\2\''." />\"",$s);
 
 	$s = preg_replace("'\[b\](.*?)\[/b\]'si","<strong>\\1</strong>", $s);
 	$s = preg_replace("'\[i\](.*?)\[/i\]'si","<em>\\1</em>", $s);
@@ -293,7 +249,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 		$s = str_replace("\n","<br />", $s);
 
 	//Blacklisted tags
-	$badTags = array('script','iframe','frame','blink','textarea','noscript','meta','xmp','plaintext');
+	$badTags = array('script','iframe','frame','blink','textarea','noscript','meta','xmp','plaintext','marquee','embed','object');
 	foreach($badTags as $tag)
 	{
 		$s = preg_replace("'<$tag(.*?)>'si", "&lt;$tag\\1>" ,$s);
@@ -311,7 +267,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("'lemonparty.com'si","www.youtube.com/watch?v=EK2tWVj6lXw", $s);
 	$s = preg_replace("'meatspin.com'si","www.youtube.com/watch?v=2iveTJXcp6k", $s);
 
-	$s = preg_replace("@(ba|Ban)?(n)?( )?Acmlmboard (1.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
+	$s = preg_replace("@(\ba|\Ban)?(n)?( )?Acmlmboard (1\.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
 
 
 	//Various other stuff
@@ -324,10 +280,17 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("/<([^>]+)bonw+s*=s*'[^>]+'/Uis", "<$1", $s);
 	$s = preg_replace('/<([^>]+)bonw+s*=s*[^>s]+/i', "<$1", $s);
 	*/
-	$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error");
-	foreach($onEvents as $onEvent)
-		$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
-
+	//$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error", "scroll");
+	//foreach($onEvents as $onEvent)
+	//	$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
+	/*
+	$s = str_replace("on", "&#x6F;&#x6E;", $s);
+	$s = str_replace("On", "&#x4F;&#x6E;", $s);
+	$s = str_replace("oN", "&#x6F;&#x4E;", $s);
+	$s = str_replace("ON", "&#x4F;&#x4E;", $s);
+	*/
+	$s = preg_replace("@(on)([^<>]+?)=@si", "$2=", $s);
+	
 	$s = preg_replace("'-moz-binding'si"," -mo<em></em>z-binding", $s);
 	$s = preg_replace("'filter:'si","filter<em></em>:>", $s);
 	$s = preg_replace("'javascript:'si","javascript<em></em>:>", $s);
@@ -337,30 +300,20 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = str_replace("[/spoiler]","</div></div>", $s);
 
 	$s = preg_replace("'\[url\](.*?)\[/url\]'si","<a href=\"\\1\">\\1</a>", $s);
+	$s = preg_replace("'\[url=[\'\"]?(.*?)[\'\"]?\](.*?)\[/url\]'si","<a href=\"\\1\">\\2</a>", $s);
 	$s = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si","<a href=\"\\1\">\\2</a>", $s);
 	$s = preg_replace("'\[img\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\">", $s);
 	$s = preg_replace("'\[img=(.*?)\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\\2\" title=\"\\2\">", $s);
 
-	$s = preg_replace_callback("'\[swf ([0-9]+) ([0-9]+)\](.*?)\[/swf\]'si", "MakeFlash", $s);
-
-	//--with both object AND embed
-	$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param><embed src=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\" type=\"application/x-shockwave-flash\" allowscriptaccess=\"never\" allowfullscreen=\"false\" width=\"425\" height=\"344\"></embed></object>", $s);
-	//--with only object (XHTML1/HTML401 Strict)
-	//$s = preg_replace("'\[youtube\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param></object>", $s);
-
-	$s = preg_replace("'\[youtube/loop\](.*?)\[/youtube\]'si","<object width=\"425\" height=\"344\"><param name=\"movie\" value=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1&amp;loop=1\"></param><param name=\"allowFullScreen\" value=\"true\"></param><param name=\"allowscriptaccess\" value=\"never\"></param><embed src=\"http://www.youtube.com/v/\\1&amp;hl=en&amp;fs=1&amp;loop=1\" type=\"application/x-shockwave-flash\" allowscriptaccess=\"never\" allowfullscreen=\"false\" width=\"425\" height=\"344\"></embed></object>", $s);
-
-	$s = preg_replace("'\[video\](.*?)\[/video\]'si","<video src=\"\\1\" width=\"425\" height=\"344\"  controls=\"controls\">Video not supported &mdash; <a href=\"\\1\">download</a></video>", $s);
-
-	//<a href="http://tindeck.com/listen/givy"><img src="http://tindeck.com/image/givy/stats.png"border=0></a>
-	$s = preg_replace("'\[tindeck\](.*?)\[/tindeck\]'si", "<a href=\"http://tindeck.com/listen/\\1\"><img src=\"http://tindeck.com/image/\\1/stats.png\" alt=\"Tindeck\" /></a>", $s);
+	$s = EatThatPork($s);
 
 	$s =  str_replace("[quote]","<blockquote><div><hr />", $s);
 	$s =  str_replace("[/quote]","<hr /></div></blockquote>", $s);
 	$s = preg_replace("'\[quote=\"(.*?)\" id=\"(.*?)\"\]'si","<blockquote><div><small><i>Posted by <a href=\"thread.php?pid=\\2#\\2\">\\1</a></i></small><hr />", $s);
 	$s = preg_replace("'\[quote=(.*?)\]'si","<blockquote><div><small><i>Posted by \\1</i></small><hr />", $s);
 	$s = preg_replace("'\[reply=\"(.*?)\"\]'si","<blockquote><div><small><i>Sent by \\1</i></small><hr />", $s);
-	//$s = preg_replace("'\[reply=\"(.*?)\" id=\"(.*?)\"\]'si","<blockquote><div><small><i>Sent by \\1</i></small><hr />", $s);
+
+	$bucket = "bbCode"; include("./lib/pluginloader.php");
 
 	$s = preg_replace_callback("@(href|src)\s*=\s*\"([^\"]+)\"@si", "FilterJS", $s);
 	$s = preg_replace_callback("@(href|src)\s*=\s*'([^']+)'@si", "FilterJS", $s);
@@ -373,6 +326,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	//Smilies
 	if(!$noSmilies)
 	{
+		//$s = ApplySmilies($s);
 		for($i = 0; $i < count($smilies); $i++)
 		{
 			$preg_special = array("\\","^","$",".","*","+","?","|","(",")","[","]","{","}","@");
@@ -398,6 +352,8 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 
 function ApplyTags($text, $tags)
 {
+	if(!stristr($text, "&"))
+		return $text;
 	$s = $text;
 	foreach($tags as $tag => $val)
 		$s = str_replace("&".$tag."&", $val, $s);
@@ -408,9 +364,14 @@ function ApplyTags($text, $tags)
 	return $s;
 }
 
+$sideBarStuff = "";
+$sideBarData = 0;
 function MakePost($post, $thread, $forum, $ispm=0)
 {
-	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts, $postText;
+	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts, $postText, $sideBarStuff, $sideBarData;
+	
+	$sideBarStuff = "";
+	
 	if(isset($_GET['pid']))
 		$highlight = (int)$_GET['pid'];
 
@@ -421,7 +382,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$noSmilies = $post['options'] & 2;
 	$noBr = $post['options'] & 4;
 
-	if($post['deleted'] && !ispm)
+	if($post['deleted'] && !$ispm)
 	{
 		$meta = "Posted on ".cdate($dateformat,$post['date']);
 		$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
@@ -526,9 +487,12 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$sideBarStuff .= "<br />\nPosts: ".$post['num']."/".$post['posts'];
 	else
 		$sideBarStuff .= "<br />\nPosts: ".$post['posts'];
-	
-	$sideBarStuff .= "<br />\nSince: ".cdate($loguser['dateformat'], $post['regdate']);
-	$sideBarStuff .= "<br /><br />\nLast post: ".$lastpost;
+		
+	$sideBarStuff .= "<br />\nSince: ".cdate($loguser['dateformat'], $post['regdate'])."<br />";
+
+	$bucket = "sidebar"; include("./lib/pluginloader.php");
+
+	$sideBarStuff .= "<br />\nLast post: ".$lastpost;
 	$sideBarStuff .= "<br />\nLast view: ".$lastview;
 
 	if($hacks['themenames'] == 3)
@@ -559,16 +523,15 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$tags = array
 	(
 		"numposts" => $post['num'],
-		"5000" => 5000 - $post['num'],
-		"20000" => 20000 - $post['num'],
-		"30000" => 30000 - $post['num'],
+		"numdays" => floor((time()-$post['regdate'])/86400),
+		"date" => cdate($dateformat,$post['date']),
 		"rank" => GetRank($post),
 	);
+	$bucket = "amperTags"; include("./lib/pluginloader.php");
 
 	$post['posts'] = $rankHax;
-
 	if($post['postheader'] && !$isBlocked)
-		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
+		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader'], "", true, true), $tags));
 
 	//Pirate Day filter
 	if($hacks['postfilter'])
@@ -586,11 +549,11 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies, $noBr), $tags);
 	
-	runBucket("postManglers");
+	$bucket = "postMangler"; include("./lib/pluginloader.php");
 
 	if($post['signature'] && !$isBlocked)
 	{
-		$postFooter = ApplyTags(CleanUpPost($post['signature']), $tags);
+		$postFooter = ApplyTags(CleanUpPost($post['signature'], "", true, true), $tags);
 		if(!$post['signsep'])
 			$separator = "<br />_________________________<br />";
 		else
@@ -640,6 +603,26 @@ function MakePost($post, $thread, $forum, $ispm=0)
 			UserLink($post, "uid"), $sideBarStuff, $meta, $links,
 			$postHeader, $postText, $postFooter, $separator, $post['id'], $post['id'] == $highlight ? "highlightedPost" : "");
 
+}
+
+
+//Scans for any numerical entities that decode to the 7-bit printable ASCII range and removes them.
+//This makes a last-minute hack impossible where a javascript: link is given completely in absurd and malformed entities.
+function EatThatPork($s)
+{
+	$s = preg_replace_callback("/(&#)([X|x]*)([a-fA-f0-9]+(?![a-zA-Z0-9]))(;*)/", "CheckKosher", $s);
+	return $s;
+}
+
+function CheckKosher($matches)
+{
+	$num = ltrim($matches[3], "0");
+	if($matches[2])
+		$num = hexdec($num);
+	if($num >= 32 && $num < 127)
+		return ""; //"&#xA4;";
+	else
+		return "&#x".dechex($num).";"; //$matches[0];
 }
 
 ?>
