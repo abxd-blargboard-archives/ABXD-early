@@ -26,7 +26,9 @@ if(NumRows($rThread))
 }
 else
 	Kill("Unknown thread ID.");
-$thread['title'] = htmlspecialchars($thread['title']);
+//$thread['title'] = htmlspecialchars($thread['title']);
+$tags = ParseThreadTags($thread['title']);
+$thread['title'] = strip_tags($thread['title']);
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
@@ -36,6 +38,8 @@ else
 	Kill("Unknown forum ID.");
 $fid = $forum['id'];
 AssertForbidden("viewForum", $fid);
+
+$isHidden = (int)($forum['minpower'] > 0);
 
 if($forum['minpowerreply'] > $loguser['powerlevel'])
 	Kill("Your power is not enough.");	
@@ -71,7 +75,7 @@ if(!$noAjax)
 
 MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
-if($warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
+if(!$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
 	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
@@ -114,19 +118,28 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 {
 	//Entered another user's name and password. Look it up now.
 	$original = $_POST['password'];
-	$sha = hash("sha256", $original.$salt, FALSE);
-	$qUser = "select * from users where name='".justEscape($_POST['username'])."' and password='".$sha."'";
+	$qUser = "select * from users where name='".justEscape($_POST['username'])."'";
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
 	{
 		$postingAsUser = Fetch($rUser);
-		$postingAs = $postingAsUser['id'];
-		$postingAsUser['uid'] = $postingAs;
-		if($postingAsUser['powerlevel'] == -1)
+		$sha = hash("sha256", $original.$salt.$postingAsUser['pss'], FALSE);
+		if($postingAsUser['password'] != $sha)
 		{
-			Alert("Nope, still banned.");
+			Alert("Invalid user name or password.");
 			$_POST['action'] = "";
 			$_POST['password'] = "";
+		}
+		else
+		{
+			$postingAs = $postingAsUser['id'];
+			$postingAsUser['uid'] = $postingAs;
+			if($postingAsUser['powerlevel'] == -1)
+			{
+				Alert("Nope, still banned.");
+				$_POST['action'] = "";
+				$_POST['password'] = "";
+			}
 		}
 	}
 	else
@@ -173,6 +186,9 @@ if($_POST['action']=="Post")
 		$qUsers = "update users set posts=".($postingAsUser['posts']+1).", lastposttime=".time()." where id=".$postingAs." limit 1";
 		$rUsers = Query($qUsers);
 
+		//$pid = FetchResult("SELECT id+1 FROM posts WHERE (SELECT COUNT(*) FROM posts p2 WHERE p2.id=posts.id+1)=0 ORDER BY id ASC LIMIT 1");
+		//if($pid < 1) $pid = 1;
+
 		$qPosts = "insert into posts (thread, user, date, ip, num, options, mood) values (".$tid.",".$postingAs.",".time().",'".$_SERVER['REMOTE_ADDR']."',".($postingAsUser['posts']+1).", ".$options.", ".(int)$_POST['mood'].")";
 		$rPosts = Query($qPosts);
 		$pid = mysql_insert_id();
@@ -186,8 +202,7 @@ if($_POST['action']=="Post")
 		$qThreads = "update threads set lastposter=".$postingAs.", lastpostdate=".time().", replies=".($thread['replies']+1).", lastpostid=".$pid.$mod." where id=".$tid." limit 1";
 		$rThreads = Query($qThreads);
 
-		if($forum['minpower'] < 1)
-			Report("New reply by [b]".$postingAsUser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid);
+		Report("New reply by [b]".$postingAsUser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid, $isHidden);
 		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
 		exit();
 	}
@@ -207,7 +222,7 @@ if($_POST['action']=="Preview")
 		$previewPost['posts'] = $postingAsUser['posts']+1;
 		$previewPost['id'] = "???";
 		$previewPost['uid'] = $postingAs;
-		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,regdate,lastactivity,lastposttime,rankset");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $postingAsUser[$toCopy];
 		$previewPost['mood'] = (int)$_POST['mood'];
@@ -311,7 +326,7 @@ write(
 								</label>
 							</td>
 							<td>
-								<input type=\"text\" id=\"uname\" name=\"username\" value=\"{1}\" style=\"width: 98%;\" maxlength=\"25\" />
+								<input type=\"text\" id=\"uname\" name=\"username\" value=\"{1}\" size=\"32\" maxlength=\"32\" />
 							</td>
 						</tr>
 						<tr class=\"cell1\">
@@ -321,7 +336,8 @@ write(
 								</label>
 							</td>
 							<td>
-								<input type=\"password\" id=\"upass\" name=\"password\" value=\"{2}\" size=\"13\" maxlength=\"32\" />
+								<input type=\"password\" id=\"upass\" name=\"password\" value=\"{2}\" size=\"32\" maxlength=\"32\" />
+								<img src=\"img/icons/icon5.png\" title=\"If you want to post under another account without having to log out, enter that account's user name and password here. Leave the password field blank to use the current account ({10}).\" alt=\"[?]\" />
 							</td>
 						</tr>
 						<tr class=\"cell0\">
@@ -358,8 +374,8 @@ write(
 					</table>
 				</form>
 			</td>
-			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$ninja, htmlval($postingAsUser['name']), $_POST['password'], $prefill, $moodOptions, $nopl, $nosm, $tid, $mod, $nobr);
+			<td style=\"width: 20%; vertical-align: top; border: none;\">
+",	$ninja, htmlval($postingAsUser['name']), $_POST['password'], $prefill, $moodOptions, $nopl, $nosm, $tid, $mod, $nobr, htmlspecialchars($loguser['name']));
 
 DoSmileyBar();
 DoPostHelp();
