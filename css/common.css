@@ -491,6 +491,10 @@ input[disabled], button[disabled]
 {
 	opacity: .5;
 }
+textarea
+{
+	font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+}
 
 #pmNotice
 {

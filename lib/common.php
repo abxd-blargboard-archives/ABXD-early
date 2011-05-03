@@ -1,8 +1,12 @@
 <?php
-//  AcmlmBoard XD support - Main hub
+// AcmlmBoard XD support - Main hub
 
+// Leaving this error in until Niko's new installer is there to whine about it instead. -- Kawa
 if(ini_get('register_globals'))
 	die("<p>PHP, as it is running on this server, has the <code>register_globals</code> setting turned on. This is something of a security hazard, and is a <a href=\"http://en.wikipedia.org/wiki/Deprecation\" target=\"_blank\">deprecated function</a>. For more information on this topic, please refer to the <a href=\"http://php.net/manual/en/security.globals.php\" target=\"_blank\">PHP manual</a>.</p><p>At any rate, the ABXD messageboard software is designed to run with <code>register_globals</code> turned <em>off</em>. If your provider allows the use of <code>.htaccess</code> files, you can try adding the line <code>php_flag register_globals off</code> to an <code>.htaccess</code> file in your board's root directory, though we suggest placing it on your website root directory (often something like <code>public_html</code>). If not, ask your provider to edit <code>php.ini</code> accordingly and make the internet a little safer for all of us.</p>");
+
+// I can't believe there are PRODUCTION servers that have E_NOTICE turned on. What are they THINKING? -- Kawa
+error_reporting(E_ALL ^ E_NOTICE | E_STRICT);
 
 if(!is_file("lib/database.php"))
 	die("You should <a href=\"install.php\">install</a> the board database first.");
@@ -32,6 +36,9 @@ if($ajax)
 	$overallTidy = 0;
 //if($overallTidy)
 	ob_start("DoFooter");
+
+date_default_timezone_set("GMT");
+$timeStart = usectime();
 
 if(!isset($title))
 	$title = "";
@@ -111,7 +118,8 @@ function htmlval($text)
 	//$text = str_replace("\"", "&quot;", $text);
 	//$text = str_replace("<", "&lt;", $text);
 	//return $text;
-	return htmlentities($text, ENT_COMPAT, "UTF-8");
+	//return htmlentities($text, ENT_COMPAT, "UTF-8");
+	return htmlspecialchars($text);
 }
 
 function filterPollColors($input)
@@ -171,7 +179,7 @@ function cdate($format, $date = 0)
 {
 	global $loguser;
 	if($date == 0)
-		$date = gmmktime();
+		$date = time(); //gmmktime(); //removed for E_STRICT
 	$hours = (int)($loguser['timezone']/3600);
 	$minutes = floor(abs($loguser['timezone']/60)%60);
 	$plusOrMinus = $hours < 0 ? "" : "+";
@@ -312,7 +320,7 @@ function SendSystemPM($to, $message, $title)
 	$qPM = "insert into pmsgs_text (pid, text, title) values (".$pid.", '".justEscape($message)."', '".justEscape($title)."')";
 	$rPM = Query($qPM);
 	
-	print "PM sent.";
+	//print "PM sent.";
 }
 
 function Shake()

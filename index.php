@@ -24,7 +24,7 @@ $stats .= "<br />".Plural($newToday,"new post")." today, ".$newLastHour." last h
 
 $numUsers = FetchResult("select count(*) from users");
 $numActive = FetchResult("select count(*) from users where lastposttime > ".(time() - 2592000)); //30 days
-$percent = ceil((100 / $numUsers) * $numActive);
+$percent = $numUsers ? ceil((100 / $numUsers) * $numActive) : 0;
 $rLastUser = Query("select id,name,displayname,powerlevel,sex from users order by regdate desc limit 1");
 $lastUser = Fetch($rLastUser);
 $last = Plural($numUsers,"registered user").", ".$numActive." active (".$percent."%)<br />Newest: ".UserLink($lastUser);
@@ -65,8 +65,6 @@ include("lib/header.php");
 if(!$noAjax)
 	write(
 "
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 		window.addEventListener(\"load\",  startOnlineUsers, false);
 		window.addEventListener(\"load\",  startNewMarkers, false);

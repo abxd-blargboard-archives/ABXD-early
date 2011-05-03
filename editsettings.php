@@ -50,7 +50,6 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "//Hacks\n");
 	fputs($hax, "\$hacks['forcetheme'] = \"".prepare($_POST['theme'])."\";\n");
 	fputs($hax, "\$hacks['themenames'] = ".(int)$_POST['names'].";\n");
-	fputs($hax, "\$hacks['postfilter'] = ".(int)$_POST['filters'].";\n");
 	fputs($hax, "\n");
 	fputs($hax, "//Profile Preview Post\n");
 	fputs($hax, "\$profilePreviewText = \"".prepare($_POST['previewtext'], "\\\"")."\";\n");
@@ -70,7 +69,6 @@ if($_POST['action'] == "Edit")
 
 $forcetheme = $hacks['forcetheme'];
 $themenames = $hacks['themenames'];
-$postfilter = $hacks['postfilter'];
 
 $themelist[""] = "[Disabled]";
 $themelist = array_merge($themelist, $themes);
@@ -296,19 +294,12 @@ write(
 				</td>
 			</td>
 			</tr>
-			<tr class=\"cell0\">
-				<td>
-					<label for=\"filters\">Filters</label>
-				</td>
-				<td>{13}
-				</td>
-			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">
 					Profile Preview Post
 				</th>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"ppp\">Text</label>
 				</td>
@@ -321,7 +312,7 @@ write(
 					Meta
 				</th>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"metadesc\">Description</label>
 				</td>
@@ -329,7 +320,7 @@ write(
 					<input type=\"text\" id=\"metadesc\" name=\"metadesc\" value=\"{16}\" class=\"width75\" />
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"metakeys\">Keywords</label>
 				</td>
@@ -342,7 +333,7 @@ write(
 					RSS Feed
 				</th>
 			</tr>
-			<tr class=\"cell0\">
+			<tr class=\"cell1\">
 				<td>
 					<label for=\"feedname\">Feed name</label>
 				</td>
@@ -350,7 +341,7 @@ write(
 					<input type=\"text\" id=\"feedname\" name=\"feedname\" value=\"{27}\" class=\"width75\" />
 				</td>
 			</tr>
-			<tr class=\"cell1\">
+			<tr class=\"cell0\">
 				<td>
 					<label for=\"rssblurb\">Blurb</label>
 				</td>
@@ -371,7 +362,7 @@ write(
 	$autoLockMonths, $warnMonths, $viewcountInterval, $customTitleThreshold,
 	($overallTidy ? "checked=\"checked\"" : ""), htmlval($theWord), $systemUser,
 	MakeSelect("theme",$forcetheme,$themelist), MakeSelect("names",$themenames,$names),
-	MakeSelect("filters",$postfilter,$filters), $tidyAvailable, $profilePreviewText,
+	0, $tidyAvailable, $profilePreviewText,
 	htmlval($metaDescription), htmlval($metaKeywords), $minWords, $minSeconds, $uploaderCap,
 	$uploaderWhitelist, ($noAjax ? "checked=\"checked\"" : ""), ($noGuestLayouts ? "checked=\"checked\"" : ""),
 	$mailResetFrom, $personalCap, $lastPostsTimeLimit, $feedname, $rssblurb, $uploaderMaxFileSize,

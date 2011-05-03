@@ -5,6 +5,9 @@ include("lib/common.php");
 AssertForbidden("viewUploader");
 
 $rootdir = "uploader";
+if(!is_file($rootdir."/.htaccess"))
+	file_put_contents($rootdir."/.htaccess", "options all -indexes");
+
 
 if($uploaderWhitelist)
 	$goodfiles = explode(" ", $uploaderWhitelist);
@@ -41,12 +44,6 @@ if($_GET['action'] == "Upload")
 		$privateFlag = 0;
 		if($_POST['private'])
 		{
-			$targetdir = $rootdir."/".$loguserid;
-			if(!is_dir($targetdir))
-			{
-				mkdir($targetdir);
-				file_put_contents($targetdir."/.htaccess", "options all -indexes");
-			}
 			$quot = $pQuota;
 			$totalsize = foldersize($targetdir);
 			$privateFlag = 1;
@@ -73,7 +70,8 @@ if($_GET['action'] == "Upload")
 				$fname = $_FILES['newfile']['name'];
 				$temp = $_FILES['newfile']['tmp_name'];
 				$size = $_FILES['size']['size'];
-				$extension = end(explode(".", $fname));
+				$parts = explode(".", $fname);
+				$extension = end($parts);
 				if($totalsize + $size > $quot)
 				{
 					Alert("Uploading \"".$fname."\" would break the quota.");
@@ -310,7 +308,7 @@ else
 			$multidel = "<td><input type=\"checkbox\" name=\"delete[".$entry['id']."]\" disabled=\"disabled\" /></td>";
 		if($loguserid == $entry['user'] || $loguser['powerlevel'] > 2)
 		{
-			$delete = "&nbsp;<sup>[<a href=\"uploader.php?action=delete&amp;fid=".$entry['id']."\">d</a>]</sup>";
+			$delete = "&nbsp;<sup><a href=\"uploader.php?action=delete&amp;fid=".$entry['id']."\">&#x2718;</a></sup>";
 			$multidel = "<td><input type=\"checkbox\" name=\"del[".$entry['id']."]\" /></td>";
 		}
 		$cellClass = ($cellClass+1) % 2;

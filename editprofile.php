@@ -38,7 +38,7 @@ if(isset($_POST['displayname']))
 	}
 	else
 	{
-		$_POST['displayname'] = htmlspecialchars($_POST['displayname']);
+		//$_POST['displayname'] = htmlspecialchars($_POST['displayname']);
 		$dispCheck = FetchResult("select count(*) from users where id != ".$user['id']." and (name = '".justEscape($_POST['displayname'])."' or displayname = '".justEscape($_POST['displayname'])."')", 0, 0);
 		if($dispCheck > 0)
 		{
@@ -178,11 +178,11 @@ if($_POST['action'] == "Edit profile")
 	if($tpp > 99)
 		$tpp = 99;
 	if($tpp < 1)
-		$tpp = 1;
+		$tpp = 50;
 	if($ppp > 99)
 		$ppp = 99;
 	if($ppp < 1)
-		$ppp = 1;
+		$ppp = 20;
 	if($fontsize > 200)
 		$fontsize = 200;
 	if($fontsize < 20)
@@ -240,8 +240,8 @@ if($_POST['action'] == "Edit profile")
 	if(isset($usempic)) $qUser.= "minipic='".$usempic."', ";
 	$qUser.= "displayname = '".justEscape($_POST['displayname'])."', ";
 	$qUser.= "sex = ".(int)$_POST['sex'].", ";
-	$qUser.= "realname = '".justEscape(htmlspecialchars($_POST['realname']))."', ";
-	$qUser.= "location = '".justEscape(htmlspecialchars($_POST['location']))."', ";
+	$qUser.= "realname = '".justEscape($_POST['realname'])."', ";
+	$qUser.= "location = '".justEscape($_POST['location'])."', ";
 	$qUser.= "birthday = ".(int)$bday.", ";
 	$qUser.= "bio = '".justEscape($_POST['bio'])."', ";
 	$qUser.= "postheader = '".justEscape($_POST['postheader'])."', ";
@@ -480,7 +480,7 @@ row("Birthday", array(
 ));
 row("Bio", NULL, array(
 	"id"=>"bio",
-	"content"=>"<textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".$user['bio']."</textarea>"
+	"content"=>"<textarea id=\"bio\" name=\"bio\" rows=\"8\" style=\"width: 98%;\">".htmlval($user['bio'])."</textarea>"
 ));
 row("Timezone offset", NULL, array(
 	"id"=>"toffz",

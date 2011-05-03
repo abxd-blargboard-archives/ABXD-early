@@ -22,8 +22,6 @@ Sentence with a<br />HTML BR tag inbetween
 
 &lt;tag> with the opening bracket escaped
 
-<!-- line missing :) -->
-
 /me does an IRC action
 
 [url]http://helmet.kafuka.org[/url]
@@ -151,7 +149,7 @@ $previewPost['text'] = $preview;
 $previewPost['num'] = "???";
 $previewPost['id'] = "???";
 $previewPost['uid'] = $user['id'];
-$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
+$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,posts,regdate,lastactivity,lastposttime");
 foreach($copies as $toCopy)
 	$previewPost[$toCopy] = $user[$toCopy];
 MakePost($previewPost, 0, 0);

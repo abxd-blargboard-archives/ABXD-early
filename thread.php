@@ -141,8 +141,6 @@ DoPrivateMessageBar();
 if(!$noAjax)
 	write(
 "
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 		onlineFID = {0};
 		window.addEventListener(\"load\",  startOnlineUsers, false);
@@ -178,7 +176,7 @@ write(
 	</script>
 ");
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
 
 if($thread['poll'])
 {
@@ -393,7 +391,7 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 		$moodOptions .= format(
 "
 	<option {0} value=\"{1}\">{2}</option>
-",	$moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
+",	$moodSelects[$mood['mid']], $mood['mid'], htmlval($mood['name']));
 
 	write(
 	"
@@ -437,6 +435,6 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 if($pagelinks)
 	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>""), $links);
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
 
 ?>

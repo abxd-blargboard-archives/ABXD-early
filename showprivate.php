@@ -152,8 +152,6 @@ if($draftEditor)
 
 	Write(
 "
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<table style=\"width: 100%;\">
 		<tr>
 			<td style=\"vertical-align: top; border: none;\">

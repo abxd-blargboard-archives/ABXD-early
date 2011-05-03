@@ -152,7 +152,7 @@ if($user['tempbantime'])
 $profileParts = array();
 
 $foo = array();
-$foo['Name'] = $minipic .($user['displayname'] ? $user['displayname'] : $user['name']) . ($user['displayname'] ? " (".$user['name'].")" : "");
+$foo['Name'] = $minipic . htmlspecialchars($user['displayname'] ? $user['displayname'] : $user['name']) . ($user['displayname'] ? " (".$user['name'].")" : "");
 if($title)
 	$foo['Title'] = $title;
 if($currentRank)

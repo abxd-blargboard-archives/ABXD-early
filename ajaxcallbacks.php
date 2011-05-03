@@ -6,46 +6,73 @@ $noFooter = TRUE;
 $ajax = TRUE;
 include("lib/common.php");
 
+header("Cache-Control: no-cache");
+
 $action = $_GET['a'];
 $id = (int)$_GET['id'];
 $hideTricks = "<a href=\"javascript:void(0)\" onclick=\"hideTricks(".$id.")\">Back</a>";
 if($action == "q")	//Quote
 {
-	$qPost = "select * from posts where id=".$id;
-	$rPost = Query($qPost);
-	if(NumRows($rPost))
-		$post = Fetch($rPost);
-	else
-		die("Unknown post ID.");
-
-	$qThread = "select forum from threads where id=".$post['thread'];
-	$rThread = Query($qThread);
-	$thread = Fetch($rThread);
-	$qForum = "select minpower from forums where id=".$thread['forum'];
-	$rForum = Query($qForum);
-	$forum = Fetch($rForum);
-	if($forum['minpower'] > $loguser['powerlevel'])
-	{
-		$text = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
-	}
-	else
-	{
-		$qText = "select text from posts_text where pid=".$id." order by revision desc limit 1";
-		$text = FetchResult($qText, 0, 0);
-	}
-
-	$qPoster = "select name from users where id=".$post['user'];
-	$rPoster = Query($qPoster);
-	$poster = Fetch($rPoster);
+	$qQuote = "	select 
+					p.id, p.deleted, pt.text,
+					f.minpower,
+					u.name poster
+				from posts p
+					left join posts_text pt on pt.pid = p.id and pt.revision = p.currentrevision 
+					left join threads t on t.id=p.thread
+					left join forums f on f.id=t.forum
+					left join users u on u.id=p.user
+				where p.id=".$id;
+	$rQuote = Query($qQuote);
 	
-	$text = preg_replace("'/me '","[b]* ".$poster['name']."[/b] ", $text);
-	
-	$reply = "[quote=\"".$poster['name']."\" id=\"".$id."\"]".$text."[/quote]";
+	if(!NumRows($rQuote))
+		die('Unknown post ID.');
+
+	$quote = Fetch($rQuote);
+
+	//SPY CHECK!
+	if($quote['minpower'] > $loguser['powerlevel'])
+		$quote['text'] = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
+		
+	if ($quote['deleted'])
+		$quote['text'] = "*post deleted*";
+
+	$reply = "[quote=\"".htmlval($quote['poster'])."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
+	$reply = str_replace("/me", "[b]* ".htmlval($quote['poster'])."[/b]", $reply);
 	die($reply);
+}
+else if ($action == 'rp') // retrieve post
+{
+	$qPost = "	select 
+					posts.id, posts.date, posts.num, posts.deleted, posts.options, posts.mood, posts.ip, posts.thread, 
+					posts_text.text, posts_text.text, posts_text.revision, users.id as uid, 
+					forums.id fid, 
+					users.name, users.displayname, users.rankset, users.powerlevel, users.title, users.sex, users.picture, users.posts, users.postheader, users.signature, users.signsep, users.globalblock, users.lastposttime, users.lastactivity, users.regdate
+				from 
+					posts 
+					left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision 
+					left join users on users.id = posts.user
+					left join threads on threads.id=posts.thread
+					left join forums on forums.id=threads.forum
+				where posts.id=".$id;
+	$rPost = Query($qPost);
+	if (!NumRows($rPost))
+		die('Unknown post ID.');
+	$post = Fetch($rPost);
+		
+	if (!CanMod($loguserid, $post['fid']))
+		die('No.');
+		
+	if (isset($_GET['o']))
+	{
+		$post['deleted'] = 0;
+		$post['unfoldhax'] = 1;
+	}
+	die(MakePost($post, $post['thread'], $post['fid']));
 }
 else if($action == "ou")	//Online Users
 {
-	die(OnlineUsers((int)$_GET['f']));
+	die(OnlineUsers((int)$_GET['f'], false));
 }
 else if($action == "tf")	//Theme File
 {
@@ -170,9 +197,8 @@ elseif($action == "sr")	//Show Revision
 	$tags = array
 	(
 		"numposts" => $post['num'],
-		"5000" => 5000 - $post['num'],
-		"20000" => 20000 - $post['num'],
-		"30000" => 30000 - $post['num'],
+		"numdays" => floor((time()-$post['regdate'])/86400),
+		"date" => cdate($dateformat,$post['date']),
 		"rank" => GetRank($post),
 	);
 
@@ -181,27 +207,7 @@ elseif($action == "sr")	//Show Revision
 	if($post['postheader'] && !$isBlocked)
 		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
 
-	//Pirate Day filter
-	if($hacks['postfilter'])
-		include_once("filters.php");
-	if($hacks['postfilter'] == 1 || "0919" == gmdate('md'))
-		$post['text'] = PirateFilter($post['text']);
-	else if($hacks['postfilter'] == 2)
-		$post['text'] = ChefFilter($post['text']);
-	else if($hacks['postfilter'] == 3)
-		$post['text'] = KrautFilter($post['text']);
-	else if($hacks['postfilter'] == 4)
-		$post['text'] = JiveFilter($post['text']);
-	else if($hacks['postfilter'] == 5)
-		$post['text'] = FuddFilter($post['text']);
-
 	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
-
-	if($goggles)
-	{
-		$postText = str_replace("<!--", "<span style=\"color: #66ff66;\">&lt;!--", $postText);
-		$postText = str_replace("-->", "--&gt;</span>", $postText);
-	}
 
 	if($post['signature'] && !$isBlocked)
 	{
@@ -219,7 +225,7 @@ elseif($action == "sr")	//Show Revision
 elseif($action == "em")	//Email
 {
 	$blah = FetchResult("select email from users where id=".$id." and showemail=1");
-	die($blah);
+	die(htmlspecialchars($blah));
 }
 elseif($action == "vc")	//View Counter
 {

@@ -10,7 +10,10 @@ if(!function_exists('format'))
 		$args = func_get_args();
 		$output = $args[0];
 		for($i = 1; $i < $argc; $i++)
-			$output = str_replace("{".($i-1)."}", $args[$i], $output);
+		{
+			$splicethis = preg_replace("'\{([0-9]+)\}'", "&#x7B;\\1&#x7D;", $args[$i]);
+			$output = str_replace("{".($i-1)."}", $splicethis, $output);
+		}
 		return $output;
 	}
 
@@ -22,7 +25,10 @@ if(!function_exists('format'))
 		$args = func_get_args();
 		$output = $args[0];
 		for($i = 1; $i < $argc; $i++)
-			$output = str_replace("{".($i-1)."}", $args[$i], $output);
+		{
+			$splicethis = preg_replace("'\{([0-9]+)\}'", "&#x7B;\\1&#x7D;", $args[$i]);
+			$output = str_replace("{".($i-1)."}", $splicethis, $output);
+		}
 		print $output;	
 	}
 }

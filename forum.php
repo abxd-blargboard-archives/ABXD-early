@@ -82,8 +82,6 @@ if(!$noAjax)
 {
 	write(
 "
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 		onlineFID = {0};
 		window.addEventListener(\"load\",  startOnlineUsers, false);
