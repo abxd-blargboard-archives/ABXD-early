@@ -18,15 +18,15 @@ $systemUser = 0;
 $minWords = 2;
 $minSeconds = 30;
 $uploaderCap = 32;
+$personalCap = 0.25;
 $uploaderMaxFileSize = 2;
-$uploaderWhitelist = "png gif jpg jpeg txt css zip rar 7z ogg mp3 swf ogv mp4 webm svg";
+$uploaderWhitelist = "png gif jpg jpeg txt css zip rar 7z ogg mp3 swf ogv mp4 webm";
 $mailResetFrom = "noreply@example.net";
 $lastPostsTimeLimit = 72;
 
 //Hacks
 $hacks['forcetheme'] = "";
 $hacks['themenames'] = 0;
-$hacks['postfilter'] = 0;
 
 //Profile Preview Post
 $profilePreviewText = "This is a sample post. It demonstrates various kinds of [i]markup[/i] and quotes and such.
