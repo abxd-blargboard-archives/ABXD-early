@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 	<title>[[BOARD TITLE HERE]]</title>
-	<meta http-equiv="Content-Type" content="text/html; CHARSET=windows-1252" />
+	<meta http-equiv="Content-Type" content="text/html; CHARSET=utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=9" />
 	<meta name="description" content="<?php print $metaDescription; ?>" />
 	<meta name="keywords" content="<?php print $metaKeywords; ?>" />
@@ -10,7 +10,7 @@
 	<link rel="stylesheet" type="text/css" href="css/common.css" />
 	<link rel="stylesheet" type="text/css" href="css/<?php print $themeFile; ?>" id="theme_css" />
 	<script type="text/javascript" src="lib/tricks.js"></script>
-	<script type="text/javascript" src="lib/jQuery.js"></script>
+	<script type="text/javascript" src="lib/jquery.js"></script>
 	<?php
 		$bucket = "pageHeader"; include("./lib/pluginloader.php");
 		$bucket = "footer"; include("./lib/pluginloader.php");
@@ -27,7 +27,7 @@
 							<?php if($misc['porabox']) { ?>
 							<td style="border: 0px none;">
 								<a href="./">
-									<img src="<?php print $logopic; ?>" alt="<?php print $logoalt; ?>" title="<?php print $logotitle; ?>" id="theme_banner" style="padding: 8px;" />
+									<img src="<?php print htmlval($logopic); ?>" alt="<?php print htmlval($logoalt); ?>" title="<?php print htmlval($logotitle); ?>" id="theme_banner" style="padding: 8px;" />
 								</a>
 							</td>
 							<td style="border: 0px none;">
@@ -130,7 +130,6 @@
 	</form>
 	<div id="body">
 <?php
-	$timeStart = usectime();
 
 	if($isIE6)
 	{

@@ -42,8 +42,6 @@ $onlineUsers = OnlineUsers($fid);
 write(
 "
 	<script type=\"text/javascript\" src=\"lib/jscolor/jscolor.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 			window.addEventListener(\"load\",  hookUpControls, false);
 	</script>
@@ -433,7 +431,7 @@ while($mood = Fetch($rMoods))
 	$moodOptions .= format(
 "
 	<option {0} value=\"{1}\">{2}</option>
-",	$moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
+",	$moodSelects[$mood['mid']], $mood['mid'], htmlval($mood['name']));
 
 if(CanMod($loguserid, $forum['id']))
 {

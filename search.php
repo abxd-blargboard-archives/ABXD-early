@@ -88,7 +88,7 @@ if(isset($_GET['q']))
 		$results = "";
 		while($result = Fetch($search))
 		{
-			$snippet = MakeSnippet($result['title'], $terms, true);
+			$snippet = MakeSnippet(htmlspecialchars($result['title']), $terms, true);
 			if($snippet != "")
 				$results .= Format(
 "
@@ -130,7 +130,7 @@ if(isset($_GET['q']))
 		while($result = Fetch($search))
 		{
 			$result['text'] = str_replace("<!--", "~#~", str_replace("-->", "~#~", $result['text']));
-			$snippet = MakeSnippet($result['text'], $terms);
+			$snippet = MakeSnippet(htmlspecialchars($result['text']), $terms);
 			if($snippet != "")
 				$results .= Format(
 "

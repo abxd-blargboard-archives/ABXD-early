@@ -2,9 +2,9 @@
 //Category/forum editor -- By Nikolaj
 $noAutoHeader = true;
 include('lib/common.php');
-$title = "Edit forums/categories";
+$title = "Edit forums";
 
-if ($loguser['powerlevel'] < 3) Kill("You're not allowed to access the category editor.");
+if ($loguser['powerlevel'] < 3) Kill("You're not allowed to access the forum editor.");
 
 $noFooter = true;
 if ($_GET['updateforum']) {
@@ -293,7 +293,7 @@ $ftbl = Format('
 		</td>
 	</tr>', (!$_GET['n'] ? '
 			<span id="hint">
-				Hint: Click a forum or a category to select it.
+				Hint: Click a forum to select it.
 			</span>' : ''));
 $tbl2 .= Format('
 </table>

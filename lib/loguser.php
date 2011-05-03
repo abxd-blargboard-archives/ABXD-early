@@ -82,44 +82,6 @@ if(FetchResult("select count(*) from proxybans where instr('".$_SERVER['REMOTE_A
 	die("No.");
 
 
-// User/Guest lastforum handling
-// lastforum=0: not browsing a forum
-// lastforum=x: browsing forum ID x or a thread in it
-$CurrentForum = 0;
-$ScriptNameParts = explode("/", $_SERVER['SCRIPT_NAME']);
-$ScriptName = $ScriptNameParts[count($ScriptNameParts)-1];
-switch ($ScriptName)
-{
-	case 'forum.php':
-		$CurrentForum = (int)$_GET['id'];
-		break;
-	       
-	case 'newthread.php':
-		if (isset($_POST['id']))
-			$CurrentForum = (int)$_POST['id'];
-		else
-			$CurrentForum = (int)$_GET['id'];
-		break;
-	       
-	case 'thread.php':
-		if (isset($_GET['pid']))
-			$CurrentForum = FetchResult("SELECT forum FROM threads WHERE id=(SELECT thread FROM posts WHERE id=".intval($_GET['pid']).")");
-		else
-			$CurrentForum = FetchResult("SELECT forum FROM threads WHERE id=".intval($_GET['id']));
-		break;
-	       
-	case 'newreply.php':
-	case 'editthread.php':
-		$CurrentForum = FetchResult("SELECT forum FROM threads WHERE id=".intval($_GET['id']));
-		break;
-	       
-	case 'editpost.php':
-		$CurrentForum = FetchResult("SELECT forum FROM threads WHERE id=(SELECT thread FROM posts WHERE id=".intval($_GET['id']).")");
-		break;
-}
-
-
-
 $logdata = unserialize(base64_decode($_COOKIE['logdata']));
 $loguserid = (int)$logdata['loguserid'];
 $loguserbull = $logdata['bull'];
@@ -139,7 +101,7 @@ if($loguserid) //Are we logged in?
 		$ourbull = hash('sha256', $loguser['id'].$loguser['password'].$salt.$loguser['pss'], FALSE);
 		if($loguserbull == $ourbull)
 		{
-			$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."', lastforum=".$CurrentForum." where id=".$loguserid;
+			$rLastView = "update users set lastactivity=".time().", lastip='".$_SERVER['REMOTE_ADDR']."', lasturl='".justEscape($thisURL)."', lastknownbrowser='".justEscape($lastKnownBrowser)."' where id=".$loguserid;
 			if(!$noOnlineUsers)
 				$qLastView = Query($rLastView);
 
@@ -152,7 +114,7 @@ if($loguserid) //Are we logged in?
 
 if($wantGuest)
 {
-	$qGuest = "insert into guests (date, ip, lasturl, lastforum, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', ".$CurrentForum.", '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
+	$qGuest = "insert into guests (date, ip, lasturl, useragent, bot) values (".time().", '".$_SERVER['REMOTE_ADDR']."', '".justEscape($thisURL)."', '".justEscape($_SERVER['HTTP_USER_AGENT'])."', ".$isBot.")";
  	if(!$noOnlineUsers)
  		$rGuest = Query($qGuest);
 	

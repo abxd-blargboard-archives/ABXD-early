@@ -3,7 +3,6 @@
 
 include_once("geshi.php");
 include_once("write.php");
-include_once("filters.php");
 
 function LoadSmilies($byOrder = FALSE)
 {
@@ -13,12 +12,18 @@ function LoadSmilies($byOrder = FALSE)
 		')' => '\)',
 		'(' => '\(',
 		'/' => '\/',
+		'+' => '\+',
 		'|' => '\|',
 		'^' => '\^',
 		'?' => '\?',
 		'[' => '\[',
 		']' => '\]',
+		'<' => '\<',
+		'>' => '\>',
+		':' => '\:',
+		']' => '\]',
 		'.' => '\.',
+		'\'' => '\\\'',
 	);
 	if($byOrder)
 	{
@@ -41,8 +46,8 @@ function LoadSmilies($byOrder = FALSE)
 		$smilies = array();
 		while($smiley = Fetch($rSmilies))
 		{
-			foreach ($smiliesR as $old => $new)
-				$smiley['code'] = str_replace($old, $new, $smiley['code']);
+			//foreach ($smiliesR as $old => $new)
+			//	$smiley['code'] = str_replace($old, $new, $smiley['code']);
 			$smilies[] = $smiley;
 		}
 	}
@@ -53,7 +58,7 @@ function ApplySmilies($text)
 	global $smilies;
 	foreach($smilies as $s)
 	{
-		$text = preg_replace('/'.$s['code'].'/i', "<img src=\"img/smilies/".htmlentities($s['image'])."\" />", $text);
+		$text = preg_replace("/\b(".$s['code'].")\b/si", "<img src=\"img/smilies/".htmlentities($s['image'])."\" />", $text);
 	}
 	return $text;
 }
@@ -211,6 +216,7 @@ $text = "";
 function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 {
 	global $smilies, $text;
+	static $orig, $repl;
 	LoadSmilies();
 
 	$s = $postText; //stripslashes($postText);
@@ -230,7 +236,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
     $s = preg_replace("'\[code\](.*?)\[/code\]'sie",
 					'\''."<code class=\"Code block\">".'\''
 					.'.str_replace($list,$list2,\'\\1\').\'</code>\'',$s);
-
 
 	$s = preg_replace("'\[b\](.*?)\[/b\]'si","<strong>\\1</strong>", $s);
 	$s = preg_replace("'\[i\](.*?)\[/i\]'si","<em>\\1</em>", $s);
@@ -257,7 +262,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	}
 
 	//Bad sites
-	//$s = preg_replace("'jul.rusted'si", "zophar.", $s); //I didn't add this! Honest! -- Kawa
 	$s = preg_replace("'goatse'si","goat<span>se</span>", $s);
 	$s = preg_replace("'tubgirl.com'si","www.youtube.com/watch?v=EK2tWVj6lXw", $s);
 	$s = preg_replace("'ogrish.com'si","www.youtube.com/watch?v=2iveTJXcp6k", $s);
@@ -267,7 +271,7 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("'lemonparty.com'si","www.youtube.com/watch?v=EK2tWVj6lXw", $s);
 	$s = preg_replace("'meatspin.com'si","www.youtube.com/watch?v=2iveTJXcp6k", $s);
 
-	$s = preg_replace("@(\ba|\Ban)?(n)?( )?Acmlmboard (1\.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
+	//$s = preg_replace("@(\ba|\Ban)?(n)?( )?Acmlmboard (1\.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
 
 
 	//Various other stuff
@@ -280,16 +284,17 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("/<([^>]+)bonw+s*=s*'[^>]+'/Uis", "<$1", $s);
 	$s = preg_replace('/<([^>]+)bonw+s*=s*[^>s]+/i', "<$1", $s);
 	*/
-	//$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error", "scroll");
-	//foreach($onEvents as $onEvent)
-	//	$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
 	/*
-	$s = str_replace("on", "&#x6F;&#x6E;", $s);
-	$s = str_replace("On", "&#x4F;&#x6E;", $s);
-	$s = str_replace("oN", "&#x6F;&#x4E;", $s);
-	$s = str_replace("ON", "&#x4F;&#x4E;", $s);
+	$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error", "scroll");
+	foreach($onEvents as $onEvent)
+		$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
 	*/
 	$s = preg_replace("@(on)([^<>]+?)=@si", "$2=", $s);
+	$s = EatThatPork($s); //has to be done before escaping "on" or it'll eat that too.
+	//$s = str_replace("on", "&#x6F;&#x6E;", $s);
+	//$s = str_replace("On", "&#x4F;&#x6E;", $s);
+	//$s = str_replace("oN", "&#x6F;&#x4E;", $s);
+	//$s = str_replace("ON", "&#x4F;&#x4E;", $s);
 	
 	$s = preg_replace("'-moz-binding'si"," -mo<em></em>z-binding", $s);
 	$s = preg_replace("'filter:'si","filter<em></em>:>", $s);
@@ -304,8 +309,6 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si","<a href=\"\\1\">\\2</a>", $s);
 	$s = preg_replace("'\[img\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\">", $s);
 	$s = preg_replace("'\[img=(.*?)\](.*?)\[/img\]'si","<img src=\"\\1\" alt=\"\\2\" title=\"\\2\">", $s);
-
-	$s = EatThatPork($s);
 
 	$s =  str_replace("[quote]","<blockquote><div><hr />", $s);
 	$s =  str_replace("[/quote]","<hr /></div></blockquote>", $s);
@@ -326,17 +329,17 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	//Smilies
 	if(!$noSmilies)
 	{
-		//$s = ApplySmilies($s);
-		for($i = 0; $i < count($smilies); $i++)
+		if (!isset($orig))
 		{
-			$preg_special = array("\\","^","$",".","*","+","?","|","(",")","[","]","{","}","@");
-			$preg_special_escape = array("\\\\","\\^","\\$","\\.","\\*","\\+","\\?","\\|","\\(","\\)","\\[","\\]","\\{","\\}","\\@");
-
-			$s = preg_replace("@<([^>]+)(".str_replace($preg_special, $preg_special_escape, $smilies[$i]['code']).")+([^>]+)>@si", "<$1##LOLDONTREPLACESMILIESINHTMLTAGZLOL##$3>", $s);
-			$s = str_replace($smilies[$i]['code'], "«".$smilies[$i]['image']."»", $s);
-			$s = str_replace("«".$smilies[$i]['image']."»", "<img src=\"img/smilies/".$smilies[$i]['image']."\" alt=\"".str_replace(">", "&gt;", $smilies[$i]['code'])."\" />", $s);
-			$s = str_replace("##LOLDONTREPLACESMILIESINHTMLTAGZLOL##", $smilies[$i]['code'], $s);
+			$orig = $repl = array();
+			for ($i = 0; $i < count($smilies); $i++)
+			{
+				$orig[] = "/(?<=.\W|\W.|^\W)".preg_quote($smilies[$i]['code'], "/")."(?=.\W|\W.|\W$)/";
+				$repl[] = "<img src=\"img/smilies/".$smilies[$i]['image']."\" />";
+			}
 		}
+		$s = preg_replace($orig, $repl, " ".$s." ");
+		$s = substr($s, 1, -1);
 	}
 	
 	$s = preg_replace_callback("@<a[^>]+href\s*=\s*\"(.*?)\"@si", 'ApplyNetiquetteToLinks', $s);
@@ -386,27 +389,29 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	{
 		$meta = "Posted on ".cdate($dateformat,$post['date']);
 		$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
-		if(CanMod($loguserid,$forum) || $post['uid'] == $loguserid && IsAllowed("editPost", $post['id']))
-			$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
+		if(CanMod($loguserid,$forum))
+		{
+			if (IsAllowed("editPost", $post['id']))
+				$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
+			$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",true); return false;\">View</a></li>";
+		}
 		$links .= "<li>ID: ".$post['id']."</li></ul>";
 		write(
 "
-		<div class=\"outline margin\">
-			<a name=\"{0}\"></a>
-			<table class=\"post\">
-				<tr>
-					<td class=\"side userlink\">
-						{1}
-					</td>
-					<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">
-						{2}
-					</td>
-					<td class=\"smallFonts right\" style=\"border-left: 0px none;\">
-						{3}
-					</td>
-				</tr>
-			</table>
-		</div>
+		<table class=\"post margin\" id=\"post{0}\">
+			<tr>
+				<td class=\"side userlink\">
+					<a name=\"{0}\"></a>
+					{1}
+				</td>
+				<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">
+					{2}
+				</td>
+				<td class=\"smallFonts right\" style=\"border-left: 0px none;\">
+					{3}
+				</td>
+			</tr>
+		</table>
 ",	$post['id'], UserLink($post, "uid"), $meta, $links
 );
 		return;
@@ -420,20 +425,31 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$links = "";
 		if(!$ispm && !$isBot)
 		{
-			$links .= "<ul class=\"pipemenu\"><li><a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a></li>";
-			if($thread && $loguser['powerlevel'] > -1 && $forum != -2 && IsAllowed("makeReply", $thread))
-				$links .= "<li><a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a></li>";
-			if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'] && IsAllowed("editPost", $post['id']))
-				$links .= "<li><a href=\"editpost.php?id=".$post['id']."\">Edit</a></li>";
-			if(CanMod($loguserid, $forum) && IsAllowed("editPost", $post['id']))
-				$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a></li>";
-			if($forum != -2 && IsAllowed("makeReply", $thread))
-				$links .= "<li>ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a></li>";
+			if ($post['unfoldhax'])
+			{
+				$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
+				if (IsAllowed("editPost", $post['id']))
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
+				$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",false); return false;\">Close</a></li>";
+				$links .= "<li>ID: ".$post['id']."</li></ul>";
+			}
 			else
-				$links .= "<li>ID: ".$post['id']."</li>";
-			if($loguser['powerlevel'] > 0)
-				$links .= "<li>".$post['ip']."</li>";
-			$links .= "</ul>";
+			{
+				$links .= "<ul class=\"pipemenu\"><li><a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a></li>";
+				if($thread && $loguser['powerlevel'] > -1 && $forum != -2 && IsAllowed("makeReply", $thread))
+					$links .= "<li><a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a></li>";
+				if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'] && IsAllowed("editPost", $post['id']))
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."\">Edit</a></li>";
+				if(CanMod($loguserid, $forum) && IsAllowed("editPost", $post['id']))
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a></li>";
+				if($forum != -2 && IsAllowed("makeReply", $thread))
+					$links .= "<li>ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a></li>";
+				else
+					$links .= "<li>ID: ".$post['id']."</li>";
+				if($loguser['powerlevel'] > 0)
+					$links .= "<li>".$post['ip']."</li>";
+				$links .= "</ul>";
+			}
 		}
 
 		$meta = (!$ispm ? "Posted on " : 'Sent on ').cdate($dateformat,$post['date']);
@@ -531,29 +547,15 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$post['posts'] = $rankHax;
 	if($post['postheader'] && !$isBlocked)
-		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader'], "", true, true), $tags));
+		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader'], "", $noSmilies, true), $tags));
 
-	//Pirate Day filter
-	if($hacks['postfilter'])
-		include_once("filters.php");
-	if($hacks['postfilter'] == 1 || "0919" == gmdate('md'))
-		$post['text'] = PirateFilter($post['text']);
-	else if($hacks['postfilter'] == 2)
-		$post['text'] = ChefFilter($post['text']);
-	else if($hacks['postfilter'] == 3)
-		$post['text'] = KrautFilter($post['text']);
-	else if($hacks['postfilter'] == 4)
-		$post['text'] = JiveFilter($post['text']);
-	else if($hacks['postfilter'] == 5)
-		$post['text'] = FuddFilter($post['text']);
-
-	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies, $noBr), $tags);
+	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'], $noSmilies, $noBr), $tags);
 	
 	$bucket = "postMangler"; include("./lib/pluginloader.php");
 
 	if($post['signature'] && !$isBlocked)
 	{
-		$postFooter = ApplyTags(CleanUpPost($post['signature'], "", true, true), $tags);
+		$postFooter = ApplyTags(CleanUpPost($post['signature'], "", $noSmilies, true), $tags);
 		if(!$post['signsep'])
 			$separator = "<br />_________________________<br />";
 		else
@@ -562,7 +564,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	$postCode =
 "
-		<table class=\"post margin {14}\">
+		<table class=\"post margin {14}\" id=\"post{13}\">
 			<tr>
 				<td class=\"side userlink {1}\">
 					{0}
@@ -619,7 +621,7 @@ function CheckKosher($matches)
 	$num = ltrim($matches[3], "0");
 	if($matches[2])
 		$num = hexdec($num);
-	if($num >= 32 && $num < 127)
+	if($num < 127)
 		return ""; //"&#xA4;";
 	else
 		return "&#x".dechex($num).";"; //$matches[0];

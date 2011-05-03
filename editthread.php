@@ -23,15 +23,11 @@ if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
 	Kill("Unknown thread ID.");
-$thread['title'] = htmlspecialchars($thread['title']);
 
 $canMod = CanMod($loguserid, $thread['forum']);
 
 if(!$canMod && $thread['user'] != $loguserid)
 	Kill("You are not allowed to edit threads.");
-
-if(isset($_POST['title']))
-	$_POST['title'] = htmlentities2($_POST['title']);
 
 $qFora = "select minpower from forums where id=".$thread['forum'];
 $rFora = Query($qFora);
@@ -221,8 +217,10 @@ else
 }
 
 if(!$_POST['title']) $_POST['title'] = $thread['title'];
-if(strpos($thread['icon'],"img/icons/icon") === 0) //Has a default icon
-	$_POST['iconid'] = substr($thread['icon'],14,1);
+
+$match = array();
+if (preg_match("@^img/icons/icon(\d+)\..{3,}\$@si", $thread['icon'], $match))
+	$_POST['iconid'] = $match[1];
 elseif($thread['icon'] == "") //Has no icon
 	$_POST['iconid'] = 0;
 else //Has custom icon
@@ -251,8 +249,8 @@ if($canMod)
 		$icons .= format(
 "
 				<label>
-					<input type=\"radio\" {0}\" name=\"iconid\" value=\"{1}\" />
-					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" /
+					<input type=\"radio\" {0} name=\"iconid\" value=\"{1}\" />
+					<img src=\"img/icons/icon{1}.png\" alt=\"Icon {1}\" />
 				</label>
 ", $check, $i);
 		$i++;
