@@ -26,9 +26,9 @@ if(NumRows($rThread))
 }
 else
 	Kill("Unknown thread ID.");
-//$thread['title'] = htmlspecialchars($thread['title']);
-$tags = ParseThreadTags($thread['title']);
 $thread['title'] = strip_tags($thread['title']);
+$tags = ParseThreadTags($thread['title']);
+$titleandtags = $thread['title'].'<TAGS>'.$tags;
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
@@ -51,8 +51,6 @@ $onlineUsers = OnlineUsers($fid);
 
 write(
 "
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 			window.addEventListener(\"load\",  hookUpControls, false);
 	</script>
@@ -73,7 +71,7 @@ if(!$noAjax)
 	</div>
 ", $fid, $onlineUsers);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
 if(!$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
 	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
@@ -247,7 +245,16 @@ if($_GET['link'])
 }
 else if($_GET['quote'])
 {
-	$qQuote = "select * from posts left join posts_text on posts_text.pid = posts.id and posts_text.revision = posts.currentrevision where id=".(int)$_GET['quote'];
+	$qQuote = "	select 
+					p.id, p.deleted, pt.text,
+					f.minpower,
+					u.name poster
+				from posts p
+					left join posts_text pt on pt.pid = p.id and pt.revision = p.currentrevision 
+					left join threads t on t.id=p.thread
+					left join forums f on f.id=t.forum
+					left join users u on u.id=p.user
+				where p.id=".(int)$_GET['quote'];
 	$rQuote = Query($qQuote);
 	
 	if(NumRows($rQuote))
@@ -255,20 +262,14 @@ else if($_GET['quote'])
 		$quote = Fetch($rQuote);
 
 		//SPY CHECK!
-		$qThread = "select forum from threads where id=".$quote['thread'];
-		$rThread = Query($qThread);
-		$thread = Fetch($rThread);
-		$qForum = "select minpower from forums where id=".$thread['forum'];
-		$rForum = Query($qForum);
-		$forum = Fetch($rForum);
-		if($forum['minpower'] > $postingAsUser['powerlevel'])
+		if($quote['minpower'] > $postingAsUser['powerlevel'])
 			$quote['text'] = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
+			
+		if ($quote['deleted'])
+			$quote['text'] = "*post deleted*";
 
-		$qPoster = "select * from users where id=".$quote['user'];
-		$rPoster = Query($qPoster);
-		$poster = Fetch($rPoster);
-		$prefill = "[quote=\"".$poster['name']."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
-		$prefill = str_replace("/me", "[b]* ".$poster['name']."[/b]", $prefill);
+		$prefill = "[quote=\"".htmlval($quote['poster'])."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
+		$prefill = str_replace("/me", "[b]* ".htmlval($quote['poster'])."[/b]", $prefill);
 	}
 }
 
@@ -287,7 +288,7 @@ while($mood = Fetch($rMoods))
 	$moodOptions .= format(
 "
 	<option {0} value=\"{1}\">{2}</option>
-",	$moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
+",	$moodSelects[$mood['mid']], $mood['mid'], htmlval($mood['name']));
 
 $ninja = FetchResult("select id from posts where thread=".$tid." order by date desc limit 0, 1",0,0);
 
@@ -410,7 +411,7 @@ if(NumRows($rPosts))
 		$posts .= Format(
 "
 		<tr>
-			<td class=\"cell2\">
+			<td class=\"cell2\" style=\"width: 15%; vertical-align: top;\">
 				{1}
 			</td>
 			<td class=\"cell{0}\">
@@ -432,6 +433,6 @@ if(NumRows($rPosts))
 ",	$posts);
 }
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "New Reply"=>""), $links);
+MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, "New Reply"=>""), $links);
 
 ?>

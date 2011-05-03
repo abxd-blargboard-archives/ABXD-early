@@ -79,8 +79,6 @@ if($thread['closed'] && !CanMod($loguserid, $fid))
 	Kill("This thread is closed.");
 	
 write("
-	<script type=\"text/javascript\" src=\"lib/Tween.js\"></script>
-	<script type=\"text/javascript\" src=\"lib/OpacityTween.js\"></script>
 	<script type=\"text/javascript\">
 			window.addEventListener(\"load\",  hookUpControls, false);
 	</script>
@@ -178,7 +176,7 @@ if($_POST['action']=="Preview")
 		$previewPost['num'] = $post['num'];
 		$previewPost['id'] = $pid;
 		$previewPost['uid'] = $post['user'];
-		$copies = explode(",","title,name,picture,sex,powerlevel,avatar,postheader,signature,signsep,posts,regdate,lastactivity,lastposttime,rankset");
+		$copies = explode(",","title,name,displayname,picture,sex,powerlevel,avatar,postheader,signature,signsep,posts,regdate,lastactivity,lastposttime,rankset");
 		foreach($copies as $toCopy)
 			$previewPost[$toCopy] = $user[$toCopy];
 		$previewPost['options'] = 0;
@@ -193,7 +191,7 @@ if($_POST['action']=="Preview")
 
 //if(!$_POST['text']) $_POST['text'] = $post['text'];
 //if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
-if(!$_POST['text']) $prefill = htmlval($post['text']);
+if(!$_POST['text']) $prefill = $post['text'];
 else $prefill = htmlval(deSlashMagic($_POST['text']));
 
 if($_POST['nopl'])
@@ -210,7 +208,7 @@ if($_POST['mood'])
 $moodOptions = Format("<option {0}value=\"0\">[Default avatar]</option>\n", $moodSelects[0]);
 $rMoods = Query("select mid, name from moodavatars where uid=".$post['user']." order by mid asc");
 while($mood = Fetch($rMoods))
-	$moodOptions .= Format("<option {0}value=\"{1}\">{2}</option>\n", $moodSelects[$mood['mid']], $mood['mid'], $mood['name']);
+	$moodOptions .= Format("<option {0}value=\"{1}\">{2}</option>\n", $moodSelects[$mood['mid']], $mood['mid'], htmlval($mood['name']));
 
 Write(
 "
@@ -292,7 +290,7 @@ if(NumRows($rPosts))
 		$posts .= Format(
 "
 		<tr>
-			<td class=\"cell2\">
+			<td class=\"cell2\" style=\"width: 15%; vertical-align: top;\">
 				{1}
 			</td>
 			<td class=\"cell{0}\">
