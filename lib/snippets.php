@@ -28,8 +28,8 @@ function OptimizeLayouts($text)
 
 function usectime()
 {
-	$t=gettimeofday();
-	return $t[sec]+$t[usec] / 1000000;
+	$t = gettimeofday();
+	return $t['sec'] + ($t['usec'] / 1000000);
 }
 
 function Plural($i, $s)
@@ -65,7 +65,7 @@ function DoFooter($buffer)
 		$footer = format(
 "
 		<div class=\"footer\">
-			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2<span style=\"opacity: 0.5;\">.2</span><br />
+			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2.2.1<br />
 			By Kawa, Mega-Mario, Nikolaj, et al<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br />
 			Page rendered in {0} seconds with {1}.<br />
@@ -88,12 +88,11 @@ function DoFooter($buffer)
 		//if(function_exists("runBucket")) runBucket("footers");
 	}
 			
-	$boardTitle = $boardname;
+	$boardTitle = htmlval($boardname);
 	if($title != "")
 		$boardTitle .= " &raquo; ".$title;
 
 	$raw = $buffer.$footerExtensionsA.$footer.$footerExtensionsB;
-	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
 	$raw = str_replace("<title>[[BOARD TITLE HERE]]</title>", "<title>".$boardTitle."</title>", $raw);
 	if(!$ajax)
 		$raw = OptimizeLayouts($raw);
@@ -184,6 +183,7 @@ function UserLink($user, $field = "id")
 	$fpow = $user['powerlevel'];
 	$fsex = $user['sex'];
 	$fname = ($user['displayname'] ? $user['displayname'] : $user['name']);
+	$fname = htmlspecialchars($fname);
 
 	if($hacks['alwayssamepower'])
 		$fpow = $hacks['alwayssamepower'] - 1;
@@ -414,10 +414,19 @@ function DoPostHelp()
 <?php
 }
 
-function OnlineUsers($forum = 0)
+function OnlineUsers($forum = 0, $update = true)
 {
+	global $loguserid;
 	$forumClause = "";
 	$browseLocation = " online";
+	
+	if ($update)
+	{
+		if ($loguserid)
+			Query("UPDATE users SET lastforum=".$forum." WHERE id=".$loguserid);
+		else
+			Query("UPDATE guests SET lastforum=".$forum." WHERE ip='".$_SERVER['REMOTE_ADDR']."'");
+	}
        
 	if($forum)
 	{
