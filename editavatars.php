@@ -1,30 +1,30 @@
 <?php
 include("lib/common.php");
 
-$title = "Mood avatars";
+$title = __("Mood avatars");
 
 AssertForbidden("editMoods");
 
-if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to edit your avatars.");
+if(!$loguserid)
+	Kill(__("You must be logged in to edit your avatars."));
 
 if(isset($_POST['action']))
 {
 	$mid = (int)$_POST['mid'];
-	if($_POST['action'] == "Rename")
+	if($_POST['action'] == __("Rename"))
 	{
 		Query("update moodavatars set name='".justEscape($_POST['name'])."' where mid=".$mid." and uid=".$loguserid);
-		Alert("Avatar renamed.", "Okay");
+		Alert(__("Avatar renamed."), __("Okay"));
 	}
-	else if($_POST['action'] == "Delete")
+	else if($_POST['action'] == __("Delete"))
 	{
 		Query("delete from moodavatars where uid=".$loguserid." and mid=".$mid);
 		Query("update posts set mood=0 where user=".$loguserid." and mood=".$mid);
 		if(file_exists("img/avatars/".$loguserid."_".$mid))
 			unlink("img/avatars/".$loguserid."_".$mid);
-		Alert("Avatar deleted.", "Okay");
+		Alert(__("Avatar deleted."), __("Okay"));
 	}
-	else if($_POST['action'] == "Add")
+	else if($_POST['action'] == __("Add"))
 	{
 		$highest = FetchResult("select mid from moodavatars where uid=".$loguserid." order by mid desc limit 1");
 		if($highest < 1)
@@ -53,7 +53,7 @@ if(isset($_POST['action']))
 				$extlist .= ($extlist ? ", " : "").$ext;
 			}
 			if(!$validext)
-				$error.="<li>Invalid file type, must be either: ".$extlist."</li>";
+				$error.="<li>".__("Invalid file type, must be one of:")." ".$extlist."</li>";
 
 			if(!$error)
 			{
@@ -95,7 +95,7 @@ if(isset($_POST['action']))
 				}
 				$usepic = $file;
 			} else
-				Kill("Could not update your avatar for the following reason(s):<ul>".$error."</ul>");
+				Kill(__("Could not update your avatar for the following reason(s):")."<ul>".$error."</ul>");
 		}
 	}
 }
@@ -115,8 +115,8 @@ while($mood = Fetch($rMoods))
 				<form method=\"post\" action=\"editavatars.php\">
 					<input type=\"hidden\" name=\"mid\" value=\"{2}\" />
 					<input type=\"text\" id=\"name{2}\" name=\"name\" style=\"width: 60%;\" value=\"{3}\" />
-					<input type=\"submit\" name=\"action\" value=\"Rename\" />
-					<input type=\"submit\" name=\"action\" value=\"Delete\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Rename")."\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Delete")."\" />
 				</form>
 			</td>
 		</tr>
@@ -128,13 +128,13 @@ write(
 	<table class=\"margin outline width50\">
 		<tr class=\"header1\">
 			<th colspan=\"2\">
-				Mood Avatars
+				".__("Mood avatars")."
 			</th>
 		</tr>
 		{0}
 		<tr class=\"header1\">
 			<th colspan=\"2\">
-				Add New
+				".__("Add new")."
 			</th>
 		</tr>
 		<tr class=\"cell2\">
@@ -142,13 +142,13 @@ write(
 			</td>
 			<td>
 				<form method=\"post\" action=\"editavatars.php\" enctype=\"multipart/form-data\">
-					<label for=\"newName\">Name:</label>
+					<label for=\"newName\">".__("Name:")."</label>
 					<input type=\"text\" id=\"newName\" name=\"name\" style=\"width: 60%;\" /><br />
 					
-					<label for=\"pic\">Image:</label>
+					<label for=\"pic\">".__("Image:")."</label>
 					<input type=\"file\" id=\"pic\" name=\"picture\"  style=\"width: 75%;\" />
 
-					<input type=\"submit\" name=\"action\" value=\"Add\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Add")."\" />
 				</form>
 			</td>
 	</table>
