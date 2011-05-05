@@ -7,12 +7,10 @@ include("lib/common.php");
 AssertForbidden("addRanks");
 
 if($loguser['powerlevel'] < 3)
-	Kill("You must be an administrator to import ranksets.");
+	Kill(__("You must be an administrator to import ranksets."));
 
 Query("truncate table ranks");
 Query("truncate table ranksets");
-
-write("<div>Ranksets cleared for refill.</div>");
 
 include("ranksets.php");
 
@@ -23,10 +21,10 @@ write(
 	<table class=\"outline margin width25\">
 		<tr class=\"header1\">
 			<th>
-				Postcount
+				".__("Postcount")."
 			</th>
 			<th>
-				Rank
+				".__("Rank")."
 			</th>
 		</tr>
 ");
@@ -46,11 +44,11 @@ foreach($ranks as $rankset)
 		$rankset['directory'] = strtolower($rankset['name']);
 
 	$index++;
-	$description = "Set index is ".$index.". Base directory is <a href=\"img/ranks/".$rankset['directory']."/\"><code>".$rankset['directory']."</code></a>.";
+	$description = format(__("Set index is {0}. Base directory is {1}."), $index, "<a href=\"img/ranks/".$rankset['directory']."/\"><code>".$rankset['directory']."</code></a>");
 	if($rankset['notolower'])
-		$description .= " Set does not use lowercase filenames.";
+		$description .= " ".__("Set does not use lowercase filenames.");
 	if($rankset['noimages'])
-		$description .= " Set is text-only.";
+		$description .= " ".__("Set is text-only.");
 
 	write(
 "
@@ -87,7 +85,7 @@ write(
 "
 	</table>
 	<div>
-		The above ranks and sets have been imported.
+		".__("The above ranks and sets have been imported.")."
 	</div>
 ");
 
