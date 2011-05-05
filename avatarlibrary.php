@@ -4,7 +4,7 @@
 
 include("lib/common.php");
 
-$title = "Avatar library";
+$title = __("Avatar library");
 
 AssertForbidden("viewAvatars");
 
@@ -14,7 +14,7 @@ if(isset($_GET['rebuild'])) //Now no longers requires an actual value.
 	//Prepare file tree...
 	$library = @opendir("img/avatars/library"); //in some PHP setups, you get an ugly "invalid argument" message here on fail.
 	if($library === FALSE)
-		Kill("Could not open avatar library.");
+		Kill(__("Could not open avatar library."));
 	//Loop through library folders...
 	while(FALSE !== ($folder = readdir($library)))
 	{
@@ -35,18 +35,18 @@ if(isset($_GET['rebuild'])) //Now no longers requires an actual value.
 		$avalib[] = array("name"=>$folder, "content"=>$thisFolder);
 	}
 	if(count($avalib) == 0)
-		Kill("There was nothing to index. Make sure there are actually images in the avatar library directory and try again.");
+		Kill(__("There was nothing to index. Make sure there are actually images in the avatar library directory and try again."));
 	file_put_contents("avalib.txt", serialize($avalib));
-	Alert("The avatar library has been rebuilt", "All done");
+	Alert(__("The avatar library has been rebuilt."), __("All done"));
 }
 
 //Because it seems faster to just slurp in a single file than to do a whole folder scan |3
 $avalib = @unserialize(file_get_contents("avalib.txt")); //in the same vein as opendir above...
 if($avalib === FALSE)
-	Kill("Could not open avatar library file. Please <a href=\"avatarlibrary.php?rebuild=1\">rebuild</a> it.");
+	Kill(format(__("Could not open avatar library file. Please {0}rebuild{1} it."), "<a href=\"avatarlibrary.php?rebuild=1\">", "</a>"));
 
 if(count($avalib) == 0)
-	Kill("The avatar library is empty.");
+	Kill(__("The avatar library is empty."));
 
 if(isset($_GET['fid']))
 {
@@ -54,7 +54,7 @@ if(isset($_GET['fid']))
 	$selected[$fid] = " selected=\"selected\"";
 	if($avalib[$fid]['name'] == "")
 	{
-		Alert("Unknown category.");
+		Alert(__("Unknown category."));
 		unset($fid);
 	}
 }
@@ -62,17 +62,17 @@ if(isset($_GET['fid']))
 if($_GET['action'] == "set")
 {
 	if(!$loguserid)
-		Kill("You must be logged in to set your avatar.");
+		Kill(__("You must be logged in to set your avatar."));
 	elseif($_SERVER['REMOTE_ADDR'] != $loguser['lastip'])
-		Kill("Haaaah, no.");
+		Kill(__("Haaaah, no."));
 	else
 		if(!isset($_GET['fid']) || !isset($_GET['img']))
-			Alert("Both category and image must be chosen to set your avatar.", "Error");
+			Alert(__("Both category and image must be chosen to set your avatar."), __("Error"));
 		elseif(!is_numeric($_GET['fid']) || !is_numeric($_GET['img']))
-			Alert("Category and image are supposed to be numerical!", "WTFHAX?");
+			Alert(__("Category and image are supposed to be numerical!"), "WTFHAX?");
 		else
 			if($avalib[$fid]['content'][$_GET['img']] == "")
-				Alert("Unknown image.","Error");
+				Alert(__("Unknown image."), __("Error"));
 			else
 			{
 				//Here's where the fun starts.
@@ -85,7 +85,7 @@ if($_GET['action'] == "set")
 				Query("update users set picture='img/avatars/".$loguserid."' where id=".$loguserid." limit 1");
 				
 				Report("[b]".$loguser['name']."[/] switched avatars to [b]\"".$avalib[$fid]['content'][$_GET['img']]."\"[/] -> [g]#HERE#?uid=".$loguserid, 1);
-				Redirect("Your avatar has been set to \"".$avalib[$fid]['content'][$_GET['img']]."\".","profile.php?id=".$loguserid, "your profile");
+				Redirect(format(__("Your avatar has been set to \"{0}\"."), $avalib[$fid]['content'][$_GET['img']]),"profile.php?id=".$loguserid, __("your profile"));
 			}
 }
 
@@ -99,15 +99,15 @@ write(
 	<form action=\"avatarlibrary.php\" method=\"get\" id=\"myForm\">
 		<table class=\"outline margin\">
 			<tr class=\"header1\">
-				<th colspan=\"2\">Avatar library</th>
+				<th colspan=\"2\">".__("Avatar library")."</th>
 			</tr>
 			<tr class=\"cell0\">
-				<td style=\"width: 10%;\">Category</td>
+				<td style=\"width: 10%;\">".__("Category")."</td>
 				<td>
 					<select name=\"fid\" size=\"1\" onchange=\"myForm.submit();\">
 						{0}
 					</select>
-					<input type=\"submit\" value=\"Change\" />
+					<input type=\"submit\" value=\"".__("Change")."\" />
 				</td>
 			</tr>
 		</table>
@@ -147,7 +147,7 @@ if($loguser['picture'] == "img/avatars/".$loguserid)
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
 			<th colspan=\"2\">
-				Notice
+				".__("Notice")."
 			</th>
 		</tr>
 		<tr class=\"cell2\">
@@ -157,7 +157,7 @@ if($loguser['picture'] == "img/avatars/".$loguserid)
 				</a>
 			</td>
 			<td>
-				Please note that anything you choose here will <em>overwrite</em> your previous avatar. Keep a backup in case you want to switch back later &mdash; we can't and won't help you restore your previous avatar. However, we can help make a backup &mdash; you can save the image to the left.
+				".__("Please note that anything you choose here will <em>overwrite</em> your previous avatar. Keep a backup in case you want to switch back later &mdash; we can't and won't help you restore your previous avatar. However, we can help make a backup &mdash; you can save the image to the left.")."
 			</td>
 		</tr>
 	</table>
@@ -169,12 +169,12 @@ if($loguser['picture'] == "img/avatars/".$loguserid)
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
 			<th colspan=\"2\">
-				Notice
+				".__("Notice")."
 			</th>
 		</tr>
 		<tr class=\"cell2\">
 			<td>
-				Because you are not logged in, you cannot select any avatars. Feel free to browse, though.
+				".__("Because you are not logged in, you cannot select any avatars. Feel free to browse, though.")."
 			</td>
 		</tr>
 	</table>
