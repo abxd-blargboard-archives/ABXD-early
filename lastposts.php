@@ -41,22 +41,22 @@ if($theList == "")
 "
 	<tr class=\"cell1\">
 		<td colspan=\"5\" style=\"text-align: center\">
-			Nothing has been posted in the last {0}.
+			".__("Nothing has been posted in the last {0}.")."
 		</td>
 	</tr>
-", Plural($hours, "hour"));
+", Plural($hours, __("hour")));
 
 write(
 "
 <table class=\"margin outline\">
 	<tr class=\"header0\">
-		<th colspan=\"5\">Last Posts</th>
+		<th colspan=\"5\">".__("Last posts")."</th>
 	</tr>
 	<tr class=\"header1\">
-		<th>Forum</th>
-		<th>Thread</th>
-		<th>User</th>
-		<th>Date</th>
+		<th>".__("Forum")."</th>
+		<th>".__("Thread")."</th>
+		<th>".__("User")."</th>
+		<th>".__("Date")."</th>
 		<th></th>
 	</tr>
 	{0}
