@@ -4,25 +4,26 @@
 
 include("lib/common.php");
 
-$title = "IP bans";
+$title = __("IP bans");
 
 AssertForbidden("editIPBans");
 
 if($loguser['powerlevel'] < 3)
-	Kill("Only administrators get to manage IP bans.");
+	Kill(__("Only administrators get to manage IP bans."));
 
-MakeCrumbs(array("Main"=>"./", "IP ban manager"=>""), "");
+MakeCrumbs(array(__("Main")=>"./", __("IP ban manager")=>""), "");
 
-if($_POST['action'] == "Add")
+if($_POST['action'] == __("Add"))
 {
 	$qIPBan = "insert into ipbans (ip, reason, date) values ('".justEscape($_POST['ip'])."', '".justEscape($_POST['reason'])."', ".((int)$_POST['days'] > 0 ? time() + ((int)$_POST['days'] * 86400) : 0).")";
 	$rIPBan = Query($qIPBan);
-	Alert("Added.","Notice");
-} elseif($_GET['action'] == "delete")
+	Alert(__("Added."), __("Notice"));
+}
+elseif($_GET['action'] == "delete")
 {
 	$qIPBan = "delete from ipbans where ip='".justEscape($_GET['ip'])."' limit 1";
 	$rIPBan = Query($qIPBan);
-	Alert("Removed.","Notice");
+	Alert(__("Removed."), __("Notice"));
 }
 
 $qIPBan = "select * from ipbans order by date desc";
@@ -35,7 +36,7 @@ while($ipban = Fetch($rIPBan))
 	if($ipban['date'])
 		$date = gmdate($dateformat,$ipban['date'])." (".TimeUnits($ipban['date']-time())." left)";
 	else
-		$date = "Permanent";
+		$date = __("Permanent");
 	$banList .= format(
 "
 	<tr class=\"cell{0}\">
@@ -49,7 +50,7 @@ while($ipban = Fetch($rIPBan))
 			{3}
 		</td>
 		<td>
-			<a href=\"ipbans.php?ip={1}&amp;action=delete\">del</a>
+			<a href=\"ipbans.php?ip={1}&amp;action=delete\">&#x2718;</a>
 		</td>
 	</tr>
 ", $cellClass, $ipban['ip'], $ipban['reason'], $date);
@@ -58,9 +59,9 @@ while($ipban = Fetch($rIPBan))
 write("
 <table class=\"outline margin width50\">
 	<tr class=\"header1\">
-		<th>IP</th>
-		<th>Reason</th>
-		<th>Date</th>
+		<th>".__("IP")."</th>
+		<th>".__("Reason")."</th>
+		<th>".__("Date")."</th>
 		<th>&nbsp;</th>
 	</tr>
 	{0}
@@ -70,12 +71,12 @@ write("
 	<table class=\"outline margin width50\">
 		<tr class=\"header1\">
 			<th colspan=\"2\">
-				Add
+				".__("Add")."
 			</th>
 		</tr>
 		<tr>
 			<td class=\"cell2\">
-				IP
+				".__("IP")."
 			</td>
 			<td class=\"cell0\">
 				<input type=\"text\" name=\"ip\" style=\"width: 98%;\" maxlength=\"25\" />
@@ -83,7 +84,7 @@ write("
 		</tr>
 		<tr>
 			<td class=\"cell2\">
-				Reason
+				".__("Reason")."
 			</td>
 			<td class=\"cell1\">
 				<input type=\"text\" name=\"reason\" style=\"width: 98%;\" maxlength=\"25\" />
@@ -91,22 +92,22 @@ write("
 		</tr>
 		<tr>
 			<td class=\"cell2\">
-				For
+				".__("For")."
 			</td>
 			<td class=\"cell1\">
-				<input type=\"text\" name=\"days\" size=\"13\" maxlength=\"13\" /> days
+				<input type=\"text\" name=\"days\" size=\"13\" maxlength=\"13\" /> ".__("days")."
 			</td>
 		</tr>
 		<tr class=\"cell2\">
 			<td></td>
 			<td>
-				<input type=\"submit\" name=\"action\" value=\"Add\" />
+				<input type=\"submit\" name=\"action\" value=\"".__("Add")."\" />
 			</td>
 		</tr>
 	</table>
 </form>
 ", $banList);
 
-MakeCrumbs(array("Main"=>"./", "IP ban manager"=>""), "");
+MakeCrumbs(array(__("Main")=>"./", __("IP ban manager")=>""), "");
 
 ?>
