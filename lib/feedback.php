@@ -7,8 +7,10 @@ function Debug($s)
 }
 
 //	Not really much different to kill()
-function Alert($s, $t="Alert")
+function Alert($s, $t="")
 {
+	if($t=="")
+		$t = __("Alert");
 	write("
 	<div class=\"outline margin\">
 		<div class=\"errort\">
@@ -20,8 +22,10 @@ function Alert($s, $t="Alert")
 	</div>", $s, $t);
 }
 
-function Kill($s, $t="Error")
+function Kill($s, $t="")
 {
+	if($t=="")
+		$t = __("Error");
 	Alert($s, $t);
 	exit();
 }
@@ -35,7 +39,7 @@ function Redirect($s,$t,$n)
 			<strong>{0}</strong>
 		</div>
 		<div class=\"errorc cell2\">
-			You will now be redirected to <a href=\"{1}\">{2}</a>&hellip;
+			".__("You will now be redirected to {3}&hellip;")."
 			<div class=\"pollbarContainer\" style=\"margin: 4px auto; width: 25%; display: none;\">
 				<div class=\"pollbar\" id=\"theBar\" style=\"background: silver; width: 1%;\">&nbsp;</div>
 			</div>
@@ -72,7 +76,7 @@ function Redirect($s,$t,$n)
 		
 		window.addEventListener(\"load\",  startBar, false);
 	</script>
-",	$s, $t, $n);
+",	$s, $t, $n, "<a href=\"".$t."\">".$n."</a>");
 	exit();
 }
 
