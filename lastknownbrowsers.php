@@ -36,7 +36,7 @@ if($pagelinks)
 		$pagelinks = "1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"lastknownbrowsers.php".$ual."\">1</a>".$pagelinks;
-	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	Write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 }
 
 
@@ -96,19 +96,19 @@ if($isMod)
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
 			<th>
-				ID
+				".__("ID")."
 			</th>
 			<th>
-				Name
+				".__("Name")."
 			</th>
 			<th>
 				&nbsp;
 			</th>
 			<th>
-				IP
+				".__("IP")."
 			</th>
 			<th>
-				Last known browser
+				".__("Last known browser")."
 			</th>
 		</tr>
 		{0}
@@ -119,16 +119,16 @@ else
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
 			<th>
-				ID
+				".__("ID")."
 			</th>
 			<th>
-				Name
+				".__("Name")."
 			</th>
 			<th>
 				&nbsp;
 			</th>
 			<th>
-				Last known browser
+				".__("Last known browser")."
 			</th>
 		</tr>
 		{0}
