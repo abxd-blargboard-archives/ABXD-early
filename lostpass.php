@@ -2,13 +2,13 @@
 include("lib/common.php");
 
 if($mailResetFrom == "")
-	Kill("No sender specified for reset emails. Please check the board settings.");
+	Kill(__("No sender specified for reset emails. Please check the board settings."));
 
 if(isset($_GET['key']) && isset($_GET['id']))
 {
 	$user = Query("select id, name, password from users where id = '".(int)$_GET['id']."' and lostkey = '".justEscape($_GET['key'])."'");
 	if(NumRows($user) == 0)
-		Kill("This old key cannot be used.", "Invalid key");
+		Kill(__("This old key cannot be used."), __("Invalid key"));
 	else
 		$user = Fetch($user);
 
@@ -16,26 +16,26 @@ if(isset($_GET['key']) && isset($_GET['id']))
 	$sha = hash("sha256", $newPass.$salt, FALSE);
 
 	Query("update users set lostkey = '', password = '".$sha."', pss = '' where id = ".(int)$_GET['id']);
-	Kill("Your password has been reset to <strong>".$newPass."</strong>. You can use this password to log in to the board. We suggest you change it as soon as possible.", "Password reset");
+	Kill(format(__("Your password has been reset to <strong>{0}</strong>. You can use this password to log in to the board. We suggest you change it as soon as possible."), $newPass), __("Password reset"));
 	
 }
-else if($_POST['action'] == "Send reset email")
+else if($_POST['action'] == __("Send reset email"))
 {
 	$user = Query("select id, name, password, email, lostkeytimer from users where name = '".justEscape($_POST['name'])."' and email = '".justEscape($_POST['mail'])."'");
 	if(NumRows($user) == 0)
-		Kill("Could not find a user with that name and email address.", "Invalid user name or email");
+		Kill(__("Could not find a user with that name and email address."), __("Invalid user name or email"));
 	else
 		$user = Fetch($user);
 	//print_r($user);
 	if($user['lostkeytimer'] > time() - (60*60)) //wait an hour between attempts
-		Kill("To prevent abuse, this function can only be used once an hour.", "Slow down!");
+		Kill(__("To prevent abuse, this function can only be used once an hour."), __("Slow down!"));
 
 	$resetKey = md5($user['id'].$user['name'].$user['password'].$user['email']);
 
 	$from = $mailResetFrom;
 	$to = $user['email'];
 	$subject = "Password reset for ".$user['name'];
-	$message = "A password reset was requested for your user account on ".$boardname.".\nIf you did not submit this request, this message can be ignored.\n\nTo reset your password, visit the following URL:\n\n".$_SERVER['HTTP_REFERER']."?id=".$user['id']."&key=".$resetKey."\n\nThis link can be used once.";
+	$message = format(__("A password reset was requested for your user account on {0}."), $boardname)."\n".__("If you did not submit this request, this message can be ignored.")."\n\n".__("To reset your password, visit the following URL:")."\n\n".$_SERVER['HTTP_REFERER']."?id=".$user['id']."&key=".$resetKey."\n\n".__("This link can be used once.");
 	
 	$headers = "From: ".$from."\r\n"."Reply-To: ".$from."\r\n"."X-Mailer: PHP/".phpversion();
 	
@@ -44,7 +44,7 @@ else if($_POST['action'] == "Send reset email")
 
 	Query("update users set lostkey = '".justEscape($resetKey)."', lostkeytimer = ".time()." where id = ".$user['id']);
 
-	Kill("Check your email in a moment and follow the link found therein.", "Reset email sent");
+	Kill(__("Check your email in a moment and follow the link found therein."), __("Reset email sent"));
 }
 else
 {
@@ -53,12 +53,12 @@ else
 		<table class=\"outline margin width50\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Lost password
+					".__("Lost password")."
 				</th>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"un\">User name</label>
+					<label for=\"un\">".__("User name")."</label>
 				</td>
 				<td class=\"cell0\">
 					<input type=\"text\" id=\"un\" name=\"name\" style=\"width: 98%;\" maxlength=\"25\" />
@@ -66,7 +66,7 @@ else
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"em\">Email address</label>
+					<label for=\"em\">".__("Email address")."</label>
 				</td>
 				<td class=\"cell1\">
 					<input type=\"email\" id=\"em\" name=\"mail\" style=\"width: 98%;\" maxlength=\"60\" />
@@ -75,12 +75,12 @@ else
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Send reset email\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Send reset email")."\" />
 				</td>
 			</tr>
 			<tr>
 				<td class=\"cell1 smallFonts\" colspan=\"2\">
-					If you did not specify an email address in your profile, you are <em>not</em> out of luck. The old method of contacting an administrator from outside the board is still an option.
+					".__("If you did not specify an email address in your profile, you are <em>not</em> out of luck. The old method of contacting an administrator from outside the board is still an option.")."
 				</td>
 			</tr>
 		</table>
