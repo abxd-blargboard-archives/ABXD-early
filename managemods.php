@@ -5,12 +5,12 @@
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
-$title = "Manage localmod assignments";
+$title = __("Manage localmod assignments");
 
 AssertForbidden("editMods");
 
 if($loguser['powerlevel'] < 3)
-	Kill("You're not an admin.");
+	Kill(__("You're not an admin."));
 
 if(!isset($_GET['action']))
 {
@@ -32,7 +32,7 @@ if(!isset($_GET['action']))
 				<li>
 					{0}
 					<sup>
-						[<a href=\"managemods.php?action=delete&amp;fid={1}&amp;mid={2}\">delete</a>]
+						<a href=\"managemods.php?action=delete&amp;fid={1}&amp;mid={2}\">&#x2718;</a>
 					</sup>
 				</li>
 ", UserLink($mod), $forum['id'], $mods['user']);
@@ -44,7 +44,7 @@ if(!isset($_GET['action']))
 			<ul>
 				{2}
 				<li>
-					<a href=\"managemods.php?action=add&amp;fid={1}\">Add</a>
+					<a href=\"managemods.php?action=add&amp;fid={1}\">".__("Add")."</a>
 				</li>
 			</ul>
 		</li>
@@ -53,7 +53,7 @@ if(!isset($_GET['action']))
 	write(
 "
 	<div class=\"faq outline margin\">
-		<h3>Moderators as of {0}</h3>
+		<h3>".__("Moderators as of {0}")."</h3>
 		<ul>
 			{1}
 		</ul>
@@ -64,22 +64,22 @@ elseif($_GET['action'] == "delete")
 {
 	include("lib/header.php");
 	if(!isset($_GET['fid']))
-		Kill("Forum ID unspecified.");
+		Kill(__("Forum ID unspecified."));
 	if(!isset($_GET['mid']))
-		Kill("Mod ID unspecified.");
+		Kill(__("Mod ID unspecified."));
 
 	$fid = (int)$_GET['fid'];
 	$mid = (int)$_GET['mid'];
 
 	$qMod = "delete from forummods where forum=".$fid." and user=".$mid;
 	$rMod = Query($qMod);
-	Redirect("Removed!","managemods.php","the mod manager");
+	Redirect(__("Removed!"), "managemods.php", __("the mod manager"));
 }
 elseif($_GET['action'] == "add")
 {
 	include("lib/header.php");
 	if(!isset($_GET['fid']))
-		Kill("Forum ID unspecified.");
+		Kill(__("Forum ID unspecified."));
 
 	$fid = (int)$_GET['fid'];
 
@@ -93,9 +93,9 @@ elseif($_GET['action'] == "add")
 			$qCheck = "select user from forummods where forum=".$fid." and user=".$mod['id'];
 			$rCheck = Query($qCheck);
 			if(NumRows($rCheck))
-				$add = "already there";
+				$add = __("already there");
 			else
-				$add = format("<a href=\"managemods.php?action=add&amp;fid={0}&amp;mid={1}\">add</a>", $fid, $mod['id']);
+				$add = format("<a href=\"managemods.php?action=add&amp;fid={0}&amp;mid={1}\">".__("add")."</a>", $fid, $mod['id']);
 			$modList .= format(
 "
 <li>
@@ -107,7 +107,7 @@ elseif($_GET['action'] == "add")
 		write(
 "
 		<div class=\"faq outline margin\">
-			Pick a mod, any mod.
+			".__("Pick a mod, any mod.")."
 			<ul>
 				{0}
 			</ul>
@@ -119,7 +119,7 @@ elseif($_GET['action'] == "add")
 		$mid = (int)$_GET['mid'];
 		$qMod = "insert into forummods (forum	, user) values (".$fid.", ".$mid.")";
 		$rMod = Query($qMod);
-		Redirect("Added!","managemods.php","the mod manager");
+		Redirect(__("Added!"), "managemods.php", __("the mod manager"));
 	}
 }
 
