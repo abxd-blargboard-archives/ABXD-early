@@ -7,7 +7,7 @@ include("lib/common.php");
 AssertForbidden("listPosts");
 
 if(!isset($_GET['id']))
-	Kill("User ID unspecified.");
+	Kill(__("User ID unspecified."));
 
 $id = (int)$_GET['id'];
 
@@ -16,8 +16,10 @@ $rUser = Query($qUser);
 if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
-	Kill("Unknown user ID.");
+	Kill(__("Unknown user ID."));
 $bucket = "userMangler"; include("./lib/pluginloader.php");
+
+$total = __("Post list");
 
 $total = $user['posts'];
 $ppp = $loguser['postsperpage'];
@@ -53,7 +55,7 @@ if($pagelinks)
 		$pagelinks = " 1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"listposts.php?id=".$id."\">1</a>".$pagelinks;
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	write("<div class=\"smallFonts pages\">"._("Pages:")." {0}</div>", $pagelinks);
 }
 
 if(NumRows($rPosts))
@@ -82,8 +84,8 @@ if(NumRows($rPosts))
 }
 
 if($pagelinks)
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 
-MakeCrumbs(array("Main"=>"./", $user['name']=>"profile.php?id=".$id, "Lists of posts"=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $user['name']=>"profile.php?id=".$id, __("List of posts")=>""), $links);
 
 ?>
