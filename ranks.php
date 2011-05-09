@@ -1,11 +1,11 @@
 <?php
 include("lib/common.php");
-$title = "Ranks";
+$title = __("Ranks");
 AssertForbidden("viewRanks");
 
 $setCount = FetchResult("select count(*) from ranksets");
 if($setCount == 0)
-	Kill("No ranksets have been defined.");
+	Kill(__("No ranksets have been defined."));
 
 $users = array();
 $rUsers = Query("select id, name, displayname, powerlevel, sex, posts from users order by id asc");
@@ -38,18 +38,18 @@ write(
 	<table class=\"outline margin width25\">
 		<tr class=\"header0\">
 			<th colspan=\"2\">
-				User ranks
+				".__("User ranks")."
 			</th>
 		</tr>
 		<tr class=\"cell0\">
 			<td>
-				Set
+				".__("Set")."
 			</td>
 			<td>
 				<select name=\"rankset\" size=\"1\" onchange=\"myForm.submit();\">
 					{0}
 				</select>
-				<input type=\"submit\" value=\"Change\" />
+				<input type=\"submit\" value=\"".__("Change")."\" />
 			</td>
 		</tr>
 	</table>
@@ -79,7 +79,7 @@ if(count($climbingAgain))
 		<th colspan=\"3\" style=\"height: 4px;\"></th>
 	</tr>
 	<tr class=\"cell0\">
-		<td colspan=\"2\">Climbing the Ranks Again</td>
+		<td colspan=\"2\">".__("Climbing the Ranks Again")."</td>
 		<td>
 			{0}
 		</td>
@@ -124,10 +124,10 @@ write(
 <table class=\"width75 margin outline\">
 	<tr class=\"header1\">
 		<th>
-			Rank
+			".__("Rank")."
 		</th>
 		<th>
-			To&nbsp;get
+			".__("To get", 1)."
 		</th>
 		<th>
 			&nbsp;
