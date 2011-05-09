@@ -4,6 +4,7 @@
 
 include("lib/common.php");
 
+$title = __("Records");
 AssertForbidden("viewRecords");
 
 $df = "l, F jS Y, G:i:s";
@@ -13,31 +14,31 @@ write(
 <table class=\"outline margin width75\">
 	<tr class=\"header0\">
 		<th colspan=\"2\">
-			Highest Numbers
+			".__("Highest Numbers")."
 		</th>
 	</tr>
 	<tr class=\"cell0\">
 		<td>
-			Highest number of posts in 24 hours
+			".__("Highest number of posts in 24 hours")."
 		</td>
 		<td>
-			<strong>{0}</strong>, on {1} GMT
+			".__("<strong>{0}</strong>, on {1} GMT")."
 		</td>
 	</tr>
 	<tr class=\"cell1\">
 		<td>
-			Highest number of posts in one hour
+			".__("Highest number of posts in one hour")."
 		</td>
 		<td>
-			<strong>{2}</strong>, on {3} GMT
+			".__("<strong>{2}</strong>, on {3} GMT")."
 		</td>
 	</tr>
 	<tr class=\"cell0\">
 		<td>
-			Highest number of users in five minutes
+			".__("Highest number of users in five minutes")."
 		</td>
 		<td>
-			<strong>{4}</strong>, on {5} GMT
+			".__("<strong>{4}</strong>, on {5} GMT")."
 		</td>
 	</tr>
 	<tr class=\"cell1\">
@@ -99,30 +100,30 @@ write(
 <table class=\"outline margin\">
 	<tr class=\"header0\">
 		<th colspan=\"7\">
-			Table Status
+			".__("Table Status")."
 		</th>
 	</tr>
 	<tr class=\"header1\">
 		<th>
-			Name
+			".__("Name")."
 		</th>
 		<th>
-			Rows
+			".__("Rows")."
 		</th>
 		<th>
-			Avg. data/row
+			".__("Avg. data/row")."
 		</th>
 		<th>
-			Data size
+			".__("Data size")."
 		</th>
 		<th>
-			Index size
+			".__("Index size")."
 		</th>
 		<th>
-			Unused data
+			".__("Unused data")."
 		</th>
 		<th>
-			Total size
+			".__("Total size")."
 		</th>
 	</tr>
 	{0}
@@ -131,7 +132,7 @@ write(
 	</tr>
 	<tr class=\"cell2\">
 		<td style=\"font-weight: bold;\">
-			Total
+			".__("Total")."
 		</td>
 		<td>
 			{1}
