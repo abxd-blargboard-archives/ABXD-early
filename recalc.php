@@ -7,13 +7,13 @@ include("lib/common.php");
 AssertForbidden("recalculate");
 
 if($loguser['powerlevel'] < 1)
-		Kill("Staff only, please.");
+		Kill(__("Staff only, please."));
 
 print "<table class=\"outline margin width50\">";
 
-print "<tr class=\"header1\"><th>Name</th><th>Actual</th><th>Reported</th><th>&nbsp;</th></tr>";
+print "<tr class=\"header1\"><th>".__("Name")."</th><th>".__("Actual")."</th><th>".__("Reported")."</th><th>&nbsp;</th></tr>";
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting user's posts&hellip;</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">".__("Counting user's posts&hellip;")."</th></tr>";
 $qUsers = "select * from users";
 $rUsers = Query($qUsers);
 while($user = Fetch($rUsers))
@@ -32,7 +32,7 @@ while($user = Fetch($rUsers))
 	RecalculateKarma($user['id']);
 }
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting thread replies&hellip;</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">".__("Counting thread replies&hellip;")."</th></tr>";
 $qThreads = "select * from threads";
 $rThreads = Query($qThreads);
 while($thread = Fetch($rThreads))
@@ -51,7 +51,7 @@ while($thread = Fetch($rThreads))
 	$rThread = Query($qThread);
 }
 
-print "<tr class=\"header0\"><th colspan=\"4\">Counting forum threads and posts&hellip;</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">".__("Counting forum threads and posts&hellip;")."</th></tr>";
 $qFora = "select * from forums";
 $rFora = Query($qFora);
 while($forum = Fetch($rFora))
@@ -78,7 +78,7 @@ while($forum = Fetch($rFora))
 	$rForum = Query($qForum);
 }
 
-print "<tr class=\"header0\"><th colspan=\"4\">All counters reset.</th></tr>";
+print "<tr class=\"header0\"><th colspan=\"4\">".__("All counters reset.")."</th></tr>";
 print "</table>";
 
 
