@@ -14,11 +14,11 @@ foreach($tables as $table)
 	$cellClass = ($cellClass+1) % 2;
 	$overhead = $table['Data_free'];
 	$total += $overhead;
-	$status = "OK";
+	$status = __("OK");
 	if($overhead > 0)
 	{
 		Query("OPTIMIZE TABLE `".$table['Name']."`");
-		$status = "Optimized";
+		$status = "<strong>".__("Optimized")."</strong>";
 	}
 	
 	$tablelist .= format(
@@ -43,27 +43,27 @@ write(
 <table class=\"outline margin\">
 	<tr class=\"header0\">
 		<th colspan=\"7\">
-			Table Status
+			".__("Table Status")."
 		</th>
 	</tr>
 	<tr class=\"header1\">
 		<th>
-			Name
+			".__("Name")."
 		</th>
 		<th>
-			Rows
+			".__("Rows")."
 		</th>
 		<th>
-			Overhead
+			".__("Overhead")."
 		</th>
 		<th>
-			Final Status
+			".__("Final Status")."
 		</th>
 	</tr>
 	{0}
 	<tr class=\"header0\">
 		<th colspan=\"7\" style=\"font-size: 130%;\">
-			Excess trimmed: {1} bytes 
+			".__("Excess trimmed: {1} bytes")."
 		</th>
 	</tr>
 </table>
