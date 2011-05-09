@@ -6,8 +6,10 @@ include("lib/common.php");
 
 AssertForbidden("viewPM");
 
+$title = "Private messages";
+
 if(!$loguserid)
-	Kill("You must be logged in to view your private messages.");
+	Kill(__("You must be logged in to view your private messages."));
 
 $user = $loguserid;
 if(isset($_GET['user']) && $loguser['powerlevel'] > 2)
@@ -16,8 +18,6 @@ if(isset($_GET['user']) && $loguser['powerlevel'] > 2)
 	$snoop = "&amp;snooping=1";
 	$userGet = "&amp;user=".$user;
 }
-
-$title = "Private messages";
 
 if(isset($_POST['action']))
 {
@@ -42,7 +42,7 @@ if(isset($_POST['action']))
 				$deleted++;
 			}
 		}
-		Alert(Plural($deleted, "private message")." deleted.");
+		Alert(format(__("{0} deleted."), Plural($deleted, __("private message"))));
 	}
 }
 
@@ -62,7 +62,7 @@ if(isset($_GET['del']))
 		}
 		else
 			Query("update pmsgs set deleted = ".$newVal." where id = ".$pid);
-		Alert("Private message deleted.");
+		Alert(__("Private message deleted."));
 	}
 }
 
@@ -94,11 +94,11 @@ else
 	$from = 0;
 
 
-$links = "<ul class=\"pipemenu\"><li><a href=\"private.php".(isset($_GET['show']) ? str_replace("&amp;", "?", $userGet) . "\">Show received" : "?show=1".$userGet."\">Show sent")."</a></li>";
-$links .= "<li><a href=\"private.php?show=2".$userGet."\">Show drafts</a></li>";
-$links .= "<li><a href=\"sendprivate.php\">Send PM</a></li></ul>";
+$links = "<ul class=\"pipemenu\"><li><a href=\"private.php".(isset($_GET['show']) ? str_replace("&amp;", "?", $userGet) . "\">".__("Show received") : "?show=1".$userGet."\">".__("Show sent"))."</a></li>";
+$links .= "<li><a href=\"private.php?show=2".$userGet."\">".__("Show drafts")."</a></li>";
+$links .= "<li><a href=\"sendprivate.php\">".__("Send new PM")."</a></li></ul>";
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php"), $links);
+MakeCrumbs(array(__("Main")=>"./", __("Private messages")=>"private.php"), $links);
 
 $qPM = "select * from pmsgs left join pmsgs_text on pid = pmsgs.id where ".$whereFrom." and deleted != ".$deleted." order by date desc limit ".$from.", ".$ppp;
 
@@ -118,7 +118,7 @@ if($pagelinks)
 		$pagelinks = " 1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"private.php".str_replace("&amp;","?", $show).$userGet."\">1</a>".$pagelinks;
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 }
 
 if(NumRows($rPM))
@@ -167,7 +167,7 @@ else
 "
 		<tr class=\"cell1\">
 			<td colspan=\"6\">
-				There are no messages to display.
+				".__("There are no messages to display.")."
 			</td>
 		</tr>
 ");
@@ -181,24 +181,24 @@ write(
 				<input type=\"checkbox\" id=\"ca\" onchange=\"checkAll();\" />
 			</th>
 			<th style=\"width: 22px;\">&nbsp;</th>
-			<th style=\"width: 75%;\">Title</th>
+			<th style=\"width: 75%;\">".__("Title")."</th>
 			<th>{0}</th>
-			<th>Date</th>
+			<th>".__("Date")."</th>
 		</tr>
 		{1}
 		<tr class=\"header1\">
 			<th style=\"text-align: right;\" colspan=\"6\">
 				<input type=\"hidden\" name=\"action\" value=\"multidel\" />
-				<a href=\"javascript:void();\" onclick=\"document.forms[1].submit();\">delete checked</a>
+				<a href=\"javascript:void();\" onclick=\"document.forms[1].submit();\">".__("delete checked")."</a>
 			</th>
 		</tr>
 	</table>
 	</font>
-", (isset($_GET['show']) ? "To" : "From"), $pms);
+", (isset($_GET['show']) ? __("To") : __("From")), $pms);
 
 if($pagelinks)
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php"), $links);
+MakeCrumbs(array(__("Main")=>"./", __("Private messages")=>"private.php"), $links);
 
 ?>
