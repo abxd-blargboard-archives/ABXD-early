@@ -9,58 +9,58 @@ if(isset($_POST['google']))
 }
 include("lib/header.php");
 AssertForbidden("search");
-?>
-<div style="float: left; width: 70%;\">
+write("
+<div style=\"float: left; width: 70%;\">
 
-	<form action="search.php" method="post">
-		<div class="outline PoRT margin width25" style="margin: 16px; width: 100%; float: none;">
-			<div class="errort">
-				<strong>Google search</strong>
+	<form action=\"search.php\" method=\"post\">
+		<div class=\"outline PoRT margin width25\" style=\"margin: 16px; width: 100%; float: none;\">
+			<div class=\"errort\">
+				<strong>".__("Google search")."</strong>
 			</div>
-			<div class="errorc left cell0" style="padding: 8px; font-size: 150%">
-				<input type="text" maxlength="1024" name="google" style="width: 80%;">
+			<div class=\"errorc left cell0\" style=\"padding: 8px; font-size: 150%\">
+				<input type=\"text\" maxlength=\"1024\" name=\"google\" style=\"width: 80%;\">
 				&nbsp;
-				<input type="submit" value="Search">
+				<input type=\"submit\" value=\"".__("Search")."\">
 			</div>
 		</div>
 	</form>
+");
 
-<?php
 if($loguser['powerlevel'] < 1) die("</div>");
-?>
 
-	<form action="search.php" method="get">
-		<div class="outline PoRT margin" style="margin: 16px; width: 100%; float: none;">
-			<div class="errort">
-				<strong>Internal search</strong>
+write("
+	<form action=\"search.php\" method=\"get\">
+		<div class=\"outline PoRT margin\" style=\"margin: 16px; width: 100%; float: none;\">
+			<div class=\"errort\">
+				<strong>".__("Internal search")."</strong>
 			</div>
-			<div class="errorc left cell0" style="padding: 8px; font-size: 150%">
-				<input type="text" maxlength="1024" name="q" style="width: 80%;" value="<?php print htmlspecialchars($_GET['q']); ?>">
+			<div class=\"errorc left cell0\" style=\"padding: 8px; font-size: 150%\">
+				<input type=\"text\" maxlength=\"1024\" name=\"q\" style=\"width: 80%;\" value=\"".htmlspecialchars($_GET['q'])."\">
 				&nbsp;
-				<input type="submit" value="Search">
+				<input type=\"submit\" value=\"".__("Search")."\">
 			</div>
 		</div>
 	</form>
 </div>
 
-<div class="PoRT margin width25">
-	<div class="errort"><strong>Search help</strong></div>
-	<div class="errorc left cell0" style="padding: 8px 8px;">
-		Internal search checks both thread titles and post text, returning results from both.
+<div class=\"PoRT margin width25\">
+	<div class=\"errort\"><strong>".__("Search help")."</strong></div>
+	<div class=\"errorc left cell0\" style=\"padding: 8px 8px;\">
+		".__("Internal search checks both thread titles and post text, returning results from both.")."
 		<dl>
 			<dt><samp>foo bar</samp></dt>
-			<dd>Find entries with either term</dd>
-			<dt><samp>"foo bar"</samp></dt>
-			<dd>Find entries with full phrase</dd>
+			<dd>".__("Find entries with either term")."</dd>
+			<dt><samp>\"foo bar\"</samp></dt>
+			<dd>".__("Find entries with full phrase")."</dd>
 			<dt><samp>+foo -bar</samp></dt>
-			<dd>Find entries with <var>foo</var> but not <var>bar</var></dd>
+			<dd>".__("Find entries with <var>foo</var> but not <var>bar</var>")."</dd>
 		</dl>
 	</div>
 </div>
 
-<hr style="clear: both; visibility: hidden;" />
+<hr style=\"clear: both; visibility: hidden;\" />
 
-<?php
+");
 
 if(isset($_GET['q']))
 {
