@@ -6,12 +6,13 @@ if($loguser['powerlevel'] < 1)
 
 //$here = "http://helmet.kafuka.org/nikoboard";
 $full = GetFullURL();
-$here = substr($full, 0, strrpos($full, "/"));
-$there = "/";
+$here = substr($full, 0, strrpos($full, "/"))."/";
+$there = "./"; //"/";
 
 $logR = Query("select * from reports order by time desc");
 while($item = Fetch($logR))
 {
+	//print $item['text'];
 	$blar = $item['text'];
 	$blar = str_replace("[g]", "", $blar);
 	$blar = str_replace("[b]", "", $blar);
@@ -25,13 +26,13 @@ while($item = Fetch($logR))
 "
 		<tr>
 			<td class=\"cell2\">
-				{1}
+				{1}&nbsp;
 			</td>
 			<td class=\"cell{0}\">
 				{2}
 			</td>
 		</tr>
-", $cellClass, TimeUnits(time() - $item['time']), $blar);
+", $cellClass, str_replace(" ", "&nbsp;", TimeUnits(time() - $item['time'])), $blar);
 }
 
 write(
