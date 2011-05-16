@@ -6,8 +6,8 @@ $pluginbuckets = array();
 
 function registerSetting($settingname, $label, $check = false)
 {
-	global $pluginSettings;
-	$pluginSettings[$settingname] = array("label" => $label, "value" => "", "check" => $check);
+	//global $pluginSettings;
+	//$pluginSettings[$settingname] = array("label" => $label, "value" => "", "check" => $check);
 }
 
 function getSetting($settingname, $useUser = false)
