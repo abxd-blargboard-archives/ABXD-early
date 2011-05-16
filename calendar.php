@@ -2,23 +2,12 @@
 
 include("lib/common.php");
 
+$title = __("Calendar");
+
 AssertForbidden("viewCalendar");
 
-$months = array
-(
-	1=>"January",
-	"February",
-	"March",
-	"April",
-	"May",
-	"June",
-	"July",
-	"August",
-	"September",
-	"October",
-	"November",
-	"December"
-);
+//$calinfo = cal_info(0);
+//$months = $calinfo['months'];
 
 $now = getdate(time());
 $year = $now['year'];
@@ -46,7 +35,7 @@ while($user = Fetch($users))
 	{
 		$dd = $d['mday'];
 		$age = $year - $d['year'];
-		$cells[$dd] .= "<br />&bull; ".Userlink($user)."'s birthday (".$age.")\n";
+		$cells[$dd] .= "<br />&bull; ".format(__("{0}'s birthday ({1})"), Userlink($user), $age)."\n";
 	}
 }
 
@@ -114,13 +103,13 @@ write(
 		</th>
 	</tr>
 	<tr class=\"header1\">
-		<th {3}>Sunday</th>
-		<th {3}>Monday</th>
-		<th {3}>Tuesday</th>
-		<th {3}>Wednesday</th>
-		<th {3}>Thursday</th>
-		<th {3}>Friday</th>
-		<th {3}>Saturday</th>
+		<th {3}>".__("Sunday")."</th>
+		<th {3}>".__("Monday")."</th>
+		<th {3}>".__("Tuesday")."</th>
+		<th {3}>".__("Wednesday")."</th>
+		<th {3}>".__("Thursday")."</th>
+		<th {3}>".__("Friday")."</th>
+		<th {3}>".__("Saturday")."</th>
 	</tr>
 	{2}
 	<tr>
