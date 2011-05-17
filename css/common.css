@@ -206,41 +206,6 @@ table.outline tr td:first-child, table.outline tr th:first-child
 {
 	border-left: 1px solid #000;
 }
-table.outline
-{
-	outline: 0px none !important;
-	border-collapse: separate;
-	border-spacing: 0px;
-	border-top-left-radius: 8px;
-	border-top-right-radius: 8px;
-	border: 1px solid #669;
-}
-table.outline tr:first-child th:first-child
-{
-	border-top-left-radius: 7px;
-}
-table.outline tr:first-child th:last-child
-{
-	border-top-right-radius: 7px;
-	border-right: 1px solid #000;
-}
-table.outline tr:first-child th
-{
-	border-top: 1px solid #000;
-}
-table.outline td
-{
-	border-left: 0px none;
-	border-top: 0px none;
-}
-table.outline th
-{
-	border-bottom: 1px solid #000;
-}
-table.outline tr td:first-child, table.outline tr th:first-child
-{
-	border-left: 1px solid #000;
-}
 
 .PoRT
 {
@@ -423,9 +388,10 @@ ul.pipemenu
 ul.pipemenu li
 {
 	display: inline;
-	border-left: 1px solid #FFF;
+	border-left: 1px solid white;
 	padding-left: 4px;
-	padding-right: 2px;
+	padding-right: 4px;
+
 }
 ul.pipemenu li:first-child
 {
