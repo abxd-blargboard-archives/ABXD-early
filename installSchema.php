@@ -126,15 +126,6 @@ $tables = array
 		),
 		"special" => "unique key `ip` (`ip`)"
 	),
-	"lastsearches" => array
-	(
-		"fields" => array
-		(
-			"ip" => "varchar(16)".$notNull,
-			"userid" => $genericInt,
-			"time" => $genericInt,			
-		),
-	),
 	"misc" => array
 	(
 		"fields" => array
@@ -247,6 +238,7 @@ $tables = array
 			"text" => $text,
 			"revision" => $genericInt,
 		),
+		"special" => "fulltext key `text` (`text`)"
 	),
 	"proxybans" => array
 	(
@@ -313,7 +305,7 @@ $tables = array
 			"sticky" => $bool,
 			"poll" => $genericInt,
 		),
-		"special" => $keyID.", key `forum` (`forum`), key `user` (`user`), key `sticky` (`sticky`), key `pollid` (`poll`), key `lastpostdate` (`lastpostdate`)"
+		"special" => $keyID.", key `forum` (`forum`), key `user` (`user`), key `sticky` (`sticky`), key `pollid` (`poll`), key `lastpostdate` (`lastpostdate`), fulltext key `title` (`title`)"
 	),
 	"threadsread" => array
 	(
@@ -371,7 +363,7 @@ $tables = array
 			"sex" => "tinyint(2) NOT NULL DEFAULT '2'",
 			"rankset" => $smallerInt,
 			"realname" => "varchar(60)".$notNull,
-			"lastknownbrowser" => $var256,
+			"lastknownbrowser" => $text,
 			"location" => $var128,
 			"birthday" => $genericInt,
 			"email" => "varchar(60)".$notNull,
