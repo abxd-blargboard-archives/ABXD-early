@@ -9,6 +9,8 @@ $bots = array(
 	"Mediapartners-Google",
 	"yetibot@naver.com",
 	"Twiceler",
+	"YandexBot",
+	"Baiduspider",
 );
 
 $isBot = 0;
@@ -33,7 +35,7 @@ while($onlineUser = Fetch($rOnlineUsers))
 }
 if($onlineUserCt > $misc['maxusers'])
 {
-	$qRecords = "maxusers = ".$onlineUserCt.", maxusersdate = ".time().", maxuserstext = '".$onlineUsers."'";
+	$qRecords = "maxusers = ".$onlineUserCt.", maxusersdate = ".time().", maxuserstext = '".justEscape($onlineUsers)."'";
 }
 //Check the amount of posts for the record
 $qNewToday = "select count(*) from posts where date > ".(time() - 86400);
