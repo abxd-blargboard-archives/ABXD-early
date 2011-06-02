@@ -4,12 +4,12 @@
 
 include("lib/common.php");
 
-$title = "Member list";
+$title = __("Member list");
 
 AssertForbidden("viewMembers");
 
-$ppp = $loguser['postsperpage'];
-if($ppp<1) $ppp=50;
+$tpp = $loguser['threadsperpage'];
+if($tpp<1) $tpp=50;
 
 if(isset($_GET['from']))
 	$from = (int)$_GET['from'];
@@ -68,50 +68,55 @@ if(!(isset($pow) && $pow == 5))
 
 $numUsers = FetchResult("select count(*) from users where ".$where, 0, 0);
 
-$qUsers = "select * from users where ".$where." order by ".$order.", name asc limit ".$from.", ".$ppp;
+$qUsers = "select * from users where ".$where." order by ".$order.", name asc limit ".$from.", ".$tpp;
 $rUsers = Query($qUsers);
 
 $numonpage = NumRows($rUsers);
-for($i = $ppp; $i < $numUsers; $i+=$ppp)
+for($i = $tpp; $i < $numUsers; $i+=$tpp)
 {
 	if($i == $from)
-		$pagelinks .= " ".(($i/$ppp)+1);
+		$pagelinks .= " ".(($i/$tpp)+1);
 	else
-		$pagelinks .= " ".mlink($sort,$sex,$pow,$ppp,$letter,$dir,$i).(($i/$ppp)+1)."</a>";
+		$pagelinks .= " ".mlink($sort,$sex,$pow,$tpp,$letter,$dir,$i).(($i/$tpp)+1)."</a>";
 }
 if($pagelinks)
 {
 	if($from == 0)
 		$pagelinks = "1".$pagelinks;
 	else
-		$pagelinks = mlink($sort,$sex,$pow,$ppp,$letter,$dir,0)."1</a>".$pagelinks;
+		$pagelinks = mlink($sort,$sex,$pow,$tpp,$letter,$dir,0)."1</a>".$pagelinks;
 }
 
-//$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"@",$dir)."@</a></li>\n";
-$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"%23",$dir)."#</a></li>\n";
+//$alphabet .= "<li>".mlink($sort,$sex,$pow,$tpp,"@",$dir)."@</a></li>\n";
+$alphabet .= "<li>".mlink($sort,$sex,$pow,$tpp,"%23",$dir)."#</a></li>\n";
 for($l = 0; $l < 26; $l++)
 {
 	$let = chr(65+$l);
-	$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,$let,$dir).$let."</a></li>\n";
+	$alphabet .= "<li>".mlink($sort,$sex,$pow,$tpp,$let,$dir).$let."</a></li>\n";
 }
-$alphabet .= "<li>".mlink($sort,$sex,$pow,$ppp,"",$dir)."All</a></li>\n";
+$alphabet .= "<li>".mlink($sort,$sex,$pow,$tpp,"",$dir)."All</a></li>\n";
 
 write(
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
 			<th colspan=\"8\">
-				Options
+				".__("Options")."
 			</th>
 		</tr>
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"8\">
-				{0} found.
+				".__("{0} found.")."
 			</td>
 		</tr>
+",	Plural($numUsers, __("user")));
+if (!$isBot)
+{
+	write(
+"
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Sort by
+				".__("Sort by")."
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
@@ -135,7 +140,7 @@ write(
 		</tr>
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Order
+				".__("Order")."
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
@@ -150,7 +155,7 @@ write(
 		</tr>
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Sex
+				".__("Sex")."
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
@@ -171,7 +176,7 @@ write(
 		</tr>
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Power
+				".__("Power")."
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
@@ -201,7 +206,7 @@ write(
 		</tr>
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Name
+				".__("Name")."
 			</td>
 			<td colspan=\"6\">
 				<ul class=\"pipemenu\">
@@ -209,32 +214,33 @@ write(
 				</ul>
 			</td>
 		</tr>
-",	Plural($numUsers, "user"),
+",	null,
 
-	mlink(""     ,$sex,$pow,$ppp,$letter,$dir)."Posts</a>",
-	mlink("id"   ,$sex,$pow,$ppp,$letter)."ID</a>",
-	mlink("name" ,$sex,$pow,$ppp,$letter,$dir)."Username</a>",
-	mlink("karma",$sex,$pow,$ppp,$letter,$dir)."Karma</a>",
-	mlink("reg"  ,$sex,$pow,$ppp,$letter,$dir)."Registration date</a>",
+	mlink(""     ,$sex,$pow,$tpp,$letter,$dir).__("Posts")."</a>",
+	mlink("id"   ,$sex,$pow,$tpp,$letter).__("ID")."</a>",
+	mlink("name" ,$sex,$pow,$tpp,$letter,$dir).__("Username")."</a>",
+	mlink("karma",$sex,$pow,$tpp,$letter,$dir).__("Karma")."</a>",
+	mlink("reg"  ,$sex,$pow,$tpp,$letter,$dir).__("Registration date")."</a>",
 
-	mlink($sort,$sex,$pow,$ppp,$letter,"asc")."Ascending</a>",
-	mlink($sort,$sex,$pow,$ppp,$letter,"desc")."Descending</a>",
+	mlink($sort,$sex,$pow,$tpp,$letter,"asc").__("Ascending")."</a>",
+	mlink($sort,$sex,$pow,$tpp,$letter,"desc").__("Descending")."</a>",
 
-	mlink($sort,"m",$pow,$ppp,$letter,$dir)."Male</a>",
-	mlink($sort,"f",$pow,$ppp,$letter,$dir)."Female</a>",
-	mlink($sort,"n",$pow,$ppp,$letter,$dir)."N/A</a>",
-	mlink($sort,"", $pow,$ppp,$letter,$dir)."All</a>",
+	mlink($sort,"m",$pow,$tpp,$letter,$dir).__("Male")."</a>",
+	mlink($sort,"f",$pow,$tpp,$letter,$dir).__("Female")."</a>",
+	mlink($sort,"n",$pow,$tpp,$letter,$dir).__("N/A")."</a>",
+	mlink($sort,"", $pow,$tpp,$letter,$dir).__("All")."</a>",
 	
-	mlink($sort,$sex,"-1",$ppp,$letter,$dir)."Banned</a>",
-	mlink($sort,$sex, "0",$ppp,$letter,$dir)."Normal</a>",
-	mlink($sort,$sex, "1",$ppp,$letter,$dir)."Local moderator</a>", 
-	mlink($sort,$sex, "2",$ppp,$letter,$dir)."Full moderator</a>",
-	mlink($sort,$sex, "3",$ppp,$letter,$dir)."Administrator</a>",
-	mlink($sort,$sex, "4",$ppp,$letter,$dir)."Root</a>",
-	mlink($sort,$sex, "", $ppp,$letter,$dir)."All</a>",
+	mlink($sort,$sex,"-1",$tpp,$letter,$dir).__("Banned")."</a>",
+	mlink($sort,$sex, "0",$tpp,$letter,$dir).__("Normal")."</a>",
+	mlink($sort,$sex, "1",$tpp,$letter,$dir).__("Local moderator")."</a>", 
+	mlink($sort,$sex, "2",$tpp,$letter,$dir).__("Full moderator")."</a>",
+	mlink($sort,$sex, "3",$tpp,$letter,$dir).__("Administrator")."</a>",
+	mlink($sort,$sex, "4",$tpp,$letter,$dir).__("Root")."</a>",
+	mlink($sort,$sex, "", $tpp,$letter,$dir).__("All")."</a>",
 	
 	$alphabet
 );
+}
 
 if($pagelinks)
 {
@@ -242,7 +248,7 @@ if($pagelinks)
 "
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Page
+				".__("Page")."
 			</td>
 			<td colspan=\"6\">
 				{0}
@@ -289,7 +295,7 @@ if($numUsers)
 "
 		<tr class=\"cell0\">
 			<td colspan=\"8\">
-				Nothing here.
+				".__("Nothing here.")."
 			</td>
 		</tr>
 ");
@@ -299,13 +305,13 @@ write(
 "
 		<tr class=\"header1\">
 			<th style=\"width: 30px; \">#</th>
-			<th style=\"width: 62px; \">Picture</th>
-			<th>Name</th>
-			<th style=\"width: 50px; \">Posts</th>
-			<th style=\"width: 50px; \">Average</th>
-			<th style=\"width: 50px; \">Karma</th>
-			<th style=\"width: 80px; \">Birthday</th>
-			<th style=\"width: 130px; \">Registered on</th>
+			<th style=\"width: 62px; \">".__("Picture")."</th>
+			<th>".__("Name")."</th>
+			<th style=\"width: 50px; \">".__("Posts")."</th>
+			<th style=\"width: 50px; \">".__("Average")."</th>
+			<th style=\"width: 50px; \">".__("Karma")."</th>
+			<th style=\"width: 80px; \">".__("Birthday")."</th>
+			<th style=\"width: 130px; \">".__("Registered on")."</th>
 		</tr>
 		{0}
 ",	$memberList);
@@ -316,7 +322,7 @@ if($pagelinks)
 "
 		<tr class=\"cell2 smallFonts\">
 			<td colspan=\"2\">
-				Page
+				".__("Page")."
 			</td>
 			<td colspan=\"6\">
 				{0}
@@ -329,7 +335,7 @@ write("
 	</table>
 ");
 
-function mlink($sort,$sex,$pow,$ppp,$letter="",$dir="",$from=1)
+function mlink($sort,$sex,$pow,$tpp,$letter="",$dir="",$from=1)
 {
 	return "<a href=\"memberlist.php?"
 			.($sort   ?"sort=$sort":"")
@@ -338,7 +344,7 @@ function mlink($sort,$sex,$pow,$ppp,$letter="",$dir="",$from=1)
 			.($letter!=""?"&amp;letter=$letter":"")
 			.($dir   ?"&dir=$dir":"")
 			.($from!=1?"&amp;from=$from":"")
-			."\">";
+			."\" rel=\"nofollow\">";
 }
 
 ?>
