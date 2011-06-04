@@ -8,6 +8,10 @@ AssertForbidden("editSmilies");
 
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the smiley table.");
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+if (isset($_POST['action']) && $key != $_POST['key'])
+	Kill(__("No."));
 
 if($_POST['action'] == "Apply")
 {
@@ -106,11 +110,12 @@ write(
 				</td>
 				<td>
 					<input type=\"submit\" name=\"action\" value=\"Apply\" />
+					<input type=\"hidden\" name=\"key\" value=\"{1}\" />
 				</td>
 			</tr>
 
 		</table>
 	</form>
-", $smileyList);
+", $smileyList, $key);
 
 ?>

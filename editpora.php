@@ -4,20 +4,24 @@
 
 include("lib/common.php");
 
-$title = "Points of Required Attention";
+$title = __("Points of Required Attention");
 
 AssertForbidden("editPoRA");
 
 if($loguser['powerlevel'] < 3)
-	Kill("You must be an administrator to edit the Points of Required Attention.");
+	Kill(__("You must be an administrator to edit the Points of Required Attention."));
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+if (isset($_POST['action']) && $key != $_POST['key'])
+	Kill(__("No."));
 
-if($_POST['action'] == "Edit")
+if($_POST['action'] == __("Edit"))
 {
 	//TidyPost($_POST['text']);
 	$qPora = "update misc set porabox = '".justEscape($_POST['text'])."', poratitle = '".justEscape($_POST['title'])."'";
 	$rPora = Query($qPora);
 	Report("[b]".$loguser['name']."[/] edited the PoRA.", 1);
-	Redirect("Edited!","./","the main page");
+	Redirect(__("Edited!"), "./", __("the main page"));
 }
 
 write(
@@ -37,12 +41,12 @@ write(
 		<table id=\"t\" class=\"outline margin width50\">
 			<tr class=\"header1\">
 				<th colspan=\"2\">
-					PoRA Editor
+					".__("PoRA Editor")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					Title (plain)
+					".__("Title (plain)")."
 				</td>
 				<td>
 					<input type=\"text\" name=\"title\" id=\"title\" maxlength=\"256\" style=\"width: 80%;\" value=\"{2}\" />
@@ -50,7 +54,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					Content (HTML)
+					".__("Content (HTML)")."
 				</td>
 				<td style=\"width: 80%;\">
 					<textarea name=\"text\" rows=\"16\" style=\"width: 97%;\" id=\"editbox\" onkeyup=\"startPoraUpdate()\">{3}</textarea>
@@ -59,10 +63,11 @@ write(
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Edit\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Edit")."\" />
+					<input type=\"hidden\" name=\"key\" value=\"{4}\" />
 				</td>
 			</tr>
 		</table>
 	</form>
-",	$misc['poratitle'], $misc['porabox'], htmlval($misc['poratitle']), htmlval($misc['porabox']));
+",	$misc['poratitle'], $misc['porabox'], htmlval($misc['poratitle']), htmlval($misc['porabox']), $key);
 ?>
