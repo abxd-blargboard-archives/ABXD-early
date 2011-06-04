@@ -4,7 +4,7 @@
 
 include("lib/common.php");
 
-$title = "Online users";
+$title = __("Online users");
 
 AssertForbidden("viewOnline");
 
@@ -31,8 +31,8 @@ foreach($spans as $span)
 }
 write(
 "
-	<div class=\"smallFonts\">
-		Show visitors during the last
+	<div class=\"smallFonts margin\">
+		".__("Show visitors from this far back:")."
 		<ul class=\"pipemenu\">
 			{0}
 		</ul>
@@ -48,9 +48,9 @@ if(NumRows($rUsers))
 	{
 		$cellClass = ($cellClass+1) % 2;
 		if($user['lasturl'])
-			$lastUrl = "<a href=\"".$user['lasturl']."\">".str_replace(array("%20","_"), " ", $user['lasturl'])."</a>";
+			$lastUrl = "<a href=\"".$user['lasturl']."\">".FilterURL($user['lasturl'])."</a>";
 		else
-			$lastUrl = "None";
+			$lastUrl = __("None");
 
 		$userList .= format(
 	"
@@ -77,13 +77,13 @@ if(NumRows($rUsers))
 " : "")."
 		</tr>
 	",	$cellClass, $i, UserLink($user), cdate("d-m-y G:i:s", $user['lastactivity']),
-		($user['lastposttime'] ? cdate("d-m-y G:i:s",$user['lastposttime']) : "Never"),
+		($user['lastposttime'] ? cdate("d-m-y G:i:s",$user['lastposttime']) : __("Never")),
 		$lastUrl, $user['lastip'], IP2C($user['lastip']));
 		$i++;
 	}
 }
 else
-	$userList = "<tr class=\"cell0\"><td colspan=\"6\">No users</td></tr>";
+	$userList = "<tr class=\"cell0\"><td colspan=\"6\">".__("No users")."</td></tr>";
 
 $guestList = "";
 if(NumRows($rGuests))
@@ -93,9 +93,9 @@ if(NumRows($rGuests))
 	{
 		$cellClass = ($cellClass+1) % 2;
 		if($guest['date'])
-			$lastUrl = "<a href=\"".$guest['lasturl']."\">".str_replace(array("%20","_"), " ", $guest['lasturl'])."</a>";
+			$lastUrl = "<a href=\"".$guest['lasturl']."\">".FilterURL($guest['lasturl'])."</a>";
 		else
-			$lastUrl = "None";
+			$lastUrl = __("None");
 		
 		$guestList .= format(
 "
@@ -113,7 +113,7 @@ if(NumRows($rGuests))
 	}
 }
 else
-	$guestList = "<tr class=\"cell0\"><td colspan=\"5\">No guests</td></tr>";
+	$guestList = "<tr class=\"cell0\"><td colspan=\"5\">".__("No guests")."</td></tr>";
 
 $botList = "";
 if(NumRows($rBots))
@@ -123,9 +123,9 @@ if(NumRows($rBots))
 	{
 		$cellClass = ($cellClass+1) % 2;
 		if($bot['date'])
-			$lastUrl = "<a href=\"".$bot['lasturl']."\">".str_replace(array("%20","_"), " ", $bot['lasturl'])."</a>";
+			$lastUrl = "<a href=\"".$bot['lasturl']."\">".FilterURL($bot['lasturl'])."</a>";
 		else
-			$lastUrl = "None";
+			$lastUrl = __("None");
 
 		$botList .= format(
 "
@@ -142,14 +142,14 @@ if(NumRows($rBots))
 		$i++;
 	}
 } else
-	$botList = "<tr class=\"cell0\"><td colspan=\"5\">No bots</td></tr>";
+	$botList = "<tr class=\"cell0\"><td colspan=\"5\">".__("No bots")."</td></tr>";
 
 write(
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
 			<th colspan=\"6\">
-				Online users
+				".__("Online users")."
 			</th>
 		</tr>
 		<tr class=\"header1\">
@@ -157,20 +157,20 @@ write(
 				#
 			</th>
 			<th>
-				Name
+				".__("Name")."
 			</th>
 			<th style=\"width: 140px;\">
-				Last view
+				".__("Last view")."
 			</th>
 			<th style=\"width: 140px;\">
-				Last post
+				".__("Last post")."
 			</th>
 			<th>
-				URL
+				".__("URL")."
 			</th>
 ".($loguser['powerlevel'] > 0 ? "
 			<th style=\"width: 140px;\">
-				IP
+				".__("IP")."
 			</th>
 " : "")."
 		</tr>
@@ -179,30 +179,30 @@ write(
 	<table class=\"outline margin\">
 		<tr class=\"header1\">
 			<th style=\"width: 30px;\">
-				#
+				".__("#")."
 			</th>
 			<th>
-				User agent
+				".__("User agent")."
 			</th>
 			<th style=\"width: 140px;\">
-				Last view
+				".__("Last view")."
 			</th>
 			<th>
-				URL
+				".__("URL")."
 			</th>
 			<th style=\"width: 140px;\">
-				IP
+				".__("IP")."
 			</th>
 		</tr>
 		<tr class=\"header0\">
 			<th colspan=\"5\">
-				Guests
+				".__("Guests")."
 			</th>
 		</tr>
 		{1}
 		<tr class=\"header0\">
 			<th colspan=\"5\">
-				Bots
+				".__("Bots")."
 			</th>
 		</tr>
 		{2}
@@ -216,6 +216,15 @@ function IP2C($ip)
 	if($q) $r = @mysql_fetch_array($q);
 	if($r['cc'])
 		return " <img src=\"img/flags/".strtolower($r['cc']).".png\" alt=\"".$r['cc']."\" title=\"".$r['cc']."\" />";
+}
+
+function FilterURL($url)
+{
+	//$url = str_replace(array("%20","_"), " ", $url);
+	$url = str_replace('_', ' ', urldecode($url));
+	$url = htmlspecialchars($url);
+	$url = preg_replace("@&?(key|token)=[0-9a-f]{64}@i", '', $url);
+	return $url;
 }
 
 ?>
