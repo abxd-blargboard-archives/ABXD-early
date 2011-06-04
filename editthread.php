@@ -4,16 +4,22 @@
 
 include("lib/common.php");
 
+$title = __("Edit thread");
+
 AssertForbidden("editThread");
 
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+if (isset($_REQUEST['action']) && $key != $_REQUEST['key'])
+		Kill(__("No."));
+
 if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to post.");
+	Kill(__("You must be logged in to edit threads."));
 
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("Thread ID unspecified.");
+	Kill(__("Thread ID unspecified."));
 
 $tid = (int)$_GET['id'];
 
@@ -22,19 +28,19 @@ $rThread = Query($qThread);
 if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
-	Kill("Unknown thread ID.");
+	Kill(__("Unknown thread ID."));
 
 $canMod = CanMod($loguserid, $thread['forum']);
 
 if(!$canMod && $thread['user'] != $loguserid)
-	Kill("You are not allowed to edit threads.");
+	Kill(__("You are not allowed to edit threads."));
 
 $qFora = "select minpower from forums where id=".$thread['forum'];
 $rFora = Query($qFora);
 if(NumRows($rFora))
 	$forum = Fetch($rFora);
 else
-	Kill("Unknown forum ID.");
+	Kill(__("Unknown forum ID."));
 
 $isHidden = (int)($forum['minpower'] > 0);
 
@@ -45,28 +51,28 @@ if($canMod)
 		$qThread = "update threads set closed=1 where id=".$tid;
 		$rThread = Query($qThread);
 		Report("[b]".$loguser['name']."[/] closed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Thread closed.","forum.php?id=".$thread['forum'],"the forum");
+		Redirect(__("Thread closed."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
 	elseif($_GET['action']=="open")
 	{
 		$qThread = "update threads set closed=0 where id=".$tid;
 		$rThread = Query($qThread);
 		Report("[b]".$loguser['name']."[/] opened thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Thread opened.","forum.php?id=".$thread['forum'],"the forum");
+		Redirect(__("Thread opened."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
 	elseif($_GET['action']=="stick")
 	{
 		$qThread = "update threads set sticky=1 where id=".$tid;
 		$rThread = Query($qThread);
 		Report("[b]".$loguser['name']."[/] stickied thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Thread stickied.","forum.php?id=".$thread['forum'],"the forum");
+		Redirect(__("Thread stickied."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
 	elseif($_GET['action']=="unstick")
 	{
 		$qThread = "update threads set sticky=0 where id=".$tid;
 		$rThread = Query($qThread);
 		Report("[b]".$loguser['name']."[/] unstuck thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Thread unsticked.","forum.php?id=".$thread['forum'],"the forum");
+		Redirect(__("Thread unsticked."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
 	elseif($_POST['action']=="Move")
 	{
@@ -89,7 +95,7 @@ if($canMod)
 				WHERE forums.id=".$thread['forum']." OR forums.id=".$moveto);
 		
 		Report("[b]".$loguser['name']."[/] moved thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Thread moved.","forum.php?id=".$moveto,"the new forum");
+		Redirect(__("Thread moved."), "forum.php?id=".$moveto, __("the new forum"));
 	}
 	elseif($_GET['action']=="delete")
 	{
@@ -140,7 +146,7 @@ if($canMod)
 		}
 
 		Report("[b]".$loguser['name']."[/] deleted thread [b]".$thread['title']."[/]", $isHidden);
-		Redirect("Thread deleted.","forum.php?id=".$thread['forum'],"the forum");
+		Redirect(__("Thread deleted."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
 	elseif($_GET['action'] == "trash")
 	{
@@ -164,13 +170,13 @@ if($canMod)
 					WHERE forums.id=".$thread['forum']." OR forums.id=".$trashid);
 
 			Report("[b]".$loguser['name']."[/] thrashed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-			Redirect("Thread trashed.","forum.php?id=".$thread['forum'],"the forum");
+			Redirect(__("Thread trashed."), "forum.php?id=".$thread['forum'], __("the forum"));
 		}
 		else
-			Kill("Could not identify trash forum.");
+			Kill(__("Could not identify trash forum."));
 	}
 
-	if($_POST['action']=="Edit")
+	if($_POST['action'] == __("Edit"))
 	{
 		$isClosed = (isset($_POST['isClosed']) ? 1 : 0);
 		$isSticky = (isset($_POST['isSticky']) ? 1 : 0);
@@ -191,16 +197,16 @@ if($canMod)
 			$rThreads = Query($qThreads);
 
 			Report("[b]".$loguser['name']."[/] edited thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-			Redirect("Edited!","thread.php?id=".$tid,"the thread");
+			Redirect(__("Edited!"), "thread.php?id=".$tid, __("the thread"));
 			exit();
 		}
 		else
-			Alert("Your thread title is empty. Enter a message and try again.");
+			Alert(__("Your thread title is empty. Enter a message and try again."));
 	}
 }
 else
 {
-	if($_POST['action']=="Edit")
+	if($_POST['action'] == __("Edit"))
 	{
 		if($_POST['title'])
 		{
@@ -208,11 +214,11 @@ else
 			$rThreads = Query($qThreads);
 
 			Report("[b]".$loguser['name']."[/] renamed thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
-			Redirect("Edited!","thread.php?id=".$tid,"the thread");
+			Redirect(__("Edited!"), "thread.php?id=".$tid, __("the thread"));
 			exit();
 		}
 		else
-			Alert("Your thread title is empty. Enter a message and try again.");
+			Alert(__("Your thread title is empty. Enter a message and try again."));
 	}
 }
 
@@ -270,12 +276,12 @@ if($canMod)
 		<table class=\"outline margin\" style=\"width: 100%;\">
 			<tr class=\"header1\">
 				<th colspan=\"2\">
-					Edit Thread
+					".__("Edit Thread")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"tit\">Title</label>
+					<label for=\"tit\">".__("Title")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{0}\" />
@@ -283,46 +289,47 @@ if($canMod)
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					Icon
+					".__("Icon")."
 				</td>
 				<td class=\"threadIcons\">
 					<label>
 						<input type=\"radio\" {2} id=\"noicon\" name=\"iconid\" value=\"0\">
-						None
+						".__("None")."
 					</label>
 					{1}
 					<br/>
 					<label>
 						<input type=\"radio\" {3} name=\"iconid\" value=\"255\" />
-						<span>Custom</span>
+						<span>".__("Custom")."</span>
 					</label>
 					<input type=\"text\" name=\"iconurl\" style=\"width: 50%;\" maxlength=\"100\" value=\"{4}\" />
 				</td>
 			</tr>
 			<tr class=\"cell2\">
 				<td>
-					Extras
+					".__("Extras")."
 				</td>
 				<td>
 					<label>
 						<input type=\"checkbox\" name=\"isClosed\" {5} />
-						Closed
+						".__("Closed")."
 					</label>
 					<label>
 						<input type=\"checkbox\" name=\"isSticky\" {6} />
-						Sticky
+						".__("Sticky")."
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Edit\"></input>
-					<button onclick=\"window.navigate('editthread.php?id={7}&amp;action=delete');\">Delete</button>
+					<input type=\"submit\" name=\"action\" value=\"".__("Edit")."\"></input>
+					<button onclick=\"window.navigate('editthread.php?id={7}&amp;action=delete');\">".__("Delete")."</button>
 
 					<select name=\"moveTo\" size=\"1\">{8}</select>
-					<input type=\"submit\" name=\"action\" value=\"Move\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Move")."\" />
 					<input type=\"hidden\" name=\"id\" value=\"{7}\" />
+					<input type=\"hidden\" name=\"key\" value=\"{9}\" />
 				</td>
 			</tr>
 		</table>
@@ -330,7 +337,7 @@ if($canMod)
 ",	htmlval(deSlashMagic($_POST['title'])), $icons, $check[0], $check[1], $iconurl,
 	($thread['closed'] ? " checked=\"checked\"" : ""),
 	($thread['sticky'] ? " checked=\"checked\"" : ""),
-	$tid, $moveToTargets);
+	$tid, $moveToTargets, $key);
 }
 else
 {
@@ -340,7 +347,7 @@ else
 		<table class=\"outline margin width50\">
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"tit\">Title</label>
+					<label for=\"tit\">".__("Title")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"tit\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{0}\" />
@@ -349,13 +356,14 @@ else
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Edit\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Edit")."\" />
 					<input type=\"hidden\" name=\"id\" value=\"{1}\" />
+					<input type=\"hidden\" name=\"key\" value=\"{2}\" />
 				</td>
 			</tr>
 		</table>
 	</form>
-",	htmlval(deSlashMagic($_POST['title'])), $tid);
+",	htmlval(deSlashMagic($_POST['title'])), $tid, $key);
 }
 
 ?>

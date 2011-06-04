@@ -4,14 +4,18 @@
 
 include("lib/common.php");
 
-$title = "Edit settings";
+$title = __("Edit settings");
 
 AssertForbidden("editSettings");
 
 if($loguser['powerlevel'] < 3)
-	Kill("You must be an administrator to edit the Points of Required Attention.");
+	Kill(__("You must be an administrator to edit the board settings."));
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+if (isset($_POST['action']) && $key != $_POST['key'])
+	Kill(__("No."));
 
-if($_POST['action'] == "Edit")
+if($_POST['action'] == __("Edit"))
 {
 	if((float)$_POST['uploaderCap'] <= 0)
 		$_POST['uploaderCap'] = "0.25";
@@ -64,16 +68,15 @@ if($_POST['action'] == "Edit")
 	fputs($hax, "\n");
 	fputs($hax, "?>");
 	fclose($hax);
-	Redirect("Edited!","./","the main page");
+	Redirect(__("Edited!"),"./", __("the main page"));
 }
 
 $forcetheme = $hacks['forcetheme'];
 $themenames = $hacks['themenames'];
 
-$themelist[""] = "[Disabled]";
+$themelist[""] = __("[Disabled]");
 $themelist = array_merge($themelist, $themes);
-$names = array("[Disabled]", "Christmas", "Rainbow", "Anonymous");
-$filters = array("[Disabled]", "Pirate", "Swedish Chef", "Kraut", "Jive", "Fudd");
+$names = array(__("[Disabled]"), __("Christmas"), __("Rainbow"), __("Anonymous"));
 
 if(!function_exists('tidy_repair_string'))
 	$tidyAvailable = "disabled=\"disabled\"";
@@ -85,17 +88,17 @@ write(
 
 			<tr class=\"header1\">
 				<th colspan=\"2\">
-					Settings
+					".__("Settings")."
 				</th>
 			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Various
+					".__("Various")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"boardname\">Board name</label>
+					<label for=\"boardname\">".__("Board name")."</label>
 				</td>
 				<td class=\"width75\">
 					<input type=\"text\" id=\"boardname\" name=\"boardname\" value=\"{0}\" class=\"width75\" />
@@ -103,7 +106,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"logoalt\">Logo alt text</label>
+					<label for=\"logoalt\">".__("Logo alt text")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"logoalt\" name=\"logoalt\" value=\"{1}\" class=\"width75\" />
@@ -111,7 +114,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"logotitle\">Logo title</label>
+					<label for=\"logotitle\">".__("Logo title")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"logotitle\" name=\"logotitle\" value=\"{2}\" class=\"width75\" />
@@ -119,7 +122,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"dateformat\">Datetime format</label>
+					<label for=\"dateformat\">".__("Date/time format")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"dateformat\" name=\"dateformat\" value=\"{3}\" />
@@ -127,7 +130,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"autoLockMonths\">Autolock months</label>
+					<label for=\"autoLockMonths\">".__("Autolock months")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"autoLockMonths\" name=\"autoLockMonths\" value=\"{4}\" />
@@ -135,7 +138,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"warnMonths\">Bump warning months</label>
+					<label for=\"warnMonths\">".__("Bump warning months")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"warnMonths\" name=\"warnMonths\" value=\"{5}\" />
@@ -143,7 +146,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"viewcountInterval\">Viewcount report interval</label>
+					<label for=\"viewcountInterval\">".__("Viewcount report interval")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"viewcountInterval\" name=\"viewcountInterval\" value=\"{6}\" />
@@ -151,7 +154,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"customTitleThreshold\">Custom title threshold</label>
+					<label for=\"customTitleThreshold\">".__("Custom title threshold")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"customTitleThreshold\" name=\"customTitleThreshold\" value=\"{7}\" />
@@ -159,40 +162,40 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					Markup Cleanup
+					".__("Markup Cleanup")."
 				</td>
 				<td>
 					<label>
 						<input type=\"checkbox\" name=\"overallTidy\" {8} {14} />
-						Use HtmlTidy
+						".__("Use HtmlTidy")."
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					AJAX
+					".__("AJAX")."
 				</td>
 				<td>
 					<label>
 						<input type=\"checkbox\" name=\"noAjax\" {22} />
-						Disable AJAX refreshers
+						".__("Disable AJAX refreshers")."
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					Guests
+					".__("Guests")."
 				</td>
 				<td>
 					<label>
 						<input type=\"checkbox\" name=\"noGuestLayouts\" {23} />
-						Disable post layouts for guests
+						".__("Disable post layouts for guests")."
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"theWord\">Registration word</label>
+					<label for=\"theWord\">".__("Registration word")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"theWord\" name=\"theWord\" value=\"{9}\" />
@@ -200,7 +203,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"systemUser\">System user ID</label>
+					<label for=\"systemUser\">".__("System user ID")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"systemUser\" name=\"systemUser\" value=\"{10}\" />
@@ -208,23 +211,25 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"minWords\">Minimal word count</label>
+					<label for=\"minWords\">".__("Minimal word count")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"minWords\" name=\"minWords\" value=\"{18}\" />
+					<img src=\"img/icons/icon4.png\" title=\"".__("This is supposed to protect your board from the Happyface Guy, who floods a single smiley.")." ".__("Set this to zero to disable the check, at your own risk.")."\" alt=\"[!]\" />
 				</td>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"minSeconds\">Minimal seconds between posts</label>
+					<label for=\"minSeconds\">".__("Minimal seconds between posts")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"minSeconds\" name=\"minSeconds\" value=\"{19}\" />
+					<img src=\"img/icons/icon4.png\" title=\"".__("This is supposed to protect your board from flooders by slowing them down.")." ".__("Set this to zero to disable the check, at your own risk.")."\" alt=\"[!]\" />
 				</td>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"uploaderCap\">Uploader size cap</label>
+					<label for=\"uploaderCap\">".__("Uploader size cap")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"uploaderCap\" name=\"uploaderCap\" value=\"{20}\" />
@@ -233,7 +238,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"personalCap\">Uploader private cap</label>
+					<label for=\"personalCap\">".__("Uploader private cap")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"personalCap\" name=\"personalCap\" value=\"{25}\" />
@@ -242,16 +247,16 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"uploaderMaxFileSize\">Uploader max file size</label>
+					<label for=\"uploaderMaxFileSize\">".__("Uploader max file size")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"uploaderMaxFileSize\" name=\"uploaderMaxFileSize\" value=\"{29}\" />
-					MiB <img src=\"img/icons/icon5.png\" title=\"You cannot go past the php.ini setting, which is {30}. Exceeding this value or entering zero will reset the limit to {30}.\" alt=\"[?]\" />
+					MiB <img src=\"img/icons/icon5.png\" title=\"".__("You cannot go past the php.ini setting, which is {30}. Exceeding this value or entering zero will reset the limit to {30}.")."\" alt=\"[?]\" />
 				</td>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"uploaderWhitelist\">Uploader whitelist</label>
+					<label for=\"uploaderWhitelist\">".__("Uploader whitelist")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"uploaderWhitelist\" name=\"uploaderWhitelist\" value=\"{21}\" class=\"width75\" />
@@ -259,7 +264,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"mailResetFrom\">Mail Reset sender</label>
+					<label for=\"mailResetFrom\">".__("Mail Reset sender")."</label>
 				</td>
 				<td>
 					<input type=\"email\" id=\"mailResetFrom\" name=\"mailResetFrom\" value=\"{24}\" class=\"width75\" />
@@ -267,7 +272,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"lastPostsTimeLimit\">Time limit for Last Posts</label>
+					<label for=\"lastPostsTimeLimit\">".__("Time limit for Last Posts")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"lastPostsTimeLimit\" name=\"lastPostsTimeLimit\" value=\"{26}\" /> hours
@@ -276,19 +281,19 @@ write(
 			
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Hacks
+					".__("Hacks")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"theme\">Theme</label>
+					<label for=\"theme\">".__("Theme")."</label>
 				</td>
 				<td>{11}
 				</td>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"names\">Names</label>
+					<label for=\"names\">".__("Names")."</label>
 				</td>
 				<td>{12}
 				</td>
@@ -296,12 +301,12 @@ write(
 			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Profile Preview Post
+					".__("Profile Preview Post")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"ppp\">Text</label>
+					<label for=\"ppp\">".__("Text")."</label>
 				</td>
 				<td>
 					<textarea id=\"ppp\" name=\"previewtext\" rows=\"8\" style=\"width: 98%;\">{15}</textarea>
@@ -309,12 +314,12 @@ write(
 			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Meta
+					".__("Meta")."
 				</th>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"metadesc\">Description</label>
+					<label for=\"metadesc\">".__("Description")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"metadesc\" name=\"metadesc\" value=\"{16}\" class=\"width75\" />
@@ -322,7 +327,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"metakeys\">Keywords</label>
+					<label for=\"metakeys\">".__("Keywords")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"metakeys\" name=\"metakeys\" value=\"{17}\" class=\"width75\" />
@@ -330,12 +335,12 @@ write(
 			</tr>
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					RSS Feed
+					".__("RSS Feed")."
 				</th>
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					<label for=\"feedname\">Feed name</label>
+					<label for=\"feedname\">".__("Feed name")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"feedname\" name=\"feedname\" value=\"{27}\" class=\"width75\" />
@@ -343,7 +348,7 @@ write(
 			</tr>
 			<tr class=\"cell0\">
 				<td>
-					<label for=\"rssblurb\">Blurb</label>
+					<label for=\"rssblurb\">".__("Blurb")."</label>
 				</td>
 				<td>
 					<input type=\"text\" id=\"rssblurb\" name=\"rssblurb\" value=\"{28}\" class=\"width75\" />
@@ -353,7 +358,8 @@ write(
 				<td>
 				</td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Edit\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Edit")."\" />
+					<input type=\"hidden\" name=\"key\" value=\"{31}\" />
 				</td>
 			</tr>
 		</table>
@@ -366,7 +372,7 @@ write(
 	htmlval($metaDescription), htmlval($metaKeywords), $minWords, $minSeconds, $uploaderCap,
 	$uploaderWhitelist, ($noAjax ? "checked=\"checked\"" : ""), ($noGuestLayouts ? "checked=\"checked\"" : ""),
 	$mailResetFrom, $personalCap, $lastPostsTimeLimit, $feedname, $rssblurb, $uploaderMaxFileSize,
-	BytesToSize(IniValToBytes(ini_get("upload_max_filesize")))
+	BytesToSize(IniValToBytes(ini_get("upload_max_filesize"))), $key
 );
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList, $extras = "")
