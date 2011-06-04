@@ -9,9 +9,10 @@ if($haveSecurimage)
 $noAutoHeader = TRUE;
 include("lib/common.php");
 
+$title = __("Register");
 
-$backtomain = "<br /><a href=\"./\">Back to main</a> or <a href=\"register.php\">try again</a>.";
-$sexes = array("Male","Female","N/A");
+$backtomain = "<br /><a href=\"./\">".__("Back to main")."</a> &bull; <a href=\"register.php\">".__("Try again")."</a>";
+$sexes = array(__("Male"), __("Female"), __("N/A"));
 
 if(!isset($_POST['action']))
 {
@@ -22,36 +23,36 @@ if(!isset($_POST['action']))
 		<table class=\"outline margin width50\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Register
+					".__("Register")."
 				</th>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"un\">User name</label>
+					<label for=\"un\">".__("User name")."</label>
 				</td>
 				<td class=\"cell0\">
-					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"20\" style=\"width: 98%;\"  class=\"required testingClass anotherTestingClass\" />
+					<input type=\"text\" id=\"un\" name=\"name\" maxlength=\"20\" style=\"width: 98%;\"  class=\"required\" />
 				</td>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"pw\">Password</label>
+					<label for=\"pw\">".__("Password")."</label>
 				</td>
 				<td class=\"cell1\">
-					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" class=\"required\" />
+					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" class=\"required\" /> / ".__("Repeat:")." <input type=\"password\" id=\"pw2\" name=\"pass2\" size=\"13\" maxlength=\"32\" class=\"required\" />
 				</td>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"email\">Email address</label>
+					<label for=\"email\">".__("Email address")."</label>
 				</td>
-				<td class=\"cell1\">
+				<td class=\"cell0\">
 					<input type=\"email\" id=\"email\" name=\"email\" value=\"\" style=\"width: 98%;\" maxlength=\"60\"  class=\"required\" />
 				</td>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					Sex
+					".__("Sex")."
 				</td>
 				<td class=\"cell1\">
 					{0}
@@ -62,7 +63,7 @@ if(!isset($_POST['action']))
 				<td class=\"cell0\">
 					<label>
 						<input type=\"checkbox\" name=\"readFaq\" />
-						I have read the <a href=\"faq.php\">FAQ</a>
+						".format(__("I have read the {0}FAQ{1}"), "<a href=\"faq.php\">", "</a>")."
 					</label>
 				</td>
 			</tr>
@@ -74,11 +75,11 @@ if(!isset($_POST['action']))
 "
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"tw\">The word</label>
+					<label for=\"tw\">".__("The word")."</label>
 				</td>
 				<td class=\"cell1\">
 					<input type=\"text\" id=\"tw\" name=\"theWord\" maxlength=\"100\" style=\"width: 80%;\"  class=\"required\" />
-					<img src=\"img/icons/icon5.png\" title=\"It's in the FAQ. Read it carefully and you'll find out what the word is.\" alt=\"[?]\" />
+					<img src=\"img/icons/icon5.png\" title=\"".__("It's in the FAQ. Read it carefully and you'll find out what the word is.")."\" alt=\"[?]\" />
 				</td>
 			</tr>
 ");
@@ -90,11 +91,11 @@ if(!isset($_POST['action']))
 "
 			<tr>
 				<td class=\"cell2\">
-					Security
+					".__("Security")."
 				</td>
 				<td class=\"cell1\">
 					<img id=\"captcha\" src=\"captcha.php\" alt=\"CAPTCHA Image\" />
-					<button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">New</button><br />
+					<button onclick=\"document.getElementById('captcha').src = 'captcha.php?' + Math.random(); return false;\">".__("New")."</button><br />
 					<input type=\"text\" name=\"captcha_code\" size=\"10\" maxlength=\"6\" class=\"required\" />
 				</td>
 			</tr>
@@ -106,25 +107,27 @@ if(!isset($_POST['action']))
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Register\"/>
+					<input type=\"submit\" name=\"action\" value=\"".__("Register")."\"/>
 					<label>
 						<input type=\"checkbox\" checked=\"checked\" name=\"autologin\" />
-						Log in afterwards
+						".__("Log in afterwards")."
 					</label>
 				</td>
 			</tr>
 			<tr>
 				<td colspan=\"2\" class=\"cell0 smallFonts\">
-					Specifying an email address is not exactly a hard requirement, but it will allow you to reset your password should you forget it. By default, your email is not shown.
+					".__("Specifying an email address is not exactly a hard requirement, but it will allow you to reset your password should you forget it. By default, your email is not shown.")."
 				</td>
 			</tr>
 		</table>
 	</form>
 ");
 }
-elseif($_POST['action'] == "Register")
+elseif($_POST['action'] == __("Register"))
 {
-	$name = htmlspecialchars($_POST['name']);
+	//<MM> Didn't I already say that storing stuff already-escaped is not a good practice?
+	//$name = htmlspecialchars($_POST['name']);
+	$name = $_POST['name'];
 	$cname = trim(str_replace(" ","", strtolower($name)));
 
 	$qUsers = "select name, displayname from users";
@@ -144,24 +147,28 @@ elseif($_POST['action'] == "Register")
 	$ipKnown = NumRows($rIP);
 
 	if($uname == $cname)
-		$err = "This user name is already taken. Please choose another.".$backtomain;
+		$err = __("This user name is already taken. Please choose another.").$backtomain;
 	else if($name == "" || $cname == "")
-		$err = "The user name must not be empty. Please choose one.".$backtomain;
+		$err = __("The user name must not be empty. Please choose one.").$backtomain;
+	else if(strpos($name, ";") !== false)
+		$err = __("The user name cannot contain semicolons.").$backtomain;
 	elseif($ipKnown)
-		$err = "Another user is already using this IP address.".$backtomain;
+		$err = __("Another user is already using this IP address.").$backtomain;
 	else if(!$_POST['readFaq'])
-		$err = "You really should <a href=\"faq.php\">read the FAQ</a>...";
+		$err = format(__("You really should {0}read the FAQ{1}&hellip;"), "<a href=\"faq.php\">", "</a>").$backtomain;
 	else if($theWord != "" && strcasecmp($_POST['theWord'], $theWord))
-		$err = "That's not the right word. Are you sure you really <a href=\"faq.php\">read the FAQ</a>?";
+		$err = format(__("That's not the right word. Are you sure you really {0}read the FAQ{1}?"), "<a href=\"faq.php\">", "</a>").$backtomain;
 	else if(strlen($_POST['pass']) < 4)
-		$err = "Your password must be at least four characters long.".$backtomain;
+		$err = __("Your password must be at least four characters long.").$backtomain;
+	else if ($_POST['pass'] != $_POST['pass2'])
+		$err = __("The passwords you entered don't match.").$backtomain;
 
 	if($haveSecurimage)
 	{
 		include("securimage/securimage.php");
 		$securimage = new Securimage();
 		if($securimage->check($_POST['captcha_code']) == false)
-			$err = "You got the CAPTCHA wrong.".$backtomain;
+			$err = __("You got the CAPTCHA wrong.").$backtomain;
 	}
 
 	if($err)
@@ -194,14 +201,14 @@ elseif($_POST['action'] == "Register")
 		$logdata['bull'] = hash('sha256', $user['id'].$user['password'].$salt.$newsalt, FALSE);
 		$logdata_s = base64_encode(serialize($logdata));
 
-		setcookie("logdata", $logdata_s, 2147483647);
+		setcookie("logdata", $logdata_s, 2147483647, "", "", false, true);
 
 		include("lib/header.php");
-		Redirect("You are now registered and logged in.","./","the main page");
+		Redirect(__("You are now registered and logged in."), "./", __("the main page"));
 	} else
 	{
 		include("lib/header.php");
-		Redirect("You are now registered!","login.php","the login page");
+		Redirect(__("You are now registered!"), "login.php", __("the login page"));
 	}
 }
 
