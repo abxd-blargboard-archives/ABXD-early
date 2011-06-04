@@ -8,9 +8,6 @@ $key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
 
 $quickQueries = array
 (
-	"Kawa minipic hack" => "update users set minipic = '../Pika/random/random.php?path=hats' where id = 1",
-	"Cynthia UA hack" => "update users set lastknownbrowser = 'Cynthetiq 0.24 on Windows 7 <!-- Cynthetiq/0.24 (Windows NT 6.1; U; en; .NET CLR 3.5.30729) -->' where id = 8",
-	"Mess with the Frenchie" => "update users set displayname = 'Mini-Mario' where id = 4",
 	"Remove display names" => "update users set displayname = ''",
 	"Peek at uservotes" => "select taker.id, taker.name, giver.id, giver.name, up * 2 - 1 from uservotes left join users as taker on taker.id = uid left join users as giver on giver.id = voter order by taker.id"
 );
