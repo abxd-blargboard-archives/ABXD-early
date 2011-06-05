@@ -4,17 +4,21 @@
 
 include("lib/common.php");
 
+$title = __("Edit post");
+
 if(!$loguserid)
-	Kill("You must be logged in to edit your posts.");
+	Kill(__("You must be logged in to edit your posts."));
 
 if($loguser['powerlevel'] < 0)
-	Kill("Banned users can't edit their posts.");
+	Kill(__("Banned users can't edit their posts."));
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
 
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("Post ID unspecified.");
+	Kill(__("Post ID unspecified."));
 
 $pid = (int)$_GET['id'];
 AssertForbidden("editPost", $pid);
@@ -26,14 +30,14 @@ if(NumRows($rPost))
 	$post = Fetch($rPost);
 	$tid = $post['thread'];
 } else
-	Kill("Unknown post ID.");
+	Kill(__("Unknown post ID."));
 
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
 if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
-	Kill("Unknown thread ID.");
+	Kill(__("Unknown thread ID."));
 AssertForbidden("viewThread", $tid);
 
 $qFora = "select * from forums where id=".$thread['forum'];
@@ -41,7 +45,7 @@ $rFora = Query($qFora);
 if(NumRows($rFora))
 	$forum = Fetch($rFora);
 else
-	Kill("Unknown forum ID.");
+	Kill(__("Unknown forum ID."));
 $fid = $forum['id'];
 AssertForbidden("viewForum", $fid);
 
@@ -56,27 +60,29 @@ $fid = $thread['forum'];
 
 if((int)$_GET['delete'] == 1)
 {
+	if ($_GET['key'] != $key) Kill(__("No."));
 	if(!CanMod($loguserid,$fid))
-		Kill("You're not allowed to delete posts.");
+		Kill(__("You're not allowed to delete posts."));
 	$qPosts = "update posts set deleted=1 where id=".$pid." limit 1";
 	$rPosts = Query($qPosts);
-	Redirect("Deleted!","thread.php?id=".$tid,"the thread");
+	Redirect(__("Deleted!"), "thread.php?id=".$tid, __("the thread"));
 	exit();
 } elseif((int)$_GET['delete'] == 2)
 {
+	if ($_GET['key'] != $key) Kill(__("No."));
 	if(!CanMod($loguserid,$fid))
-		Kill("You're not allowed to undelete posts.");
+		Kill(__("You're not allowed to undelete posts."));
 	$qPosts = "update posts set deleted=0 where id=".$pid." limit 1";
 	$rPosts = Query($qPosts);
-	Redirect("Restored!","thread.php?id=".$tid,"the thread");
+	Redirect(__("Restored!"), "thread.php?id=".$tid, __("the thread"));
 	exit();
 }
 
 if(!CanMod($loguserid, $fid) && $post['user'] != $loguserid)
-	Kill("You are not allowed to edit posts.");
+	Kill(__("You are not allowed to edit posts."));
 
 if($thread['closed'] && !CanMod($loguserid, $fid))
-	Kill("This thread is closed.");
+	Kill(__("This thread is closed."));
 	
 write("
 	<script type=\"text/javascript\">
@@ -87,7 +93,7 @@ write("
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
 {
 	$_POST['action'] = "";
-	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+	Alert(__("This post would break the board layout."), __("I'm sorry, Dave."));
 }
 
 if($_POST['text'])
@@ -97,7 +103,7 @@ if($_POST['text'])
 	if($wordCount < 2)
 	{
 		$_POST['action'] = "";
-		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+		Alert(__("Your post is too short to have any real meaning. Try a little harder."), __("I'm sorry, Dave."));
 	}
 }
 
@@ -108,8 +114,10 @@ if(!isset($_POST['action']))
 	$_POST['nobr'] = $post['options'] & 4;
 }
 
-if($_POST['action']=="Edit")
+if($_POST['action'] == __("Edit"))
 {
+	if ($_POST['key'] != $key) Kill(__("No."));
+	
 	if($_POST['text'])
 	{
 		$post = htmlentities2(deSlashMagic($_POST['text']));
@@ -145,10 +153,11 @@ if($_POST['action']=="Edit")
 
 		if($forum['minpower'] < 1)
 			Report("Post edited by [b]".$loguser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid);
-		Redirect("Edited!","thread.php?pid=".$pid."#".$pid,"the thread");
+		Redirect(__("Edited!"), "thread.php?pid=".$pid."#".$pid, __("the thread"));
 		exit();
-	} else
-		Alert("Enter a message and try again.","Your post is empty.");
+	}
+	else
+		Alert(__("Enter a message and try again."), __("Your post is empty."));
 }
 
 if($_POST['text'])
@@ -160,14 +169,14 @@ if($_POST['text'])
 	$prefill = str_replace("##TSURUPETTANYOUJO##","\n", $prefill);
 }
 
-if($_POST['action']=="Preview")
+if($_POST['action'] == __("Preview"))
 {
 	$qUser = "select * from users where id=".$post['user'];
 	$rUser = Query($qUser);
 	if(NumRows($rUser))
 		$user = Fetch($rUser);
 	else
-		Kill("Unknown user ID.");
+		Kill(__("Unknown user ID."));
 	$bucket = "userMangler"; include("./lib/pluginloader.php");
 
 	if($_POST['text'])
@@ -185,14 +194,15 @@ if($_POST['action']=="Preview")
 		if($_POST['nobr']) $previewPost['options'] |= 4;
 		$previewPost['mood'] = (int)$_POST['mood'];
 		MakePost($previewPost, 0, $fid);
-	} else
-		Alert("Enter a message and try again.","Your post is empty.");
+	}
+	else
+		Alert(__("Enter a message and try again."), __("Your post is empty."));
 }
 
 //if(!$_POST['text']) $_POST['text'] = $post['text'];
 //if($_POST['text']) $prefill = htmlval(deSlashMagic($_POST['text']));
 if(!$_POST['text']) $prefill = $post['text'];
-else $prefill = htmlval(deSlashMagic($_POST['text']));
+else $prefill = deSlashMagic($_POST['text']);
 
 if($_POST['nopl'])
 	$nopl = "checked=\"checked\"";
@@ -205,7 +215,7 @@ if(!isset($_POST['mood']))
 	$_POST['mood'] = $post['mood'];
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = Format("<option {0}value=\"0\">[Default avatar]</option>\n", $moodSelects[0]);
+$moodOptions = Format("<option {0}value=\"0\">".__("[Default avatar]")."</option>\n", $moodSelects[0]);
 $rMoods = Query("select mid, name from moodavatars where uid=".$post['user']." order by mid asc");
 while($mood = Fetch($rMoods))
 	$moodOptions .= Format("<option {0}value=\"{1}\">{2}</option>\n", $moodSelects[$mood['mid']], $mood['mid'], htmlval($mood['name']));
@@ -219,12 +229,12 @@ Write(
 					<table class=\"outline margin width100\">
 						<tr class=\"header1\">
 							<th colspan=\"2\">
-								Edit Post
+								".__("Edit Post")."
 							</th>
 						</tr>
 						<tr class=\"cell0\">
 							<td>
-								Post
+								".__("Post")."
 							</td>
 							<td>
 								<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
@@ -233,28 +243,29 @@ Write(
 						<tr class=\"cell2\">
 							<td></td>
 							<td>
-								<input type=\"submit\" name=\"action\" value=\"Edit\" /> 
-								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+								<input type=\"submit\" name=\"action\" value=\"".__("Edit")."\" /> 
+								<input type=\"submit\" name=\"action\" value=\"".__("Preview")."\" />
 								<select size=\"1\" name=\"mood\">
 									{1}
 								</select>
 								<label>
-									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;Disable&nbsp;post&nbsp;layout
+									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;".__("Disable post layout", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;Disable&nbsp;smilies
+									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;".__("Disable smilies", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nobr\" {5} />&nbsp;Disable&nbsp;auto-&lt;br>
+									<input type=\"checkbox\" name=\"nobr\" {5} />&nbsp;".__("Disable auto-<br>", 1)."
 								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{2}\" />
+								<input type=\"hidden\" name=\"key\" value=\"{6}\" />
 							</td>
 						</tr>
 					</table>
 				</form>
 			</td>
 			<td style=\"width: 200px; vertical-align: top; border: none;\">
-",	$prefill, $moodOptions, $pid, $nopl, $nosm, $nobr);
+",	htmlval($prefill), $moodOptions, $pid, $nopl, $nosm, $nobr, $key);
 
 DoSmileyBar();
 DoPostHelp();
@@ -294,8 +305,8 @@ if(NumRows($rPosts))
 				{1}
 			</td>
 			<td class=\"cell{0}\">
-				<button style=\"float: right;\" onclick=\"insertQuote({2});\">Quote</button>
-				<button style=\"float: right;\" onclick=\"insertChanLink({2});\">Link</button>
+				<button style=\"float: right;\" onclick=\"insertQuote({2});\">".__("Quote")."</button>
+				<button style=\"float: right;\" onclick=\"insertChanLink({2});\">".__("Link")."</button>
 				{3}
 			</td>
 		</tr>
@@ -305,13 +316,13 @@ if(NumRows($rPosts))
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"2\">Thread review</th>
+			<th colspan=\"2\">".__("Thread review")."</th>
 		</tr>
 		{0}
 	</table>
 ",	$posts);
 }
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, "Edit Post"=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']=>"thread.php?id=".$tid, __("Edit post")=>""), $links);
 
 ?>
