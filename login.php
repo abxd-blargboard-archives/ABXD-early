@@ -10,7 +10,7 @@ if($_POST['action'] == "logout")
 	setcookie("logdata", 0);
 
 	include("lib/header.php");
-	Redirect("You are now logged out.","./","the main page");
+	Redirect(__("You are now logged out."), "./", __("the main page"));
 }
 elseif(!$_POST['action'])
 {
@@ -21,12 +21,12 @@ elseif(!$_POST['action'])
 		<table class=\"outline margin width50\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Log in
+					".__("Log in")."
 				</th>
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"un\">User name</label>
+					<label for=\"un\">".__("User name")."</label>
 				</td>
 				<td class=\"cell0\">
 					<input type=\"text\" id=\"un\" name=\"name\" style=\"width: 98%;\" maxlength=\"25\" />
@@ -34,7 +34,7 @@ elseif(!$_POST['action'])
 			</tr>
 			<tr>
 				<td class=\"cell2\">
-					<label for=\"pw\">Password</label>
+					<label for=\"pw\">".__("Password")."</label>
 				</td>
 				<td class=\"cell1\">
 					<input type=\"password\" id=\"pw\" name=\"pass\" size=\"13\" maxlength=\"32\" />
@@ -45,22 +45,23 @@ elseif(!$_POST['action'])
 				<td class=\"cell1\">
 					<label>
 						<input type=\"checkbox\" name=\"session\" />
-						This session only
+						".__("This session only")."
 					</label>
 				</td>
 			</tr>
 			<tr class=\"cell2\">
 				<td></td>
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Log in\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Log in")."\" />
 					{0}
 				</td>
 			</tr>
 		</table>
 	</form>
-",  $mailResetFrom == "" ? "" : "<button onclick=\"document.location = 'lostpass.php'; return false;\">Forgot password?</button>"
+",  $mailResetFrom == "" ? "" : "<button onclick=\"document.location = 'lostpass.php'; return false;\">".__("Forgot password?")."</button>"
 );
-} elseif($_POST['action'] == "Log in")
+}
+elseif($_POST['action'] == __("Log in"))
 {
 	$original = $_POST['pass'];
 	$escapedName = justEscape($_POST['name']);
@@ -73,14 +74,14 @@ elseif(!$_POST['action'])
 		if($user['password'] != $sha)
 		{
 			include("lib/header.php");
-			Report("A visitor from [b]".$_SERVER['REMOTE_ADDR']."[/] tried to log in as [b]".$user['name']."[/].");
-			Kill("Invalid user name or password.<br /><a href=\"./\">Back to main</a> or <a href=\"login.php\">try again</a>.</div>");
+			Report("A visitor from [b]".$_SERVER['REMOTE_ADDR']."[/] tried to log in as [b]".$user['name']."[/].", 1);
+			Kill(__("Invalid user name or password.")."<br /><a href=\"./\">".__("Back to main")."</a> &bull; <a href=\"login.php\">".__("Try again")."</a></div>");
 		}
 	}
 	else
 	{
 		include("lib/header.php");
-		Kill("Invalid user name or password.<br /><a href=\"./\">Back to main</a> or <a href=\"login.php\">try again</a>.</div>");
+		Kill(__("Invalid user name or password.")."<br /><a href=\"./\">".__("Back to main")."</a> &bull; <a href=\"login.php\">".__("Try again")."</a></div>");
 	}
 
 	$logdata['loguserid'] = $user['id'];
@@ -88,13 +89,13 @@ elseif(!$_POST['action'])
 	$logdata_s = base64_encode(serialize($logdata));
 
 	if(isset($_POST['session']))
-		setcookie("logdata", $logdata_s);
+		setcookie("logdata", $logdata_s, 0, "", "", false, true);
 	else
-		setcookie("logdata", $logdata_s, 2147483647);
+		setcookie("logdata", $logdata_s, 2147483647, "", "", false, true);
 
 	include("lib/header.php");
 	Report("[b]".$escapedName."[/] logged in.", 1);
-	Redirect("You are now logged in.","./","the main page");	
+	Redirect(__("You are now logged in."), "./", __("the main page"));	
 }
 
 ?>
