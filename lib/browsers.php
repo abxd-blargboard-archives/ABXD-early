@@ -15,6 +15,7 @@ $knownBrowsers = array
 	"Nintendo Wii" => "Wii Internet Channel", //Opera/9.30 (Nintendo Wii; U; ; 3642; nl)
 	"Nintendo DSi" => "Nintendo DSi Browser", //Opera/9.50 (Nintendo DSi; Opera/507; U; en-US)
 	"Nitro" => "Nintendo DS Browser",
+	"Nintendo 3DS" => "Nintendo 3DS",
 	"Opera" => "Opera",
 	"MozillaDeveloperPreview" => "Firefox dev",
 	"Firefox" => "Firefox",
@@ -86,7 +87,7 @@ foreach($knownOSes as $code => $name)
 			$os = str_replace("%", $version, $os);
 		}
 	
-		$lastKnownBrowser .= " on ".$os;
+		$lastKnownBrowser = format(__("{0} on {1}"), $lastKnownBrowser, $os);
 		break;
 	}
 }
