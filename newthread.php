@@ -4,34 +4,36 @@
 
 include("lib/common.php");
 
+$title = __("New thread");
+
 AssertForbidden("makeThread");
 
 if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to post.");
+	Kill(__("You must be logged in to post."));
 
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("Forum ID unspecified.");
+	Kill(__("Forum ID unspecified."));
 
 $fid = (int)$_GET['id'];
 
-if($loguser['powerlevel'] == -1)
-	Kill("You're banned.");
+if($loguser['powerlevel'] < 0)
+	Kill(__("You're banned."));
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
 if(NumRows($rFora))
 	$forum = Fetch($rFora);
 else
-	Kill("Unknown forum ID.");
+	Kill(__("Unknown forum ID."));
 
 if($forum['locked'])
-	Kill("This forum is locked.");
+	Kill(__("This forum is locked."));
 
 if($forum['minpowerthread'] > $loguser['powerlevel'])
-	Kill("You are not allowed to post threads in this forum.");
+	Kill(__("You are not allowed to post threads in this forum."));
 
 if(!isset($_POST['poll']) || isset($_GET['poll']))
 	$_POST['poll'] = $_GET['poll'];
@@ -63,9 +65,9 @@ if(!$noAjax)
 ", $fid, $onlineUsers);
 
 if($_POST['poll'])
-	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Poll"=>""), $links);
+	MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, __("New poll")=>""), $links);
 else
-	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Thread"=>""), $links);
+	MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, __("New thread")=>""), $links);
 
 if(isset($_POST['title']))
 	$_POST['title'] = htmlentities2($_POST['title']);
@@ -76,31 +78,31 @@ if(isset($_POST['pollQuestion']))
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
 {
 	$_POST['action'] = "";
-	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+	Alert(__("This post would break the board layout."), __("I'm sorry, Dave."));
 }
 
-if($_POST['text'] && $_POST['action'] != "Preview")
+if($_POST['text'] && $_POST['action'] != __("Preview"))
 {
 	$words = explode(" ", $_POST['text']);
 	$wordCount = count($words);
 	if($wordCount < 2)
 	{
 		$_POST['action'] = "";
-		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+		Alert(__("Your post is too short to have any real meaning. Try a little harder."), __("I'm sorry, Dave."));
 	}
 }
 
-if($_POST['text'] && $_POST['action'] == "Post")
+if($_POST['text'] && $_POST['action'] == __("Post"))
 {
 	$lastPost = time() - $loguser['lastposttime'];
 	if($lastPost < 30)
 	{
 		$_POST['action'] = "";
-		Alert("You're going too damn fast! Slow down a little.", "Hold your horses.");
+		Alert(__("You're going too damn fast! Slow down a little."), __("Hold your horses."));
 	}
 }
 
-if($_POST['action']=="Post")
+if($_POST['action'] == __("Post"))
 {
 	$trimmedTitle = trim(str_replace('&nbsp;', ' ', $_POST['title']));
 	if($_POST['text'] && $trimmedTitle != "")
@@ -175,16 +177,17 @@ if($_POST['action']=="Post")
 		Query("update threads set lastpostid = ".$pid." where id = ".$tid);
 
 		Report("New ".($_POST['poll'] ? "poll" : "thread")." by [b]".$loguser['name']."[/]: [b]".$_POST['title']."[/] (".$forum['title'].") -> [g]#HERE#?tid=".$tid, $isHidden);
-		Redirect("Posted!","thread.php?id=".$tid,"the thread");
+		Redirect(__("Posted!"), "thread.php?id=".$tid, __("the thread"));
 		exit();
-	} else
+	}
+	else
 	{
 		if($trimmedTitle)
-			Alert("Enter a message and try again.","Your post is empty.");
+			Alert(__("Enter a message and try again."), __("Your post is empty."));
 		else if($_POST['text'])
-			Alert("Enter a thread title and try again.","Your thread is unnamed.");
+			Alert(__("Enter a thread title and try again."), __("Your thread is unnamed."));
 		else
-			Alert("Enter a message and a thread title and try again.","Your post is empty.");			
+			Alert(__("Enter a message and a thread title and try again."), __("Your post is empty."));
 	}
 }
 
@@ -200,7 +203,7 @@ if($_POST['title'])
 	$trefill = htmlentities2(deSlashMagic($_POST['title']));
 	//$trefill = htmlentities2(stripslashes($_POST['title']));
 
-if($_POST['action']=="Preview")
+if($_POST['action'] == __("Preview"))
 {
 	if($_POST['text'] && $_POST['title'])
 	{
@@ -256,7 +259,7 @@ if($_POST['action']=="Preview")
 		<table class=\"outline margin\">
 			<tr class=\"header0\">
 				<th colspan=\"2\">
-					Poll
+					".__("Poll")."
 				</th>
 			</tr>
 			<tr class=\"cell0\">
@@ -286,11 +289,11 @@ if($_POST['action']=="Preview")
 	} else
 	{
 		if($_POST['title'])
-			Alert("Enter a message and try again.","Your post is empty.");
+			Alert(__("Enter a message and try again."), __("Your post is empty."));
 		else if($_POST['text'])
-			Alert("Enter a thread title and try again.","Your thread is unnamed.");
+			Alert(__("Enter a thread title and try again."), __("Your thread is unnamed."));
 		else
-			Alert("Enter a message and a thread title and try again.","Your post is empty.");			
+			Alert(__("Enter a message and a thread title and try again."), __("Your post is empty."));	
 	}
 }
 
@@ -335,13 +338,13 @@ write(
 					<table class=\"outline margin width100\">
 						<tr class=\"header1\">
 							<th colspan=\"2\">
-								New {0}
+								{0}
 							</th>
 						</tr>
 						<tr class=\"cell0\">
 							<td>
 								<label for=\"tit\">
-									Title
+									".__("Title")."
 								</label>
 							</td>
 							<td>
@@ -350,23 +353,23 @@ write(
 						</tr>
 						<tr class=\"cell1\">
 							<td>
-								Icon
+								".__("Icon")."
 							</td>
 							<td class=\"threadIcons\">
 								<label>
 									<input type=\"radio\" {2} name=\"iconid\" value=\"0\" /> 
-									<span>None</span>
+									<span>".__("None")."</span>
 								</label> 
 								{3}
 								<br />
 								<label>
 									<input type=\"radio\" {4} name=\"iconid\" value=\"255\" /> 
-									<span>Custom</span>
+									<span>".__("Custom")."</span>
 								</label> 
 								<input type=\"text\" id=\"iconurl\" name=\"iconurl\" style=\"width: 50%;\" maxlength=\"100\" value=\"{5}\" />
 							</td>
 						</tr>
-",	($_POST['poll'] ? "Poll" : "Thread"), $trefill, $iconNoneChecked, $icons, $iconCustomChecked,
+",	($_POST['poll'] ? __("New poll") : __("New thread")), $trefill, $iconNoneChecked, $icons, $iconCustomChecked,
 	htmlval(deSlashMagic($_POST['iconurl'])));
 
 if($_POST['poll'])
@@ -381,12 +384,12 @@ if($_POST['poll'])
 "
 						<tr class=\"cell{0}\">
 							<td>
-								<label for=\"p{1}\">Option {2}</label>
+								<label for=\"p{1}\">".__("Option {2}")."</label>
 							</td>
 							<td>
 								<input type=\"text\" id=\"p{1}\" name=\"pollOption{1}\" value=\"{3}\" style=\"width: 50%;\" maxlength=\"40\" >&nbsp;
 								<label>
-									Color&nbsp;
+									".__("Color", 1)."&nbsp;
 									<input type=\"text\" name=\"pollColor{1}\" value=\"{4}\" size=\"10\" maxlength=\"7\" class=\"color {hash:true,required:false,pickerFaceColor:'black',pickerFace:3,pickerBorder:0,pickerInsetColor:'black',pickerPosition:'left',pickerMode:'HVS'}\" />
 								</label>
 								{5}
@@ -402,7 +405,7 @@ if($_POST['poll'])
 						<tr class=\"cell0\">
 							<td>
 								<label for=\"pq\">
-									Poll question
+									".__("Poll question")."
 								</label>
 							</td>
 							<td>
@@ -412,7 +415,7 @@ if($_POST['poll'])
 						<tr class=\"cell1\">
 							<td>
 								<label for=\"pn\">
-									Number of options
+									".__("Number of options")."
 								</label>
 							</td>
 							<td>
@@ -425,7 +428,7 @@ if($_POST['poll'])
 
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">".__("[Default avatar]")."</option>\n";
 $rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
 while($mood = Fetch($rMoods))
 	$moodOptions .= format(
@@ -436,15 +439,15 @@ while($mood = Fetch($rMoods))
 if(CanMod($loguserid, $forum['id']))
 {
 	$mod = "\n\n<!-- Mod options -->\n";
-	$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
-	$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
+	$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;".__("Close thread", 1)."</label>\n";
+	$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;".__("Sticky", 1)."</label>\n";
 	$mod .= "<!-- More could follow -->\n\n";
 }
 
 if(!$_POST['poll'] || $_POST['pollOptions'])
-	$postButton = "<input type=\"submit\" name=\"action\" value=\"Post\" /> ";
+	$postButton = "<input type=\"submit\" name=\"action\" value=\"".__("Post")."\" /> ";
 if($_POST['poll'])
-	$multivote = "<label><input type=\"checkbox\" ".($_POST['multivote'] ? "checked=\"checked\"" : "")." name=\"multivote\" />&nbsp;Multivote</label>";
+	$multivote = "<label><input type=\"checkbox\" ".($_POST['multivote'] ? "checked=\"checked\"" : "")." name=\"multivote\" />&nbsp;".__("Multivote", 1)."</label>";
 
 write(
 "
@@ -462,18 +465,18 @@ write(
 							<td></td>
 							<td>
 								{1}
-								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+								<input type=\"submit\" name=\"action\" value=\"".__("Preview")."\" />
 								<select size=\"1\" name=\"mood\">
 									{2}
 								</select>
 								<label>
-									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;Disable&nbsp;post&nbsp;layout
+									<input type=\"checkbox\" name=\"nopl\" {3} />&nbsp;".__("Disable post layout", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;Disable&nbsp;smilies
+									<input type=\"checkbox\" name=\"nosm\" {4} />&nbsp;".__("Disable smilies", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nobr\" {8} />&nbsp;Disable&nbsp;auto-&lt;br>
+									<input type=\"checkbox\" name=\"nobr\" {8} />&nbsp;".__("Disable auto-<br>", 1)."
 								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{5}\" />
 								<input type=\"hidden\" name=\"poll\" value=\"{6}\" />
@@ -497,8 +500,8 @@ write("
 ");
 
 if($_POST['poll'])
-	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Poll"=>""), $links);
+	MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, __("New poll")=>""), $links);
 else
-	MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, "New Thread"=>""), $links);
+	MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, __("New thread")=>""), $links);
 
 ?>
