@@ -14,10 +14,10 @@ elseif(isset($_GET['pid']))
 	if(NumRows($rPost))
 		$post = Fetch($rPost);
 	else
-		Kill("Unknown post ID.");
+		Kill(__("Unknown post ID."));
 	$tid = $post['thread'];
 } else
-	Kill("Thread ID unspecified.");
+	Kill(__("Thread ID unspecified."));
 AssertForbidden("viewThread", $tid);
 
 $qThread = "select * from threads where id=".$tid;
@@ -25,13 +25,13 @@ $rThread = Query($qThread);
 if(NumRows($rThread))
 	$thread = Fetch($rThread);
 else
-	Kill("Unknown thread ID.");
+	Kill(__("Unknown thread ID."));
 
 $fid = $thread['forum'];
 AssertForbidden("viewForum", $fid);
 
 $pl = $loguser['powerlevel'];
-if($pl == -1) $pl = 0;
+if($pl < 0) $pl = 0;
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
@@ -39,9 +39,10 @@ if(NumRows($rFora))
 {
 	$forum = Fetch($rFora);
 	if($forum['minpower'] > $pl)
-		Kill("You are not allowed to browse this forum.");
-} else
-	Kill("Unknown forum ID.");
+		Kill(__("You are not allowed to browse this forum."));
+}
+else
+	Kill(__("Unknown forum ID."));
 
 $qCategories = "select * from categories where id=".$forum['catid'];
 $rCategories = Query($qCategories);
@@ -49,9 +50,10 @@ if(NumRows($rCategories))
 {
 	$category = Fetch($rCategories);
 	if($category['minpower'] > $pl)
-		Kill("You are not allowed to browse forums in this category.");
-} else
-	Kill("Unknown category ID.");
+		Kill(__("You are not allowed to browse forums in this category."));
+}
+else
+	Kill(__("Unknown category ID."));
 
 //$thread['title'] .= " ".ParseThreadTags($thread['title']);
 $tags = ParseThreadTags($thread['title']);
@@ -65,16 +67,16 @@ if(isset($_GET['vote']))
 {
 	AssertForbidden("vote");
 	if(!$loguserid)
-		Kill("You can't vote without logging in.");
+		Kill(__("You can't vote without logging in."));
 	if($thread['closed'])
-		Kill("Poll's closed!");
+		Kill(__("Poll's closed!"));
 	if($thread['poll'])
 	{
 		$vote = (int)$_GET['vote'];
 		
 		$token = hash('sha256', "{$vote},{$loguserid},{$salt}");
 		if ($token != $_GET['token'])
-			Kill("Invalid token.");
+			Kill(__("Invalid token."));
 		
 		$doublevote = FetchResult("select doublevote from poll where id=".$thread['poll']);
 		if($doublevote)
@@ -95,39 +97,39 @@ if(isset($_GET['vote']))
 		}
 	}
 	else
-		Kill("This is not a poll.");
+		Kill(__("This is not a poll."));
 }
 
 if(!$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
-	$replyWarning = " onclick=\"if(!confirm('Are you sure you want to reply to this old thread? This will move it to the top of the list. Please only do this if you have something new and relevant to share about this thread\'s topic that is not better placed in a new thread.')) return false;\"";
+	$replyWarning = " onclick=\"if(!confirm('".__("Are you sure you want to reply to this old thread? This will move it to the top of the list. Please only do this if you have something new and relevant to share about this thread's topic that is not better placed in a new thread.")."')) return false;\"";
 if($thread['closed'])
-	$replyWarning = " onclick=\"if(!confirm('This thread is actually closed. Are you sure you want to abuse your staff position to post in a closed thread?')) return false;\"";
+	$replyWarning = " onclick=\"if(!confirm('".__("This thread is actually closed. Are you sure you want to abuse your staff position to post in a closed thread?")."')) return false;\"";
 
-if($loguser['powerlevel'] == -1)
-	$links .= "<li>You're banned.</li>";
+if($loguser['powerlevel'] < 0)
+	$links .= "<li>".__("You're banned.")."</li>";
 elseif(IsAllowed("makeReply", $tid) && (!$thread['closed'] || $loguser['powerlevel'] > 2))
-	$links .= "<li><a href=\"newreply.php?id=".$tid."\"".$replyWarning.">Post Reply</a></li>";
+	$links .= "<li><a href=\"newreply.php?id=".$tid."\"".$replyWarning.">".__("Post reply")."</a></li>";
 elseif(IsAllowed("makeReply", $tid))
-	$links .= "<li>Thread closed.</li>";
+	$links .= "<li>".__("Thread closed.")."</li>";
 if(CanMod($loguserid,$forum['id']) && IsAllowed("editThread", $tid))
 {
-	$links .= "<li><a href=\"editthread.php?id=".$tid."\">Edit</a></li>";
+	$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+	
+	$links .= "<li><a href=\"editthread.php?id=".$tid."\">".__("Edit")."</a></li>";
 	if($thread['closed'])
-		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=open\">Open</a></li>";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=open&amp;key=".$key."\">".__("Open")."</a></li>";
 	else
-		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=close\">Close</a></li>";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=close&amp;key=".$key."\">".__("Close")."</a></li>";
 	if($thread['sticky'])
-		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=unstick\">Unstick</a></li>";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=unstick&amp;key=".$key."\">".__("Unstick")."</a></li>";
 	else
-		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=stick\">Stick</a></li>";
-	$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=delete\" onclick=\"if(!confirm('Are you sure you want to just up and delete this whole thread?') || !confirm('Seriously?')) return false;\">Delete</a></li>";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=stick&amp;key=".$key."\">".__("Stick")."</a></li>";
+	$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=delete&amp;key=".$key."\" onclick=\"if(!confirm('".__("Are you sure you want to just up and delete this whole thread?")."') || !confirm('Seriously?')) return false;\">".__("Delete")."</a></li>";
 	if(strpos($forum['description'],"[trash]") === FALSE)
-		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=trash\">Trash</a></li>";
+		$links .= "<li><a href=\"editthread.php?id=".$tid."&amp;action=trash&amp;key=".$key."\">".__("Trash")."</a></li>";
 }
 else if($thread['user'] == $loguserid)
-{
-	$links .= "<li><a href=\"editthread.php?id=".$tid."\">Edit</a></li>";
-}
+	$links .= "<li><a href=\"editthread.php?id=".$tid."\">".__("Edit")."</a></li>";
 
 if($isBot)
 	$links = "";
@@ -176,7 +178,7 @@ write(
 	</script>
 ");
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
 
 if($thread['poll'])
 {
@@ -263,7 +265,7 @@ if($thread['poll'])
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
 			<th colspan=\"2\">
-				Poll
+				".__("Poll")."
 			</th>
 		</tr>
 		<tr class=\"cell0\">
@@ -274,11 +276,12 @@ if($thread['poll'])
 		{2}
 		<tr class=\"cell0\">
 			<td colspan=\"2\" class=\"smallFonts\">
-				{3} voted so far.
+				{3}
 			</td>
 		</tr>
 	</table>
-", $cellClass, htmlspecialchars($poll['question']), $pollLines, ($voters == 1 ? $voters." user has" : $voters." users have"));
+",	$cellClass, htmlspecialchars($poll['question']), $pollLines,
+	format($voters == 1 ? __("{0} user has voted so far") : __("{0} users have voted so far"), $voters));
 	}
 }
 
@@ -333,25 +336,7 @@ for($p = $page - 5; $p < $page + 10; $p++)
 }
 
 $pagelinks = $first.$prev.join(array_slice($pageLinks, 0, 11), " ").$next.$last;
-write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
-
-/*
-for($i = $ppp; $i < $total; $i+=$ppp)
-{
-	if($i == $from)
-		$pagelinks .= " ".(($i/$ppp)+1);
-	else
-		$pagelinks .= " <a href=\"thread.php?id=".$tid."&amp;from=".$i."\">".(($i/$ppp)+1)."</a>";
-}
-if($pagelinks)
-{
-	if($from == 0)
-		$pagelinks = " 1".$pagelinks;
-	else
-		$pagelinks = "<a href=\"thread.php?id=".$tid."\">1</a>".$pagelinks;
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
-}
-*/
+write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 
 if(NumRows($rPosts))
 {
@@ -373,19 +358,17 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 	//Quick reply goes here		
 	if(CanMod($loguserid, $fid))
 	{
-		$mod = "\n\n<!-- Mod options -->\n";
 		//print $thread['closed'];
 		if(!$thread['closed'])
-			$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
+			$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;".__("Close thread", 1)."</label>\n";
 		else
-			$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;Open&nbsp;thread</label>\n";
+			$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;".__("Open thread", 1)."</label>\n";
 		if(!$thread['sticky'])
-			$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
+			$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;".__("Sticky", 1)."</label>\n";
 		else
-			$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;Unstick</label>\n";
-		$mod .= "<!-- More could follow -->\n\n";
+			$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;".__("Unstick", 1)."</label>\n";
 	}
-	$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
+	$moodOptions = "<option ".$moodSelects[0]."value=\"0\">".__("[Default avatar]")."</option>\n";
 	$rMoods = Query("select mid, name from moodavatars where uid=".$loguserid." order by mid asc");
 	while($mood = Fetch($rMoods))
 		$moodOptions .= format(
@@ -399,7 +382,7 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 		<table class=\"outline margin width75\" style=\"margin: 4px auto;\" id=\"quickreply\">
 			<tr class=\"header1\">
 				<th onclick=\"expandTable('quickreply', this)\" style=\"cursor: pointer;\">
-					Quick-E Post&trade;
+					".__("Quick-E Post&trade;")."
 				</th>
 			</tr>
 			<tr class=\"cell0\" style=\"display: none;\">
@@ -409,19 +392,19 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 			</tr>
 			<tr class=\"cell2\" style=\"display: none;\">
 				<td>
-					<input type=\"submit\" name=\"action\" value=\"Post\" /> 
-					<input type=\"submit\" name=\"action\" value=\"Preview\" />
+					<input type=\"submit\" name=\"action\" value=\"".__("Post")."\" /> 
+					<input type=\"submit\" name=\"action\" value=\"".__("Preview")."\" />
 					<select size=\"1\" name=\"mood\">
 						{4}
 					</select>
 					<label>
-						<input type=\"checkbox\" name=\"nopl\" {5} />&nbsp;Disable&nbsp;post&nbsp;layout
+						<input type=\"checkbox\" name=\"nopl\" {5} />&nbsp;".__("Disable post layout", 1)."
 					</label>
 					<label>
-						<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;Disable&nbsp;smilies
+						<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;".__("Disable smilies", 1)."
 					</label>
 					<label>
-						<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;Disable&nbsp;auto-&lt;br>
+						<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;".__("Disable auto-<br>", 1)."
 					</label>
 					<input type=\"hidden\" name=\"id\" value=\"{7}\" />
 					{8}
@@ -433,8 +416,8 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 }
 
 if($pagelinks)
-	write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, $thread['title']." ".$tags=>""), $links);
 
 ?>
