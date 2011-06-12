@@ -4,12 +4,14 @@
 
 include("lib/common.php");
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
+$title = __("Private messages");
+
+MakeCrumbs(array(__("Main")=>"./", __("Private messages")=>"private.php", __("New PM")=>""), "");
 
 AssertForbidden("sendPM");
 
 if(!$loguserid) //Not logged in?
-	Kill("You must be logged in to send private messages.");
+	Kill(__("You must be logged in to send private messages."));
 
 $pid = (int)$_GET['pid'];
 if($pid)
@@ -24,13 +26,13 @@ if($pid)
 		if(NumRows($rUser))
 			$user = Fetch($rUser);
 		else
-			Kill("Unknown user.");
+			Kill(__("Unknown user."));
 		$prefill = "[reply=\"".$user['name']."\"]".htmlval($sauce['text'])."[/quote]";
 		$trefill = "Re: ".$sauce['title'];
 		if(!isset($_POST['to']))
 			$_POST['to'] = $user['name'];
 	} else
-		Kill("Unknown PM.");
+		Kill(__("Unknown PM."));
 }
 
 $uid = (int)$_GET['uid'];
@@ -43,16 +45,14 @@ if($uid)
 		$user = Fetch($rUser);
 		$_POST['to'] = $user['name'];
 	} else
-		Kill("Unknown user.");
+		Kill(__("Unknown user."));
 }
 
 /*
 // "Banned users can't send PMs. Bad bad bad, quite often PMs are a good way for them to try and get unbanned." -- Mega-Mario
-if($loguser['powerlevel'] == -1)
+if($loguser['powerlevel'] < 0)
 	Kill("You're banned.");
 */
-
-$title = "Private messages";
 
 write(
 "
@@ -62,34 +62,51 @@ write(
 ");
 
 
+$recipIDs = array();
 if($_POST['to'])
 {
-	$_POST['to'] = htmlentities($_POST['to']);
-	$qUser = "select id from users where name='".$_POST['to']."' or displayname='".$_POST['to']."'";
-	$rUser = Query($qUser);
-	if(NumRows($rUser))
+	$firstTo = -1;
+	$recipients = explode(";", $_POST['to']);
+	foreach($recipients as $to)
 	{
-		$user = Fetch($rUser);
-		$to = $user['id'];
-	} else
-	{
-		if($_POST['action']=="Send")
-			Kill("Unknown user.");
+		$to = trim(htmlentities($to));
+		if($to == "")
+			continue;
+		$qUser = "select id from users where name='".$to."' or displayname='".$to."'";
+		$rUser = Query($qUser);
+		if(NumRows($rUser))
+		{
+			$user = Fetch($rUser);
+			$id = $user['id'];
+			if($firstTo == -1)
+				$firstTo = $id;
+			if($id == $loguserid)
+				$errors .= __("You can't send private messages to yourself.")."<br />";
+			else if(!in_array($id, $recipIDs))
+				$recipIDs[] = $id;
+		}
+		else
+			$errors .= format(__("Unknown user \"{0}\""), $to)."<br />";
 	}
-	if($to == $loguserid)
+	$maxRecips = array(-1 => 1, 3, 3, 3, 10, 100, 1);
+	$maxRecips = $maxRecips[$loguser['powerlevel']];
+	//$maxRecips = ($loguser['powerlevel'] > 1) ? 5 : 1;
+	if(count($recipIDs) > $maxRecips)
+		$errors .= __("Too many recipients.");
+	if($errors != "")
 	{
-		if($_POST['action'] == "Send")
-			$_POST['action'] = "Preview";
-		Alert("You can't send private messages to yourself.", "What?");
+		Alert($errors);
+		$_POST['action'] = "";
 	}
-} else
+}
+else
 {
-	if($_POST['action'] == "Send")
+	if($_POST['action'] == __("Send"))
 		Alert("Enter a recipient and try again.", "Your PM has no recipient.");
 	$_POST['action'] = "";
 }
 
-if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
+if($_POST['action'] == __("Send") || $_POST['action'] == __("Save as Draft"))
 {
 	if($_POST['title'])
 	{
@@ -97,7 +114,7 @@ if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
 
 		if($_POST['text'])
 		{
-			$wantDraft = (int)($_POST['action'] == "Save as Draft");
+			$wantDraft = (int)($_POST['action'] == __("Save as Draft"));
 
 			//$post = justEscape($post);
 			$post = htmlentities2(deSlashMagic($_POST['text']));
@@ -105,30 +122,44 @@ if($_POST['action'] == "Send" || $_POST['action'] == "Save as Draft")
 			$post = str_replace("\n","##TSURUPETTANYOUJO##", $post);
 			TidyPost($post);
 			$post = str_replace("##TSURUPETTANYOUJO##","\n", $post);
+			if($wantDraft)
+				$post = "<!-- ###MULTIREP:".$_POST['to']." ### -->".$post;
 			$post = mysql_real_escape_string($post);
 
 			//$pid = FetchResult("SELECT id+1 FROM pmsgs WHERE (SELECT COUNT(*) FROM pmsgs p2 WHERE p2.id=pmsgs.id+1)=0 ORDER BY id ASC LIMIT 1");
 			//if($pid < 1) $pid = 1;
+			
+			if($_POST['action'] == __("Save as Draft"))
+			{
+				$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread, drafting) values (".$firstTo.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0, ".$wantDraft.")";
+				$rPM = Query($qPM);
+				$pid = mysql_insert_id();
 
-			$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread, drafting) values (".$to.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0, ".$wantDraft.")";
-			$rPM = Query($qPM);
-			$pid = mysql_insert_id();
-
-			$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".justEscape($_POST['title'])."', '".$post."')";
-			$rPMT = Query($qPMT);
-
-			if($_POST['action'] == "Save as Draft")
-				Redirect("PM saved!","private.php?show=1","your PM outbox");
+				$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".justEscape($_POST['title'])."', '".$post."')";
+				$rPMT = Query($qPMT);
+				Redirect(__("Draft saved!"), "private.php?show=2", __("your drafts box"));
+			}
 			else
-				Redirect("PM sent!","private.php?show=1","your PM outbox");
+			{
+				foreach($recipIDs as $recipient)
+				{
+					$qPM = "insert into pmsgs (userto, userfrom, date, ip, msgread, drafting) values (".$recipient.", ".$loguserid.", ".time().", '".$_SERVER['REMOTE_ADDR']."', 0, ".$wantDraft.")";
+					$rPM = Query($qPM);
+					$pid = mysql_insert_id();
+
+					$qPMT = "insert into pmsgs_text (pid,title,text) values (".$pid.", '".justEscape($_POST['title'])."', '".$post."')";
+					$rPMT = Query($qPMT);
+				}
+				Redirect(__("PM sent!"),"private.php?show=1", __("your PM outbox"));
+			}
 			exit();
 		} else
 		{
-			Alert("Enter a message and try again.", "Your PM is empty.");
+			Alert(__("Enter a message and try again."), __("Your PM is empty."));
 		}
 	} else
 	{
-		Alert("Enter a title and try again.", "Your PM is untitled.");
+		Alert(__("Enter a title and try again."), __("Your PM is untitled."));
 	}
 }
 
@@ -172,27 +203,27 @@ Write(
 					<table class=\"outline margin width100\">
 						<tr class=\"header1\">
 							<th colspan=\"2\">
-								Send PM
+								".__("Send PM")."
 							</th>
 						</tr>
 						<tr class=\"cell0\">
 							<td>
-								To
+								".__("To")."
 							</td>
 							<td>
-								<input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"60\" value=\"{2}\" />
+								<input type=\"text\" name=\"to\" style=\"width: 98%;\" maxlength=\"1024\" value=\"{2}\" />
 							</td>
 						</tr>
 						<tr class=\"cell1\">
 							<td>
-								Title
+								".__("Title")."
 							</td>
 							<td>
 								<input type=\"text\" name=\"title\" style=\"width: 98%;\" maxlength=\"60\" value=\"{1}\" />
 							</td>
 						<tr class=\"cell0\">
 							<td>
-								Post
+								".__("Message")."
 							</td>
 							<td>
 								<textarea id=\"text\" name=\"text\" rows=\"16\" style=\"width: 98%;\">{0}</textarea>
@@ -201,9 +232,9 @@ Write(
 						<tr class=\"cell2\">
 							<td></td>
 							<td>
-								<input type=\"submit\" name=\"action\" value=\"Send\" /> 
-								<input type=\"submit\" name=\"action\" value=\"Preview\" />
-								<input type=\"submit\" name=\"action\" value=\"Save as Draft\" /> 
+								<input type=\"submit\" name=\"action\" value=\"".__("Send")."\" /> 
+								<input type=\"submit\" name=\"action\" value=\"".__("Preview")."\" />
+								<input type=\"submit\" name=\"action\" value=\"".__("Save as Draft")."\" /> 
 							</td>
 						</tr>
 					</table>
@@ -223,6 +254,6 @@ Write(
 ");
 			
 
-MakeCrumbs(array("Main"=>"./", "Private messages"=>"private.php", "New PM"=>""), "");
+MakeCrumbs(array(__("Main")=>"./", __("Private messages")=>"private.php", __("New PM")=>""), "");
 
 ?>

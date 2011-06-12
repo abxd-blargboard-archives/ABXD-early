@@ -4,18 +4,20 @@
 
 include("lib/common.php");
 
+$title = __("New reply");
+
 if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("Thread ID unspecified.");
+	Kill(__("Thread ID unspecified."));
 
 $tid = (int)$_GET['id'];
 AssertForbidden("viewThread", $tid);
 AssertForbidden("makeReply", $tid);
 
-if($loguser['powerlevel'] == -1)
-	Kill("You're banned.");
+if($loguser['powerlevel'] < 0)
+	Kill(__("You're banned. You can't post."));
 
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
@@ -25,10 +27,10 @@ if(NumRows($rThread))
 	$fid = $thread['forum'];
 }
 else
-	Kill("Unknown thread ID.");
+	Kill(__("Unknown thread ID."));
 $thread['title'] = strip_tags($thread['title']);
 $tags = ParseThreadTags($thread['title']);
-$titleandtags = $thread['title'].'<TAGS>'.$tags;
+$titleandtags = $thread['title']."<TAGS>".$tags;
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
@@ -42,10 +44,10 @@ AssertForbidden("viewForum", $fid);
 $isHidden = (int)($forum['minpower'] > 0);
 
 if($forum['minpowerreply'] > $loguser['powerlevel'])
-	Kill("Your power is not enough.");	
+	Kill(__("Your power is not enough."));
 
 if($thread['closed'] && $loguser['powerlevel'] < 3)
-	Kill("This thread is locked.");
+	Kill(__("This thread is locked."));
 
 $onlineUsers = OnlineUsers($fid);
 
@@ -71,42 +73,42 @@ if(!$noAjax)
 	</div>
 ", $fid, $onlineUsers);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, "New Reply"=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, __("New reply")=>""), $links);
 
 if(!$thread['sticky'] && $warnMonths > 0 && $thread['lastpostdate'] < time() - (2592000 * $warnMonths))
-	Alert("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button.");
+	Alert(__("You are about to bump an old thread. This is usually a very bad idea. Please think about what you are about to do before you press the Post button."));
 
 if($_POST['text'] && CheckTableBreaks($_POST['text']))
 {
 	$_POST['action'] = "";
-	Alert("This post would break the board layout.", "I'm sorry, Dave.");
+	Alert(__("This post would break the board layout."), ("I'm sorry, Dave."));
 }
 
-if($_POST['text'] && $_POST['action'] != "Preview")
+if($_POST['text'] && $_POST['action'] != __("Preview"))
 {
 	$words = explode(" ", $_POST['text']);
 	$wordCount = count($words);
 	if($wordCount < $minWords)
 	{
 		$_POST['action'] = "";
-		Alert("Your post is too short to have any real meaning. Try a little harder.", "I'm sorry, Dave.");
+		Alert(__("Your post is too short to have any real meaning. Try a little harder."), __("I'm sorry, Dave."));
 	}
 }
 
 $ninja = FetchResult("select id from posts where thread=".$tid." order by date desc limit 0, 1",0,0);
 if($_POST['action'] && isset($_POST['ninja']) && $_POST['ninja'] != $ninja)
 {
-	$_POST['action'] == "Preview";
-	Alert("You got ninja'd. You might want to review the post made while you were typing before you submit yours.");
+	$_POST['action'] == __("Preview");
+	Alert(__("You got ninja'd. You might want to review the post made while you were typing before you submit yours."));
 }
 
-if($_POST['text'] && $_POST['action'] == "Post")
+if($_POST['text'] && $_POST['action'] == __("Post"))
 {
 	$lastPost = time() - $loguser['lastposttime'];
 	if($lastPost < $minSeconds)
 	{
 		$_POST['action'] = "";
-		Alert("You're going too damn fast! Slow down a little.", "Hold your horses.");
+		Alert(__("You're going too damn fast! Slow down a little."), __("Hold your horses."));
 	}
 }
 
@@ -124,7 +126,7 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 		$sha = hash("sha256", $original.$salt.$postingAsUser['pss'], FALSE);
 		if($postingAsUser['password'] != $sha)
 		{
-			Alert("Invalid user name or password.");
+			Alert(__("Invalid user name or password."));
 			$_POST['action'] = "";
 			$_POST['password'] = "";
 		}
@@ -132,9 +134,9 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 		{
 			$postingAs = $postingAsUser['id'];
 			$postingAsUser['uid'] = $postingAs;
-			if($postingAsUser['powerlevel'] == -1)
+			if($postingAsUser['powerlevel'] < 0)
 			{
-				Alert("Nope, still banned.");
+				Alert(__("Nope, still banned."));
 				$_POST['action'] = "";
 				$_POST['password'] = "";
 			}
@@ -142,16 +144,16 @@ if($_POST['username'] != "" && $_POST['password'] != "")
 	}
 	else
 	{
-		Alert("Invalid user name or password.");
+		Alert(__("Invalid user name or password."));
 		$_POST['action'] = "";
 		$_POST['password'] = "";
 	}
 }
 
-if($_POST['action']=="Post")
+if($_POST['action'] == __("Post"))
 {
 	if($postingAs == 0)
-		Kill("You must be logged in to post.");
+		Kill(__("You must be logged in to post."));
 
 	if($_POST['text'])
 	{
@@ -179,7 +181,7 @@ if($_POST['action']=="Post")
 		}
 
 		if($thread['lastposter']==$postingAs && $thread['lastpostdate']>=time()-86400 && $postingAsUser['powerlevel']<3)
-			Kill("You can't double post until it's been at least one day.");
+			Kill(__("You can't double post until it's been at least one day."));
 
 		$qUsers = "update users set posts=".($postingAsUser['posts']+1).", lastposttime=".time()." where id=".$postingAs." limit 1";
 		$rUsers = Query($qUsers);
@@ -201,17 +203,17 @@ if($_POST['action']=="Post")
 		$rThreads = Query($qThreads);
 
 		Report("New reply by [b]".$postingAsUser['name']."[/] in [b]".$thread['title']."[/] (".$forum['title'].") -> [g]#HERE#?pid=".$pid, $isHidden);
-		Redirect("Posted!","thread.php?pid=".$pid."#".$pid,"the thread");
+		Redirect(__("Posted!"), "thread.php?pid=".$pid."#".$pid, __("the thread"));
 		exit();
 	}
 	else
-		Alert("Enter a message and try again.","Your post is empty.");
+		Alert(__("Enter a message and try again."), __("Your post is empty."));
 }
 
 if($_POST['text'])
 	$prefill = htmlentities2(deSlashMagic($_POST['text']));
 
-if($_POST['action']=="Preview")
+if($_POST['action'] == __("Preview"))
 {
 	if($_POST['text'])
 	{
@@ -231,7 +233,7 @@ if($_POST['action']=="Preview")
 		MakePost($previewPost, 0, $fid);
 	}
 	else
-		Alert("Enter a message and try again.","Your post is empty.");
+		Alert(__("Enter a message and try again."), __("Your post is empty."));
 }
 
 if(!$_POST['text'])
@@ -262,11 +264,12 @@ else if($_GET['quote'])
 		$quote = Fetch($rQuote);
 
 		//SPY CHECK!
+		//Do we need to translate this line? It's not even displayed in its true form ._.
 		if($quote['minpower'] > $postingAsUser['powerlevel'])
 			$quote['text'] = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
 			
 		if ($quote['deleted'])
-			$quote['text'] = "*post deleted*";
+			$quote['text'] = __("Post is deleted");
 
 		$prefill = "[quote=\"".htmlval($quote['poster'])."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
 		$prefill = str_replace("/me", "[b]* ".htmlval($quote['poster'])."[/b]", $prefill);
@@ -282,7 +285,7 @@ if($_POST['nobr'])
 
 if($_POST['mood'])
 	$moodSelects[(int)$_POST['mood']] = "selected=\"selected\" ";
-$moodOptions = "<option ".$moodSelects[0]."value=\"0\">[Default avatar]</option>\n";
+$moodOptions = "<option ".$moodSelects[0]."value=\"0\">".__("[Default avatar]")."</option>\n";
 $rMoods = Query("select mid, name from moodavatars where uid=".$postingAs." order by mid asc");
 while($mood = Fetch($rMoods))
 	$moodOptions .= format(
@@ -297,14 +300,14 @@ if(CanMod($loguserid, $fid))
 	$mod = "\n\n<!-- Mod options -->\n";
 	//print $thread['closed'];
 	if(!$thread['closed'])
-		$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;Close&nbsp;thread</label>\n";
+		$mod .= "<label><input type=\"checkbox\" name=\"lock\">&nbsp;".__("Close thread", 1)."</label>\n";
 	else
-		$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;Open&nbsp;thread</label>\n";
+		$mod .= "<label><input type=\"checkbox\" name=\"unlock\">&nbsp;".__("Open thread", 1)."</label>\n";
 	if(!$thread['sticky'])
-		$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;Sticky</label>\n";
+		$mod .= "<label><input type=\"checkbox\" name=\"stick\">&nbsp;".__("Sticky", 1)."</label>\n";
 	else
-		$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;Unstick</label>\n";
-	$mod .= "<!-- More could follow -->\n\n";
+		$mod .= "<label><input type=\"checkbox\" name=\"unstick\">&nbsp;".__("Unstick", 1)."</label>\n";
+	$mod .= "\n\n";
 }
 
 write(
@@ -317,13 +320,13 @@ write(
 					<table class=\"outline margin width100\">
 						<tr class=\"header1\">
 							<th colspan=\"2\">
-								New Reply
+								".__("New reply")."
 							</th>
 						</tr>
 						<tr class=\"cell0\">
 							<td>
 								<label for=\"uname\">
-									User&nbsp;name
+									".__("User name", 1)."
 								</label>
 							</td>
 							<td>
@@ -333,18 +336,18 @@ write(
 						<tr class=\"cell1\">
 							<td>
 								<label for=\"upass\">
-									Password
+									".__("Password")."
 								</label>
 							</td>
 							<td>
 								<input type=\"password\" id=\"upass\" name=\"password\" value=\"{2}\" size=\"32\" maxlength=\"32\" />
-								<img src=\"img/icons/icon5.png\" title=\"If you want to post under another account without having to log out, enter that account's user name and password here. Leave the password field blank to use the current account ({10}).\" alt=\"[?]\" />
+								<img src=\"img/icons/icon5.png\" title=\"".__("If you want to post under another account without having to log out, enter that account's user name and password here. Leave the password field blank to use the current account ({10}).")."\" alt=\"[?]\" />
 							</td>
 						</tr>
 						<tr class=\"cell0\">
 							<td>
 								<label for=\"text\">
-									Post
+									".__("Post")."
 								</label>
 							</td>
 							<td>
@@ -354,19 +357,19 @@ write(
 						<tr class=\"cell2\">
 							<td></td>
 							<td>
-								<input type=\"submit\" name=\"action\" value=\"Post\" /> 
-								<input type=\"submit\" name=\"action\" value=\"Preview\" />
+								<input type=\"submit\" name=\"action\" value=\"".__("Post")."\" /> 
+								<input type=\"submit\" name=\"action\" value=\"".__("Preview")."\" />
 								<select size=\"1\" name=\"mood\">
 									{4}
 								</select>
 								<label>
-									<input type=\"checkbox\" name=\"nopl\" {5} />&nbsp;Disable&nbsp;post&nbsp;layout
+									<input type=\"checkbox\" name=\"nopl\" {5} />&nbsp;".__("Disable post layout", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;Disable&nbsp;smilies
+									<input type=\"checkbox\" name=\"nosm\" {6} />&nbsp;".__("Disable smilies", 1)."
 								</label>
 								<label>
-									<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;Disable&nbsp;auto-&lt;br>
+									<input type=\"checkbox\" name=\"nobr\" {9} />&nbsp;".__("Disable auto-<br>", 1)."
 								</label>
 								<input type=\"hidden\" name=\"id\" value=\"{7}\" />
 								{8}
@@ -415,8 +418,8 @@ if(NumRows($rPosts))
 				{1}
 			</td>
 			<td class=\"cell{0}\">
-				<button style=\"float: right;\" onclick=\"insertQuote({2});\">Quote</button>
-				<button style=\"float: right;\" onclick=\"insertChanLink({2});\">Link</button>
+				<button style=\"float: right;\" onclick=\"insertQuote({2});\">".__("Quote")."</button>
+				<button style=\"float: right;\" onclick=\"insertChanLink({2});\">".__("Link")."</button>
 				{3}
 			</td>
 		</tr>
@@ -426,13 +429,13 @@ if(NumRows($rPosts))
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"2\">Thread review</th>
+			<th colspan=\"2\">".__("Thread review")."</th>
 		</tr>
 		{0}
 	</table>
 ",	$posts);
 }
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, "New Reply"=>""), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid, $titleandtags=>"thread.php?id=".$tid, __("New reply")=>""), $links);
 
 ?>
