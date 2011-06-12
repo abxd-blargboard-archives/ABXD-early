@@ -5,13 +5,13 @@
 include("lib/common.php");
 
 if(!isset($_GET['id']))
-	Kill("Forum ID unspecified.");
+	Kill(__("Forum ID unspecified."));
 
 $fid = (int)$_GET['id'];
 AssertForbidden("viewForum", $fid);
 
 $pl = $loguser['powerlevel'];
-if($pl == -1) $pl = 0;
+if($pl < 0) $pl = 0;
 
 $qFora = "select * from forums where id=".$fid;
 $rFora = Query($qFora);
@@ -19,9 +19,9 @@ if(NumRows($rFora))
 {
 	$forum = Fetch($rFora);
 	if($forum['minpower'] > $pl)
-		Kill("You are not allowed to browse this forum.");
+		Kill(__("You are not allowed to browse this forum."));
 } else
-	Kill("Unknown forum ID.");
+	Kill(__("Unknown forum ID."));
 
 $title = $forum['title'];
 
@@ -31,9 +31,9 @@ if(NumRows($rCat))
 {
 	$cat = Fetch($rCat);
 	if($cat['minpower'] > $pl)
-		Kill("You are not allowed to see this category.");
+		Kill(__("You are not allowed to see this category."));
 } else
-	Kill("Unknown category ID.");
+	Kill(__("Unknown category ID."));
 
 //Autolock system
 if($autoLockMonths > 0)
@@ -49,7 +49,7 @@ if(isset($_GET['ignore']))
 	if(!$isIgnored)
 	{
 		Query("insert into ignoredforums values (".$loguserid.", ".$fid.")");
-		Alert("Forum ignored. You will no longer see any \"New\" markers for this forum.");
+		Alert(__("Forum ignored. You will no longer see any \"New\" markers for this forum."));
 	}
 }
 else if(isset($_GET['unignore']))
@@ -57,7 +57,7 @@ else if(isset($_GET['unignore']))
 	if($isIgnored)
 	{
 		Query("delete from ignoredforums where uid=".$loguserid." and fid=".$fid);
-		Alert("Forum unignored.");
+		Alert(__("Forum unignored."));
 	}
 }
 
@@ -65,12 +65,12 @@ $isIgnored = FetchResult("select count(*) from ignoredforums where uid=".$loguse
 if($loguserid && $forum['minpowerthread'] <= $loguser['powerlevel'])
 {
 	if($isIgnored)
-		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;unignore\">Unignore Forum</a></li>";
+		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;unignore\">".__("Unignore Forum")."</a></li>";
 	else
-		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;ignore\">Ignore Forum</a></li>";
+		$links .= "<li><a href=\"forum.php?id=".$fid."&amp;ignore\">".__("Ignore Forum")."</a></li>";
 
-	$links .= "<li><a href=\"newthread.php?id=".$fid."\">Post Thread</a></li>";
-	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">Post Poll</a></li>";
+	$links .= "<li><a href=\"newthread.php?id=".$fid."\">".__("Post Thread")."</a></li>";
+	$links .= "<li><a href=\"newthread.php?id=".$fid."&amp;poll=1\">".__("Post Poll")."</a></li>";
 }
 
 DoPrivateMessageBar();
@@ -109,7 +109,7 @@ write(
 	</div>
 ", $onlineUsers, $rssBar, $rssWidth);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 
 $total = $forum['numthreads'];
 $tpp = $loguser['threadsperpage'];
@@ -146,7 +146,7 @@ if($pagelinks)
 		$pagelinks = " 1".$pagelinks;
 	else
 		$pagelinks = "<a href=\"forum.php?id=".$fid."\">1</a>".$pagelinks;
-	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	Write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 }
 
 $ppp = $loguser['postsperpage'];
@@ -257,7 +257,7 @@ if(NumRows($rThreads))
 			</td>
 			<td class=\"smallFonts center\">
 				{11}<br />
-				by {12} {13}</td>
+				".__("by")." {12} {13}</td>
 		</tr>
 ",	$cellClass, $NewIcon, $ThreadIcon, $poll, $thread['id'], strip_tags($thread['title']), $pl, $tags,
 	UserLink($starter), $thread['replies'], $thread['views'],
@@ -269,27 +269,27 @@ if(NumRows($rThreads))
 		<tr class=\"header1\">
 			<th style=\"width: 20px;\">&nbsp;</th>
 			<th style=\"width: 16px;\">&nbsp;</th>
-			<th style=\"width: 60%;\">Title</th>
-			<th>Started by</th>
-			<th>Replies</th>
-			<th>Views</th>
-			<th>Last post</th>
+			<th style=\"width: 60%;\">".__("Title")."</th>
+			<th>".__("Started by")."</th>
+			<th>".__("Replies")."</th>
+			<th>".__("Views")."</th>
+			<th>".__("Last post")."</th>
 		</tr>
 		{0}
 	</table>
 ",	$forumList);
 } else
 	if($forum['minpowerthread'] > $loguser['powerlevel'])
-		Alert("You cannot start any threads here.", "Empty forum");
+		Alert(__("You cannot start any threads here."), __("Empty forum"));
 	elseif($loguserid)
-		Alert("Would you like to <a href=\"newthread.php?id=".$fid."\">post something</a>?","Empty forum");
+		Alert(format(__("Would you like to {0}post something{1}?"), "<a href=\"newthread.php?id=".$fid."\">", "</a>?"), __("Empty forum"));
 	else
-		Alert("<a href=\"login.php\">Log in</a> so you can post something.", "Empty forum");
+		Alert(format(__("{0}Log in{1} so you can post something."), "<a href=\"login.php\">", "</a>"), __("Empty forum"));
 
 if($pagelinks)
-	Write("<div class=\"smallFonts pages\">Pages: {0}</div>", $pagelinks);
+	Write("<div class=\"smallFonts pages\">".__("Pages:")." {0}</div>", $pagelinks);
 
-MakeCrumbs(array("Main"=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
+MakeCrumbs(array(__("Main")=>"./", $forum['title']=>"forum.php?id=".$fid), $links);
 ForumJump();
 
 
@@ -298,7 +298,7 @@ function ForumJump()
 	global $fid, $loguser;
 	
 	$pl = $loguser['powerlevel'];
-	if($pl == -1) $pl = 0;
+	if($pl < 0) $pl = 0;
 	
 	$lastCatID = -1;	
 	$rFora = Query("	SELECT 
@@ -334,7 +334,7 @@ function ForumJump()
 	write(
 "
 	<label>
-		Forum Jump:
+		".__("Forum Jump:")."
 		<select onchange=\"document.location='forum.php?id='+this.options[this.selectedIndex].value;\">
 			{0}
 			</optgroup>
