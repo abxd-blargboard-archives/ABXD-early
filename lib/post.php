@@ -219,8 +219,10 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	static $orig, $repl;
 	LoadSmilies();
 
-	$s = $postText; //stripslashes($postText);
+	$s = $postText;
 	$s = str_replace("\r\n","\n", $s);
+	
+	$s = EatThatPork($s);
 
 	$s = preg_replace_callback("'\[source=(.*?)\](.*?)\[/source\]'si", "GeshiCallbackL", $s);
 	$s = preg_replace_callback("'\[source\](.*?)\[/source\]'si", "GeshiCallback", $s);
@@ -271,30 +273,11 @@ function CleanUpPost($postText, $poster = "", $noSmilies = false, $noBr = false)
 	$s = preg_replace("'lemonparty.com'si","www.youtube.com/watch?v=EK2tWVj6lXw", $s);
 	$s = preg_replace("'meatspin.com'si","www.youtube.com/watch?v=2iveTJXcp6k", $s);
 
-	//$s = preg_replace("@(\ba|\Ban)?(n)?( )?Acmlmboard (1\.[0123456789abcdABCDxX]+)@si", "$1$3Swiss cheese ($4)", $s);
-
-
 	//Various other stuff
 	//[SUGGESTION] Block "display: none" instead of just "display:" -- Mega-Mario
 	$s = preg_replace("'display:'si", "display<em></em>:", $s);
 
-	//$s = preg_replace("'([\s]+)([o])([n])([a-z]*)'si","\\1\\2<z>\\3\\4", $s);
-	/*
-	$s = preg_replace('/<([^>]+)bonw+s*=s*"[^>]+"/Uis', "<$1", $s);
-	$s = preg_replace("/<([^>]+)bonw+s*=s*'[^>]+'/Uis", "<$1", $s);
-	$s = preg_replace('/<([^>]+)bonw+s*=s*[^>s]+/i', "<$1", $s);
-	*/
-	/*
-	$onEvents = array("load","unload","click","dblclick","mousedown","mouseup","mouseover","mousemove","mouseout","focus","blur","keypress","keydown","keyup","submit","reset","select","change","resize", "error", "scroll");
-	foreach($onEvents as $onEvent)
-		$s = str_ireplace("on".$onEvent, "on<em></em>".$onEvent, $s);
-	*/
-	$s = preg_replace("@(on)([^<>]+?)=@si", "$2=", $s);
-	$s = EatThatPork($s); //has to be done before escaping "on" or it'll eat that too.
-	//$s = str_replace("on", "&#x6F;&#x6E;", $s);
-	//$s = str_replace("On", "&#x4F;&#x6E;", $s);
-	//$s = str_replace("oN", "&#x6F;&#x4E;", $s);
-	//$s = str_replace("ON", "&#x4F;&#x4E;", $s);
+	$s = preg_replace("@(on)(\w+?\s*?)=@si", '$1$2&#x3D;', $s);
 	
 	$s = preg_replace("'-moz-binding'si"," -mo<em></em>z-binding", $s);
 	$s = preg_replace("'filter:'si","filter<em></em>:>", $s);
@@ -371,7 +354,7 @@ $sideBarStuff = "";
 $sideBarData = 0;
 function MakePost($post, $thread, $forum, $ispm=0)
 {
-	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts, $postText, $sideBarStuff, $sideBarData;
+	global $loguser, $loguserid, $dateformat, $theme, $hacks, $isBot, $blocklayouts, $postText, $sideBarStuff, $sideBarData, $salt;
 	
 	$sideBarStuff = "";
 	
@@ -387,21 +370,21 @@ function MakePost($post, $thread, $forum, $ispm=0)
 
 	if($post['deleted'] && !$ispm)
 	{
-		$meta = "Posted on ".cdate($dateformat,$post['date']);
-		$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
+		$meta = format(__("Posted on {0}"), cdate($dateformat,$post['date']));
+		$links = "<ul class=\"pipemenu\"><li>".__("Post deleted")."</li>";
 		if(CanMod($loguserid,$forum))
 		{
+			$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
 			if (IsAllowed("editPost", $post['id']))
-				$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
-			$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",true); return false;\">View</a></li>";
+				$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2&amp;key=".$key."\">".__("Undelete")."</a></li>";
+			$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",true); return false;\">".__("View")."</a></li>";
 		}
-		$links .= "<li>ID: ".$post['id']."</li></ul>";
+		$links .= "<li>".format(__("ID: {0}"), $post['id'])."</li></ul>";
 		write(
 "
 		<table class=\"post margin\" id=\"post{0}\">
 			<tr>
-				<td class=\"side userlink\">
-					<a name=\"{0}\"></a>
+				<td class=\"side userlink\" id=\"{0}\">
 					{1}
 				</td>
 				<td class=\"smallFonts\" style=\"border-left: 0px none; border-right: 0px none;\">
@@ -427,50 +410,54 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		{
 			if ($post['unfoldhax'])
 			{
-				$links = "<ul class=\"pipemenu\"><li>Post deleted</li>";
+				$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+				$links = "<ul class=\"pipemenu\"><li>".__("Post deleted")."</li>";
 				if (IsAllowed("editPost", $post['id']))
-					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2\">Undelete</a></li>";
-				$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",false); return false;\">Close</a></li>";
-				$links .= "<li>ID: ".$post['id']."</li></ul>";
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=2&amp;key=".$key."\">".__("Undelete")."</a></li>";
+				$links .= "<li><a href=\"#\" onclick=\"ReplacePost(".$post['id'].",false); return false;\">".__("Close")."</a></li>";
+				$links .= "<li>".format(__("ID: {0}"), $post['id'])."</li></ul>";
 			}
 			else
 			{
-				$links .= "<ul class=\"pipemenu\"><li><a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">Link</a></li>";
+				$links .= "<ul class=\"pipemenu\"><li><a href=\"thread.php?pid=".$post['id']."#".$post['id']."\">".__("Link")."</a></li>";
 				if($thread && $loguser['powerlevel'] > -1 && $forum != -2 && IsAllowed("makeReply", $thread))
-					$links .= "<li><a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">Quote</a></li>";
+					$links .= "<li><a href=\"newreply.php?id=".$thread."&amp;quote=".$post['id']."\">".__("Quote")."</a></li>";
 				if(CanMod($loguserid, $forum) || $post['uid'] == $loguserid && $loguser['powerlevel'] > -1 && !$post['closed'] && IsAllowed("editPost", $post['id']))
-					$links .= "<li><a href=\"editpost.php?id=".$post['id']."\">Edit</a></li>";
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."\">".__("Edit")."</a></li>";
 				if(CanMod($loguserid, $forum) && IsAllowed("editPost", $post['id']))
-					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=1\">Delete</a></li>";
+				{
+					$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+					$links .= "<li><a href=\"editpost.php?id=".$post['id']."&amp;delete=1&amp;key=".$key."\">".__("Delete")."</a></li>";
+				}
 				if($forum != -2 && IsAllowed("makeReply", $thread))
-					$links .= "<li>ID: <a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a></li>";
+					$links .= "<li>".format(__("ID: {0}"), "<a href=\"newreply.php?id=".$thread."&amp;link=".$post['id']."\">".$post['id']."</a>")."</li>";
 				else
-					$links .= "<li>ID: ".$post['id']."</li>";
+					$links .= "<li>".format(__("ID: {0}"), $post['id'])."</li>";
 				if($loguser['powerlevel'] > 0)
 					$links .= "<li>".$post['ip']."</li>";
 				$links .= "</ul>";
 			}
 		}
 
-		$meta = (!$ispm ? "Posted on " : 'Sent on ').cdate($dateformat,$post['date']);
+		$meta = format(__(!$ispm ? "Posted on {0}" : "Sent on {0}"), cdate($dateformat,$post['date']));
 		//Threadlinks for listpost.php
 		if($forum == -2)
-			$meta .= " in <a href=\"thread.php?id=".$post['thread']."\">".htmlspecialchars($post['threadname'])."</a>";
+			$meta .= " ".__("in")." <a href=\"thread.php?id=".$post['thread']."\">".htmlspecialchars($post['threadname'])."</a>";
 		//Revisions
 		if($post['revision'])
 		{
 			if(CanMod($loguserid, $forum))
-				$meta .= " (<a href=\"javascript:void(0);\" onclick=\"showRevisions(".$post['id'].")\">revision ".$post['revision']."</a>)";
+				$meta .= " (<a href=\"javascript:void(0);\" onclick=\"showRevisions(".$post['id'].")\">".format(__("revision {0}"), $post['revision'])."</a>)";
 			else
-				$meta .= " (revision ".$post['revision'].")";
+				$meta .= " (".format(__("revision {0}"), $post['revision']).")";
 		}
 		//</revisions>
 	}
 	else
-		$meta = "Sample post";
+		$meta = __("Sample post");
 
 	if($forum==-1)
-		$meta = "Posted in <a href=\"thread.php?id=".$thread['id']."\">".htmlspecialchars($thread['title'])."</a>";
+		$meta = __("Posted in")." <a href=\"thread.php?id=".$thread['id']."\">".htmlspecialchars($thread['title'])."</a>";
 
 	//if($post['postbg'])
 	//	$postbg = " style=\"background: url(".$post['postbg'].");\"";
@@ -482,7 +469,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 		$sideBarStuff .= strip_tags(CleanUpPost($post['title'], "", true), "<b><strong><i><em><span><s><del><img><a><br><small>")."<br />";
 	else
 	{
-		$levelRanks = array(-1=>"Banned", 0=>"", 1=>"Local mod", 2=>"Full mod", 3=>"Administrator");
+		$levelRanks = array(-1=>__("Banned"), 0=>"", 1=>__("Local mod"), 2=>__("Full mod"), 3=>__("Administrator"));
 		$sideBarStuff .= $levelRanks[$post['powerlevel']]."<br />";
 	}
 	$sideBarStuff .= GetSyndrome($post['activity']);
@@ -500,16 +487,16 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	$lastview = timeunits(time() - $post['lastactivity']);
 
 	if($post['num'] != "preview")
-		$sideBarStuff .= "<br />\nPosts: ".$post['num']."/".$post['posts'];
+		$sideBarStuff .= "<br />\n".__("Posts:")." ".$post['num']."/".$post['posts'];
 	else
-		$sideBarStuff .= "<br />\nPosts: ".$post['posts'];
+		$sideBarStuff .= "<br />\n".__("Posts:")." ".$post['posts'];
 		
-	$sideBarStuff .= "<br />\nSince: ".cdate($loguser['dateformat'], $post['regdate'])."<br />";
+	$sideBarStuff .= "<br />\n".__("Since:")." ".cdate($loguser['dateformat'], $post['regdate'])."<br />";
 
 	$bucket = "sidebar"; include("./lib/pluginloader.php");
 
-	$sideBarStuff .= "<br />\nLast post: ".$lastpost;
-	$sideBarStuff .= "<br />\nLast view: ".$lastview;
+	$sideBarStuff .= "<br />\n".__("Last post:")." ".$lastpost;
+	$sideBarStuff .= "<br />\n".__("Last view:")." ".$lastview;
 
 	if($hacks['themenames'] == 3)
 	{
@@ -518,7 +505,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 	}
 
 	if($post['lastactivity'] > time() - 3600)
-		$sideBarStuff .= "<br />\nUser is <strong>online</strong>";
+		$sideBarStuff .= "<br />\n".__("User is <strong>online</strong>");
 
 	if($post['id'] != "preview")
 		$anchor = "<a name=\"".$post['id']."\" />";
@@ -612,7 +599,7 @@ function MakePost($post, $thread, $forum, $ispm=0)
 //This makes a last-minute hack impossible where a javascript: link is given completely in absurd and malformed entities.
 function EatThatPork($s)
 {
-	$s = preg_replace_callback("/(&#)([X|x]*)([a-fA-f0-9]+(?![a-zA-Z0-9]))(;*)/", "CheckKosher", $s);
+	$s = preg_replace_callback("/(&#)(x*)([a-f0-9]+(?![a-f0-9]))(;*)/i", "CheckKosher", $s);
 	return $s;
 }
 
