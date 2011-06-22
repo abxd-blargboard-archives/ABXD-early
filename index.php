@@ -1,6 +1,6 @@
 <?php
 $noAutoHeader = TRUE;
-if($_SERVER['HTTP_X_PURPOSE'] == "preview")
+if(isset($_SERVER['HTTP_X_PURPOSE']) && $_SERVER['HTTP_X_PURPOSE'] == "preview")
 	die(header("Location: speeddial.php"));
 
 if(isset($_GET['fid']) && (int)$_GET['fid'] > 0 && !isset($_GET['action']))
@@ -16,23 +16,24 @@ include("lib/common.php");
 
 $numThreads = FetchResult("select count(*) from threads");
 $numPosts = FetchResult("select count(*) from posts");
-$stats = Plural($numThreads, "thread")." and ".Plural($numPosts,"post")." total";
+//$stats = Plural($numThreads, "thread")." and ".Plural($numPosts,"post")." total";
+$stats = Format(__("{0} and {1} total"), Plural($numThreads, __("thread")), Plural($numPosts, __("post")));
 
 $newToday = FetchResult("select count(*) from posts where date > ".(time() - 86400));
 $newLastHour = FetchResult("select count(*) from posts where date > ".(time() - 3600));
-$stats .= "<br />".Plural($newToday,"new post")." today, ".$newLastHour." last hour";
+$stats .= "<br />".format(__("{0} today, {1} last hour"), Plural($newToday, __("new post")), $newLastHour);
 
 $numUsers = FetchResult("select count(*) from users");
 $numActive = FetchResult("select count(*) from users where lastposttime > ".(time() - 2592000)); //30 days
 $percent = $numUsers ? ceil((100 / $numUsers) * $numActive) : 0;
 $rLastUser = Query("select id,name,displayname,powerlevel,sex from users order by regdate desc limit 1");
 $lastUser = Fetch($rLastUser);
-$last = Plural($numUsers,"registered user").", ".$numActive." active (".$percent."%)<br />Newest: ".UserLink($lastUser);
+$last = format(__("{0}, {1} active ({2}%)"), Plural($numUsers, __("registered user")), $numActive, $percent)."<br />".format(__("Newest: {0}"), UserLink($lastUser));
 
 $onlineUsers = OnlineUsers();
 
 $pl = $loguser['powerlevel'];
-if($pl == -1) $pl = 0;
+if($pl < 0) $pl = 0;
 
 if($loguserid && ($_GET['action'] == "markallread" || $_GET['action'] == "markasread" && isset($_GET['fid'])))
 {
@@ -92,7 +93,7 @@ write(
 if($birthdaysToday)
 	write("
 		<div class=\"header1 cell0\" style=\"border-top: 0px; text-align: center\">
-			Birthdays today: {0}
+			".__("Birthdays today:")." {0}
 		</div>", $birthdaysToday);
 write("	</div>");
 
@@ -182,7 +183,7 @@ while($forum = Fetch($rFora))
 	}
 
 	if($localMods)
-		$localMods = "<br /><small>Moderated by: ".substr($localMods,0,strlen($localMods)-2)."</small>";
+		$localMods = "<br /><small>".__("Moderated by:")." ".substr($localMods,0,strlen($localMods)-2)."</small>";
 
 	if($forum['lastpostdate'])
 	{
@@ -192,7 +193,7 @@ while($forum = Fetch($rFora))
 		$lastLink = "";
 		if($forum['lastpostid'])
 			$lastLink = "<a href=\"thread.php?pid=".$forum['lastpostid']."#".$forum['lastpostid']."\">&raquo;</a>";
-		$lastLink = format("<span class=\"nom\">{0}<br />by </span>{1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($user), $lastLink);
+		$lastLink = format("<span class=\"nom\">{0}<br />".__("by")." </span>{1} {2}", cdate($dateformat, $forum['lastpostdate']), UserLink($user), $lastLink);
 	}
 	else
 		$lastLink = "----";
@@ -233,10 +234,10 @@ write(
 <table class=\"outline margin\" id=\"mainTable\">
 	<tr class=\"header1\">
 		<th style=\"width: 20px\"></th>
-		<th style=\"width: 75%\">Forum title</th>
-		<th>Threads</th>
-		<th>Posts</th>
-		<th style=\"width: 15%\">Last Post</th>
+		<th style=\"width: 75%\">".__("Forum title")."</th>
+		<th>".__("Threads")."</th>
+		<th>".__("Posts")."</th>
+		<th style=\"width: 15%\">".__("Last Post")."</th>
 	</tr>
 	{0}
 </table>
