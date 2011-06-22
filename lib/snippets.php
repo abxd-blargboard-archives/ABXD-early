@@ -1,6 +1,6 @@
 <?php
 //  AcmlmBoard XD support - Handy snippets
-
+include_once("language.php");
 include_once("write.php");
 
 function OptimizeLayouts($text)
@@ -32,28 +32,6 @@ function usectime()
 	return $t['sec'] + ($t['usec'] / 1000000);
 }
 
-function Plural($i, $s)
-{
-	if($i == 1) //For 1, just return that.
-		return $i." ".$s;
-
-	if(substr($s,-1) == "y") //Grammar Nazi strikes back!
-		$s = substr($s, 0, strlen($s)-1)."ies"; //query -> queries
-	else
-		$s .= "s"; //record -> records
-
-	return $i." ".$s;
-}
-
-function HisHer($user)
-{
-	if($user['sex'] == 0)
-		return "his";
-	if($user['sex'] == 1)
-		return "her";
-	return "its";
-}
-
 function DoFooter($buffer)
 {
 	global $noFooter, $timeStart, $queries, $overallTidy, $boardname, $title, $dblink, $ajax, $footerButtons, $footerExtensionsA, $footerExtensionsB;
@@ -65,10 +43,11 @@ function DoFooter($buffer)
 		$footer = format(
 "
 		<div class=\"footer\">
-			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2.2.1<br />
+			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2.2.2<br />
 			By Kawa, Mega-Mario, Nikolaj, et al<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br />
 			Page rendered in {0} seconds with {1}.<br />
+			{3}
 
 			<a href=\"http://validator.w3.org/check?uri=referer\">
 				<img src=\"img/xhtml10.png\" alt=\"Valid XHTML 1.0 Transitional\" />
@@ -84,8 +63,8 @@ function DoFooter($buffer)
 	</div>
 </body>
 </html>
-",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, "MySQL query"), $footerButtons);
-		//if(function_exists("runBucket")) runBucket("footers");
+",	sprintf("%1.3f",usectime()-$timeStart), Plural($queries, __("MySQL query")),
+	$footerButtons, __("<!-- English translation by Kawa -->"));
 	}
 			
 	$boardTitle = htmlval($boardname);
@@ -184,13 +163,14 @@ function UserLink($user, $field = "id")
 	$fsex = $user['sex'];
 	$fname = ($user['displayname'] ? $user['displayname'] : $user['name']);
 	$fname = htmlspecialchars($fname);
+	if($fpow < 0) $fpow = -1;
 
 	if($hacks['alwayssamepower'])
 		$fpow = $hacks['alwayssamepower'] - 1;
 	if($hacks['alwayssamesex'])
 		$fsex = $hacks['alwayssamesex'];
 
-	$classing = " class=\"nc" . $fsex . (($fpow == -1) ? "x" : $fpow)."\"";
+	$classing = " class=\"nc" . $fsex . (($fpow < 0) ? "x" : $fpow)."\"";
 
 	if($hacks['themenames'] == 1)
 	{
@@ -223,11 +203,11 @@ function UserLink($user, $field = "id")
 		}
 	}
 	
-	$levels = array(-1 => " [banned]", 0 => "", 1 => " [local mod]", 2 => " [full mod]", 3 => " [admin]", 4 => " [root]", 5 => " [sys]");
+	$levels = array(-1 => " [".__("banned")."]", 0 => "", 1 => " [".__("local mod")."]", 2 => " [".__("full mod")."]", 3 => " [".__("admin")."]", 4 => " [".__("root")."]", 5 => " [".__("system")."]");
 	
 	$bucket = "userLink"; include('lib/pluginloader.php');
 	
-	$userlink = format("<a href=\"profile.php?id={0}\"><span{1} title=\"{3} ({0}){4}\">{2}</span></a>", $user[$field], $classing, $fname, str_replace(" ", "&nbsp;", $user['name']), $levels[$user['powerlevel']]);
+	$userlink = format("<a href=\"profile.php?id={0}\"><span{1} title=\"{3} ({0}){4}\">{2}</span></a>", $user[$field], $classing, $fname, str_replace(" ", "&nbsp;", htmlspecialchars($user['name'])), $levels[$user['powerlevel']]);
 	return $userlink;
 }
 
@@ -313,18 +293,21 @@ function DoPrivateMessageBar()
 			$user = Fetch($rUser);
 			$content .= format(
 "
-		You have {0}</a>. 
-		<a href=\"showprivate.php?id={1}\">Last message</a> from {2} on {3}.
-",	Plural($unread, "new <a href=\"private.php\">private message"), $last['id'],
-	UserLink($user), cdate($dateformat, $last['date']));
+		".__("You have {0}{1}. {2}Last message{1} from {3} on {4}."),
+			Plural($unread, format(__("new {0}private message"), "<a href=\"private.php\">")),
+			"</a>",
+			format("<a href=\"showprivate.php?id={0}\">", $last['id']),
+			UserLink($user), cdate($dateformat, $last['date']));
 		}
 		
 		if($loguser['newcomments'])
 		{
 			$content .= format(
 "
-		You {0} have new comments in your <a href=\"profile.php?id={1}\">profile</a>.
-",	$content != "" ? "also" : "", $loguserid);		
+		".__("You {0} have new comments in your {1}profile{2}."),
+			$content != "" ? "also" : "",
+			format("<a href=\"profile.php?id={0}\">", $loguserid),
+			"</a>");
 		}
 
 		if($content)
@@ -347,7 +330,7 @@ function DoSmileyBar($taname = "text")
 "
 	<div class=\"PoRT margin\" style=\"width: 90%\">
 		<div class=\"errort\">
-			<strong>Smilies</strong>
+			<strong>".__("Smilies")."</strong>
 		</div>
 		<div class=\"errorc cell0\" id=\"smiliesContainer\">
 ");
@@ -370,55 +353,63 @@ function DoSmileyBar($taname = "text")
 
 function DoPostHelp()
 {
-?>
-	<div class="PoRT margin" style="width: 90%;">
-		<div class="errort"><strong>Post help</strong></div>
-		<div class="errorc left cell0">
-			<button class="expander" id="postHelpExpand" onclick="expandPostHelp();">&#x25BC;</button>
-			<div id="commonHelp">
-				<h4>Presentation</h4>
-				[b]&hellip;[/b] &mdash; <strong>bold type</strong> <br />
-				[i]&hellip;[/i] &mdash; <em>italic</em> <br />
-				[u]&hellip;[/u] &mdash; <span class="underline">underlined</span> <br />
-				[s]&hellip;[/s] &mdash; <del>Strikethrough</del><br />
+	write("
+	<div class=\"PoRT margin\" style=\"width: 90%;\">
+		<div class=\"errort\"><strong>".__("Post help")."</strong></div>
+		<div class=\"errorc left cell0\">
+			<button class=\"expander\" id=\"postHelpExpand\" onclick=\"expandPostHelp();\">&#x25BC;</button>
+			<div id=\"commonHelp\">
+				<h4>".__("Presentation")."</h4>
+				[b]&hellip;[/b] &mdash; <strong>".__("bold type")."</strong> <br />
+				[i]&hellip;[/i] &mdash; <em>".__("italic")."</em> <br />
+				[u]&hellip;[/u] &mdash; <span class=\"underline\">".__("underlined")."</span> <br />
+				[s]&hellip;[/s] &mdash; <del>".__("strikethrough")."</del><br />
 			</div>
-			<div id="expandedHelp">
-				[code]&hellip;[/code] &mdash; <code>Code block</code> <br />
-				[spoiler]&hellip;[/spoiler] &mdash; Spoiler block <br />
+			<div id=\"expandedHelp\">
+				[code]&hellip;[/code] &mdash; <code>".__("code block")."</code> <br />
+				[spoiler]&hellip;[/spoiler] &mdash; ".__("spoiler block")." <br />
 				[spoiler=&hellip;]&hellip;[/spoiler] <br />
-				[source]&hellip;[/source] &mdash; Colorcoded block, assuming C# <br />
-				[source=&hellip;]&hellip;[/source] &mdash; Colorcoded block, specific language<sup title="bnf, c, cpp, csharp, html4strict, irc, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml">[which?]</sup> <br />
-				<?php $bucket = "postHelpPresentation"; include("./lib/pluginloader.php"); ?>
+				[source]&hellip;[/source] &mdash; ".__("colorcoded block, assuming C#")." <br />
+				[source=&hellip;]&hellip;[/source] &mdash; ".__("colorcoded block, specific language")."<sup title=\"bnf, c, cpp, csharp, html4strict, irc, javascript, lolcode, lua, mysql, php, qbasic, vbnet, xml\">[".__("which?")."]</sup> <br />
+	");
+	$bucket = "postHelpPresentation"; include("./lib/pluginloader.php");
+	write("
 				<br />
-				<h4>Links</h4>
-				[img]http://&hellip;[/img] &mdash; insert image <br />
+				<h4>".__("Links")."</h4>
+				[img]http://&hellip;[/img] &mdash; ".__("insert image")." <br />
 				[url]http://&hellip;[/url] <br />
 				[url=http://&hellip;]&hellip;[/url] <br />
-				>>&hellip; &mdash; link to post by ID <br />
-				[user=##] &mdash; link to user's profile by ID <br />
-				<?php $bucket = "postHelpLinks"; include("./lib/pluginloader.php"); ?>
+				>>&hellip; &mdash; ".__("link to post by ID")." <br />
+				[user=##] &mdash; ".__("link to user's profile by ID")." <br />
+	");
+	$bucket = "postHelpLinks"; include("./lib/pluginloader.php");
+	write("
 				<br />
-				<h4>Quotations</h4>
-				[quote]&hellip;[/quote] &mdash; untitled quote<br />
-				[quote=&hellip;]&hellip;[/quote] &mdash; "Posted by &hellip;"<br />
-				[quote="&hellip;" id="&hellip;"]&hellip;[/quote] &mdash; "Post by &hellip;" with link by post ID<br />
-				<?php $bucket = "postHelpQuotations"; include("./lib/pluginloader.php"); ?>
+				<h4>".__("Quotations")."</h4>
+				[quote]&hellip;[/quote] &mdash; ".__("untitled quote")."<br />
+				[quote=&hellip;]&hellip;[/quote] &mdash; ".__("\"Posted by &hellip;\"")." <br />
+				[quote=\"&hellip;\" id=\"&hellip;\"]&hellip;[/quote] &mdash; \"".__("\"Post by &hellip;\" with link by post ID")." <br />
+	");
+	$bucket = "postHelpQuotations"; include("./lib/pluginloader.php");
+	write("
 				<br />
-				<h4>Embeds</h4>
-				<?php $bucket = "postHelpEmbeds"; include("./lib/pluginloader.php"); ?>
+				<h4>".__("Embeds")."</h4>
+	");
+	$bucket = "postHelpEmbeds"; include("./lib/pluginloader.php");
+	write("
 			</div>
 			<br />
-			Most plain HTML also allowed
+			".__("Most plain HTML also allowed.")."
 		</div>
 	</div>
-<?php
+	");
 }
 
 function OnlineUsers($forum = 0, $update = true)
 {
 	global $loguserid;
 	$forumClause = "";
-	$browseLocation = " online";
+	$browseLocation = __("online");
 	
 	if ($update)
 	{
@@ -432,7 +423,7 @@ function OnlineUsers($forum = 0, $update = true)
 	{
 		$forumClause = " and lastforum=".$forum;
 		$forumName = FetchResult("SELECT title FROM forums WHERE id=".$forum);
-		$browseLocation = " browsing ".$forumName;
+		$browseLocation = format(__("browsing {0}"), $forumName);
 	}
        
 	$rOnlineUsers = Query("select id,name,displayname,sex,powerlevel,lastactivity,lastposttime,minipic from users where (lastactivity > ".(time()-300)." or lastposttime > ".(time()-300).")".$forumClause." order by name");
@@ -450,15 +441,16 @@ function OnlineUsers($forum = 0, $update = true)
 		$onlineUsers.=($onlineUserCt ? ", " : "").$userLink;
 		$onlineUserCt++;
 	}
-	$onlineUsers = $onlineUserCt." user".(($onlineUserCt > 1 || $onlineUserCt == 0) ? "s" : "").$browseLocation.($onlineUserCt ? ": " : ".").$onlineUsers;
+	//$onlineUsers = $onlineUserCt." "user".(($onlineUserCt > 1 || $onlineUserCt == 0) ? "s" : "")." ".$browseLocation.($onlineUserCt ? ": " : ".").$onlineUsers;
+	$onlineUsers = Plural($onlineUserCt, __("user"))." ".$browseLocation.($onlineUserCt ? ": " : ".").$onlineUsers;
 
 	$guests = FetchResult("select count(*) from guests where bot=0 and date > ".(time() - 300).$forumClause);
 	$bots = FetchResult("select count(*) from guests where bot=1 and date > ".(time() - 300).$forumClause);
 
 	if($guests)
-		$onlineUsers .= " | ".Plural($guests,"guest");
+		$onlineUsers .= " | ".Plural($guests,__("guest"));
 	if($bots)
-		$onlineUsers .= " | ".Plural($bots,"bot");
+		$onlineUsers .= " | ".Plural($bots,__("bot"));
 	       
 	return $onlineUsers;
 }
