@@ -2,17 +2,24 @@
 
 include("lib/common.php");
 
+$title = __("Uploader");
+
 AssertForbidden("viewUploader");
 
 $rootdir = "uploader";
-if(!is_file($rootdir."/.htaccess"))
-	file_put_contents($rootdir."/.htaccess", "options all -indexes");
-
+//if(!is_file($rootdir."/.htaccess"))
+{
+	$here = $_SERVER['SCRIPT_FILENAME'];
+	$here = substr($here, 0, strrpos($here, '/') + 1);
+	$here = str_replace($_SERVER['DOCUMENT_ROOT'], '', $here);
+	print "<!-- ".$here." -->";
+	file_put_contents($rootdir."/.htaccess", "RewriteEngine On\nRewriteRule ^(.+)$ ".$here."get.php?file=$1 [PT,L,QSA]\nRewriteRule ^$ ".$here."get.php?error [PT,L,QSA]");
+}
 
 if($uploaderWhitelist)
 	$goodfiles = explode(" ", $uploaderWhitelist);
 
-$badfiles = array("html", "htm", "php", "mht", "js");
+$badfiles = array("html", "htm", "php", "php2", "php3", "php4", "php5", "php6", "htaccess", "htpasswd", "mht", "js", "asp", "aspx", "cgi", "py", "exe", "com", "bat", "pif", "cmd", "lnk", "wsh", "vbs", "vbe", "jse", "wsf", "msc", "pl", "rb", "shtm", "shtml", "stm", "htc");
 
 if(isset($_POST['action']))
 	$_GET['action'] = $_POST['action'];
@@ -28,13 +35,13 @@ if(isset($_GET['sort']) && $_GET['sort'] == "filename" || $_GET['sort'] == "date
 else
 	$skey = "date";
 
-$sortOptions = "<div class=\"margin smallFonts\">Sort order: <ul class=\"pipemenu\">";
-$sortOptions .= ($skey == "filename") ? "<li>Name</li>" : "<a href=\"uploader.php?sort=filename\">Name</a></li>";
-$sortOptions .= ($skey == "date") ? "<li>Date</li>" : "<a href=\"uploader.php\">Date</a></li>";
+$sortOptions = "<div class=\"margin smallFonts\">".__("Sort order").": <ul class=\"pipemenu\">";
+$sortOptions .= ($skey == "filename") ? "<li>".__("Name")."</li>" : "<a href=\"uploader.php?sort=filename\">".__("Name")."</a></li>";
+$sortOptions .= ($skey == "date") ? "<li>".__("Date")."</li>" : "<a href=\"uploader.php\">".__("Date")."</a></li>";
 $sortOptions .= "</ul></div>";
 $sdir = ($skey == "date") ? " desc" : " asc";
 
-if($_GET['action'] == "Upload")
+if($_GET['action'] == __("Upload"))
 {
 	AssertForbidden("useUploader");
 	if($loguserid)
@@ -45,25 +52,26 @@ if($_GET['action'] == "Upload")
 		if($_POST['private'])
 		{
 			$quot = $pQuota;
-			$totalsize = foldersize($targetdir);
+			$targetdir = $rootdir."/".$loguserid;
 			$privateFlag = 1;
 		}
+		$totalsize = foldersize($targetdir);
 		
 		$files = scandir($targetdir);
 		if(in_array($_FILES['newfile']['name'], $files))
-			Alert("The file \"".$_FILES['newfile']['name']."\" already exists. Please delete the old copy before uploading a new one.");
+			Alert(format(__("The file \"{0}\" already exists. Please delete the old copy before uploading a new one."), $_FILES['newfile']['name']));
 		else
 		{
 			if($_FILES['newfile']['size'] == 0)
 			{
 				if($_FILES['newfile']['tmp_name'] == "")
-					Alert("No file given.");
+					Alert(__("No file given."));
 				else
-					Alert("File is empty.");
+					Alert(__("File is empty."));
 			}
 			else if($_FILES['newfile']['size'] > $uploaderMaxFileSize * 1024 * 1024)
 			{
-				Alert("File is too large. Maximum size is ".BytesToSize($uploaderMaxFileSize * 1024 * 1024).".");
+				Alert(format(__("File is too large. Maximum size is {0}."), BytesToSize($uploaderMaxFileSize * 1024 * 1024)));
 			}
 			else
 			{
@@ -73,12 +81,10 @@ if($_GET['action'] == "Upload")
 				$parts = explode(".", $fname);
 				$extension = end($parts);
 				if($totalsize + $size > $quot)
-				{
-					Alert("Uploading \"".$fname."\" would break the quota.");
-				}
+					Alert(format(__("Uploading \"{0}\" would break the quota."), $fname));
 				else if(in_array(strtolower($extension), $badfiles) || is_array($goodfiles) && !in_array(strtolower($extension), $goodfiles))
 				{
-					Alert("Forbidden file type.");
+					Alert(__("Forbidden file type."));
 				}
 				else
 				{
@@ -89,19 +95,14 @@ if($_GET['action'] == "Upload")
 
 					Query("insert into uploader (id, filename, description, date, user, private) values (".$newID.", '".justEscape($fname)."', '".justEscape($description)."', ".time().", ".$loguserid.",".$privateFlag.")");
 					copy($temp, $targetdir."/".$fname);
-					Alert("File \"".$fname."\" has been uploaded.", "Okay");
+					Alert(format(__("File \"{0}\" has been uploaded."), $fname), __("Okay"));
 					Report("[b]".$loguser['name']."[/] uploaded file \"[b]".$fname."[/]\"".($privateFlag ? " (privately)" : ""), $privateFlag); 
-					
-					//Requery to see the changes
-					//$entries = Query("select uploader.*, users.name, users.displayname, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
 				}
 			}
 		}
 	}
 	else
-	{
-		Alert("You must be logged in to upload.");
-	}
+		Alert(__("You must be logged in to upload."));
 }
 else if($loguserid && $_GET['action'] == "multidel" && $_POST['del']) //several files
 {
@@ -124,7 +125,7 @@ else if($loguserid && $_GET['action'] == "multidel" && $_POST['del']) //several 
 			$deleted++;
 		}
 	}
-	Alert(format("{0} deleted.", Plural($deleted, "file")));
+	Alert(format(__("{0} deleted."), Plural($deleted, __("file"))));
 }
 else if($_GET['action'] == "delete") //single file
 {
@@ -144,15 +145,10 @@ else if($_GET['action'] == "delete") //single file
 			@unlink($rootdir."/".$entry['filename']);
 		Query("delete from uploader where id = ".$fid);
 		Report("[b]".$loguser['name']."[/] deleted \"[b]".$entry['filename']."[/]\".", 1);
-		Alert("Deleted \"".$entry['filename']."\".", "Okay");
-
-		//Requery to see the changes
-		//$entries = Query("select uploader.*, users.name, users.displayname, users.powerlevel, users.sex from uploader left join users on uploader.user = users.id order by id desc");
+		Alert(format(__("Deleted \"{0}\"."), $entry['filename']), __("Okay"));
 	}
 	else
-	{
-		Alert("No such file or not yours to mess with.");
-	}
+		Alert(__("No such file or not yours to mess with."));
 }
 
 $totalsize = foldersize($rootdir);
@@ -161,16 +157,16 @@ $head = format(
 "
 		<tr class=\"header1\">
 			<th>
-				File
+				".__("File")."
 			</th>
 			<th>
-				Description
+				".__("Description")."
 			</th>
 			<th>
-				Size
+				".__("Size")."
 			</th>
 			<th>
-				Uploader
+				".__("Uploader")."
 			</th>
 		</tr>
 ");
@@ -190,11 +186,11 @@ if($loguserid && is_dir($rootdir."/".$loguserid) || $loguser['powerlevel'] > 2)
 	"
 		<table class=\"outline margin\">
 			<tr class=\"header1\">
-				<th colspan=\"7\">Private Files</th>
+				<th colspan=\"7\">".__("Private Files")."</th>
 			</tr>
 			<tr class=\"cell1\">
 				<td colspan=\"4\">
-					Your personal folder is empty.
+					".__("Your personal folder is empty.")."
 				</td>
 			</tr>
 		</table>
@@ -207,7 +203,7 @@ if($loguserid && is_dir($rootdir."/".$loguserid) || $loguser['powerlevel'] > 2)
 "
 		<table class=\"outline margin\">
 			<tr class=\"header0\">
-				<th colspan=\"7\">Private Files</th>
+				<th colspan=\"7\">".__("Private Files")."</th>
 			</tr>
 			{0}
 ", $head);
@@ -247,7 +243,7 @@ if($loguserid && is_dir($rootdir."/".$loguserid) || $loguser['powerlevel'] > 2)
 			<tr class=\"cell{0}\">
 				{8}
 				<td>
-					<a href=\"{1}/{7}/{2}\">{2}</a>{3}
+					<a href=\"get.php?id={1}\">{2}</a>{3}
 				</td>
 				<td>
 					{4}
@@ -259,7 +255,7 @@ if($loguserid && is_dir($rootdir."/".$loguserid) || $loguser['powerlevel'] > 2)
 					{6}
 				</td>
 			</tr>
-	",	$cellClass, $rootdir, $entry['filename'], $delete, $entry['description'],
+	",	$cellClass, $entry['id'], $entry['filename'], $delete, $entry['description'],
 		BytesToSize(@filesize($rootdir."/".$entry['user']."/".$entry['filename'])), UserLink($entry, "user"),
 		$entry['user'], $multidel);
 		}
@@ -277,11 +273,11 @@ if(NumRows($entries) == 0 && !$havePrivates)
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"7\">Public Files</th>
+			<th colspan=\"7\">".__("Public Files")."</th>
 		</tr>
 		<tr class=\"cell1\">
 			<td colspan=\"4\">
-				The uploader is empty.
+				".__("The uploader is empty.")."
 			</td>
 		</tr>
 	</table>
@@ -296,7 +292,7 @@ else
 "
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"7\">Public Files</th>
+			<th colspan=\"7\">".__("Public Files")."</th>
 		</tr>
 		{0}
 ", $head);
@@ -318,7 +314,7 @@ else
 		<tr class=\"cell{0}\">
 			{7}
 			<td>
-				<a href=\"{1}/{2}\">{2}</a>{3}
+				<a href=\"get.php?id={1}\">{2}</a>{3}
 			</td>
 			<td>
 				{4}
@@ -330,7 +326,7 @@ else
 				{6}
 			</td>
 		</tr>
-",	$cellClass, $rootdir, $entry['filename'], $delete, $entry['description'],
+",	$cellClass, $entry['id'], $entry['filename'], $delete, $entry['description'],
 	BytesToSize(@filesize($rootdir."/".$entry['filename'])), UserLink($entry, "user"), $multidel);
 	}
 	if($loguserid)
@@ -338,7 +334,7 @@ else
 			<tr class=\"header1\">
 				<th style=\"text-align: right;\" colspan=\"6\">
 					<input type=\"hidden\" name=\"action\" value=\"multidel\" />
-					<a href=\"javascript:void();\" onclick=\"document.forms[2].submit();\">delete checked</a>
+					<a href=\"javascript:void();\" onclick=\"document.forms[2].submit();\">".__("delete checked")."</a>
 				</th>
 			</tr>");
 	$public .= "</table>";
@@ -355,7 +351,7 @@ if($loguserid && IsAllowed("useUploader"))
 <form action=\"uploader.php\" method=\"post\" enctype=\"multipart/form-data\">
 	<table class=\"outline margin\">
 		<tr class=\"header0\">
-			<th colspan=\"4\">Upload</th>
+			<th colspan=\"4\">".__("Upload")."</th>
 		</tr>
 		<tr class=\"cell2\">
 			<td>
@@ -364,18 +360,18 @@ if($loguserid && IsAllowed("useUploader"))
 			<td>
 				<input type=\"text\" name=\"description\" style=\"width: 80%;\" />
 				<label>
-					<input type=\"checkbox\" name=\"private\" />&nbsp;Private
+					<input type=\"checkbox\" name=\"private\" />&nbsp;".__("Private")."
 				</label>
 			</td>
 			<td>
-				<input type=\"submit\" id=\"submit\" name=\"action\" value=\"Upload\" disabled=\"disabled\" />
+				<input type=\"submit\" id=\"submit\" name=\"action\" value=\"".__("Upload")."\" disabled=\"disabled\" />
 			</td>
 		</tr>
 		<tr class=\"cell1 smallFonts\">
 			<td colspan=\"3\">
-				The maximum upload size is {0} per file. You can uploaded the following types: {2}.
-				<div id=\"sizeWarning\" style=\"display: none; font-weight: bold\">File is too large.</div>
-				<div id=\"typeWarning\" style=\"display: none; font-weight: bold\">File is not an allowed type.</div>
+				".__("The maximum upload size is {0} per file. You can upload the following types: {2}.")."
+				<div id=\"sizeWarning\" style=\"display: none; font-weight: bold\">".__("File is too large.")."</div>
+				<div id=\"typeWarning\" style=\"display: none; font-weight: bold\">".__("File is not an allowed type.")."</div>
 			</td>
 		</tr>
 	</table>
@@ -411,7 +407,7 @@ write(
 	<div class=\"pollbarContainer\" style=\"float: right; width: 50%;\">
 		{2}
 	</div>
-	Public space usage: {0} of {1}
+	".__("Public space usage: {0} of {1}")."
 </div>
 ",	BytesToSize($totalsize), BytesToSize($quota), $bar);
 
@@ -445,7 +441,7 @@ if($loguserid && is_dir($rootdir."/".$loguserid))
 	<div class=\"pollbarContainer\" style=\"float: right; width: 50%;\">
 		{2}
 	</div>
-	Personal folder space usage: {0} of {1}
+	".__("Personal folder space usage: {0} of {1}")."
 </div>
 ",	BytesToSize($personalsize), BytesToSize($pQuota), $bar);
 }
@@ -465,17 +461,8 @@ function foldersize($path)
 	$files = array_slice($files, 2);
 	foreach($files as $t)
 	{
-		//if(is_dir($t))
-		//{
-		//	//Recurse here
-		//	$size = foldersize($path . "/" . $t);
-		//	$total_size += $size;
-		//}
-		//else
-		{
-			$size = filesize($path . "/" . $t);
-			$total_size += $size;
-		}
+		$size = filesize($path . "/" . $t);
+		$total_size += $size;
 	}
 	return $total_size;
 }
