@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 //  AcmlmBoard XD - User profile page
 //  Access: all
 
@@ -10,7 +10,7 @@ if(isset($_POST['id']))
 	$_GET['id'] = $_POST['id'];
 
 if(!isset($_GET['id']))
-	Kill("User ID unspecified.");
+	Kill(__("User ID unspecified."));
 
 $id = (int)$_GET['id'];
 
@@ -19,7 +19,7 @@ $rUser = Query($qUser);
 if(NumRows($rUser))
 	$user = Fetch($rUser);
 else
-	Kill("Unknown user ID.");
+	Kill(__("Unknown user ID."));
 $bucket = "userMangler"; include("./lib/pluginloader.php");
 
 if($id == $loguserid)
@@ -38,12 +38,13 @@ if(isset($_GET['block']) && $loguserid)
 	{
 		$qBlock = "insert into blockedlayouts (user, blockee) values (".$id.", ".$loguserid.")";
 		$rBlock = Query($qBlock);
-		Alert("Layout blocked.","Notice");
-	} elseif(!$block && $isBlocked)
+		Alert(__("Layout blocked."), __("Notice"));
+	}
+	elseif(!$block && $isBlocked)
 	{
 		$qBlock = "delete from blockedlayouts where user=".$id." and blockee=".$loguserid." limit 1";
 		$rBlock = Query($qBlock);
-		Alert("Layout unblocked.","Notice");
+		Alert(__("Layout unblocked."), __("Notice"));
 	}
 }
 
@@ -58,9 +59,9 @@ if($loguserid)
 		$rBlock = Query($qBlock);
 		$isBlocked = NumRows($rBlock);
 		if($isBlocked)
-			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=0\">Unblock layout</a></li>";
+			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=0\">".__("Unblock layout")."</a></li>";
 		else
-			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=1\">Block layout</a></li>";
+			$blockLayoutLink = "<li><a href=\"profile.php?id=".$id."&amp;block=1\">".__("Block layout")."</a></li>";
 	}
 
 	if(isset($_GET['vote']) && $canVote)
@@ -80,11 +81,11 @@ if($loguserid)
 	$qKarma = "select up from uservotes where uid=".$id." and voter=".$loguserid;
 	$k = FetchResult($qKarma);
 	if($k == -1)
-		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=1\">up</a>/<a href=\"profile.php?id=".$id."&amp;vote=0\">down</a>]</small>";
+		$karmaLinks = " <small>[<a href=\"profile.php?id=".$id."&amp;vote=1\">&#x2191;</a>/<a href=\"profile.php?id=".$id."&amp;vote=0\">&#x2193;</a>]</small>";
 	else if($k == 0)
-		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=1\">up</a>]</small>";
+		$karmaLinks = " <small>[<a href=\"profile.php?id=".$id."&amp;vote=1\">&#x2191;</a>]</small>";
 	else if($k == 1)
-		$karmaLinks = " <small>[Vote <a href=\"profile.php?id=".$id."&amp;vote=0\">down</a>]</small>";
+		$karmaLinks = " <small>[<a href=\"profile.php?id=".$id."&amp;vote=0\">&#x2193;</a>]</small>";
 }
 
 $karma = $user['karma'];
@@ -126,14 +127,14 @@ if($user['homepageurl'])
 		$homepage = "<a href=\"".$user['homepageurl']."\">".$user['homepageurl']."</a>";
 }
 
-$emailField = "Private";
+$emailField = __("Private");
 if($user['email'] == "")
 {
-	$emailField = "None given";
+	$emailField = __("None given");
 }
 elseif($user['showemail'])
 {
-	$emailField = "<span id=\"emailField\">Public <button style=\"font-size: 0.7em;\" onclick=\"LoadSomething('emailField', 'ajaxcallbacks.php?a=em&amp;id=".$id."',  false);\">Show</button></span>";
+	$emailField = "<span id=\"emailField\">".__("Public")." <button style=\"font-size: 0.7em;\" onclick=\"$(this.parentNode).load('ajaxcallbacks.php?a=em&amp;id=".$id."');\">".__("Show")."</button></span>";
 }
 
 if($user['tempbantime'])
@@ -141,7 +142,7 @@ if($user['tempbantime'])
 	write(
 "
 	<div class=\"outline margin cell1 smallFonts\">
-		This user has been temporarily banned until {0} (GMT). That's {1} left.
+		".__("This user has been temporarily banned until {0} (GMT). That's {1} left.")."
 	</div>
 ",	gmdate("M jS Y, G:i:s",$user['tempbantime']), TimeUnits($user['tempbantime'] - time())
 	);
@@ -152,45 +153,45 @@ if($user['tempbantime'])
 $profileParts = array();
 
 $foo = array();
-$foo['Name'] = $minipic . htmlspecialchars($user['displayname'] ? $user['displayname'] : $user['name']) . ($user['displayname'] ? " (".$user['name'].")" : "");
+$foo[__("Name")] = $minipic . htmlspecialchars($user['displayname'] ? $user['displayname'] : $user['name']) . ($user['displayname'] ? " (".$user['name'].")" : "");
 if($title)
-	$foo['Title'] = $title;
+	$foo[__("Title")] = $title;
 if($currentRank)
-	$foo['Rank'] = $currentRank;
+	$foo[__("Rank")] = $currentRank;
 if($toNextRank)
-	$foo['To next rank'] = $toNextRank;
-$foo['Karma'] = $karma.$karmaLinks;
-$foo['Total posts'] = format("{0} ({1} per day)", $posts, $averagePosts);
-$foo['Total threads'] = format("{0} ({1} per day)", $threads, $averageThreads);
-$foo['Registered on'] = format("{0} ({1} ago)", cdate($dateformat, $user['regdate']), TimeUnits($daysKnown*86400));
-$foo['Score'] = $score;
-$foo['Browser'] = $user['lastknownbrowser'];
+	$foo[__("To next rank")] = $toNextRank;
+$foo[__("Karma")] = $karma.$karmaLinks;
+$foo[__("Total posts")] = format("{0} ({1} per day)", $posts, $averagePosts);
+$foo[__("Total threads")] = format("{0} ({1} per day)", $threads, $averageThreads);
+$foo[__("Registered on")] = format("{0} ({1} ago)", cdate($dateformat, $user['regdate']), TimeUnits($daysKnown*86400));
+$foo[__("Score")] = $score;
+$foo[__("Browser")] = $user['lastknownbrowser'];
 if($loguser['powerlevel'] > 0)
-	$foo['Last known IP'] = $user['lastip'] . " " . IP2C($user['lastip']);	
-$profileParts['General information'] = $foo;
+	$foo[__("Last known IP")] = $user['lastip'] . " " . IP2C($user['lastip']);	
+$profileParts[__("General information")] = $foo;
 
 $foo = array();
-$foo['Email address'] = $emailField;
+$foo[__("Email address")] = $emailField;
 if($homepage)
-	$foo['Homepage'] = CleanUpPost($homepage);
-$profileParts['Contact information'] = $foo;
+	$foo[__("Homepage")] = CleanUpPost($homepage);
+$profileParts[__("Contact information")] = $foo;
 
 $foo = array();
-$foo['Theme'] = $themes[$user['theme']];
-$foo['Items per page'] = Plural($user['postsperpage'],"post") . ", " . Plural($user['threadsperpage'],"thread");
-$profileParts['Presentation'] = $foo;
+$foo[__("Theme")] = $themes[$user['theme']];
+$foo[__("Items per page")] = Plural($user['postsperpage'], __("post")) . ", " . Plural($user['threadsperpage'], __("thread"));
+$profileParts[__("Presentation")] = $foo;
 
 $foo = array();
 if($user['realname'])
-	$foo['Real name'] = strip_tags($user['realname']);
+	$foo[__("Real name")] = strip_tags($user['realname']);
 if($user['location'])
-	$foo['Location'] = strip_tags($user['location']);
+	$foo[__("Location")] = strip_tags($user['location']);
 if($user['birthday'])
-	$foo['Birthday'] = format("{0} ({1} old)", cdate("F j, Y", $user['birthday']), Plural(floor((time() - $user['birthday']) / 86400 / 365.2425), "year"));
+	$foo[__("Birthday")] = format("{0} ({1} old)", cdate("F j, Y", $user['birthday']), Plural(floor((time() - $user['birthday']) / 86400 / 365.2425), "year"));
 if($user['bio'])
-	$foo['Bio'] = CleanUpPost($user['bio']);
+	$foo[__("Bio")] = CleanUpPost($user['bio']);
 if(count($foo))
-	$profileParts['Personal information'] = $foo;
+	$profileParts[__("Personal information")] = $foo;
 
 $prepend = "";
 $bucket = "profileTable"; include("./lib/pluginloader.php");
@@ -246,7 +247,7 @@ if(NumRows($rComments))
 	while($comment = Fetch($rComments))
 	{
 		if($canDeleteComments)
-			$deleteLink = "<small style=\"float: right; margin: 0px 4px;\"><a  href=\"profile.php?id=".$id."&amp;action=delete&amp;cid=".$comment['id']."\" title=\"Delete comment\">&#x2718;</a></small>";
+			$deleteLink = "<small style=\"float: right; margin: 0px 4px;\"><a  href=\"profile.php?id=".$id."&amp;action=delete&amp;cid=".$comment['id']."\" title=\"".__("Delete comment")."\">&#x2718;</a></small>";
 		$cellClass = ($cellClass+1) % 2;
 		$thisComment = format(
 "
@@ -271,13 +272,13 @@ else
 "
 						<tr>
 							<td class=\"cell0\" colspan=\"2\">
-								No comments.
+								".__("No comments.")."
 							</td>
 						</tr>
 ");
 }
 
-if($_POST['action'] == "Post" && IsReallyEmpty(strip_tags($_POST['text'])) && $loguserid && $loguserid != $lastCID)
+if($_POST['action'] == __("Post") && IsReallyEmpty(strip_tags($_POST['text'])) && $loguserid && $loguserid != $lastCID)
 {
 	AssertForbidden("makeComments");
 	$_POST['text'] = strip_tags($_POST['text']);
@@ -314,14 +315,14 @@ if($loguserid)
 									<form method=\"post\" action=\"profile.php\">
 										<input type=\"hidden\" name=\"id\" value=\"{0}\" />
 										<input type=\"text\" name=\"text\" style=\"width: 80%;\" maxlength=\"255\" />
-										<input type=\"submit\" name=\"action\" value=\"Post\" />
+										<input type=\"submit\" name=\"action\" value=\"".__("Post")."\" />
 									</form>
 								</div>
 ", $id);
 	if($lastCID == $loguserid)
-		$commentField = "You already have the last word.";
+		$commentField = __("You already have the last word.");
 	if(!IsAllowed("makeComments"))
-		$commentField = "You are not allowed to post usercomments.";
+		$commentField = __("You are not allowed to post usercomments.");
 }
 
 write(
@@ -330,7 +331,7 @@ write(
 				<table class=\"outline margin\">
 					<tr class=\"header1\">
 						<th colspan=\"2\">
-							Comments about {0}
+							".__("Comments about {0}")."
 						</th>
 					</tr>
 					{1}
@@ -381,14 +382,14 @@ MakePost($previewPost, 0, 0);
 if($loguser['powerlevel'] > 2)
 {
 	if(IsAllowed("editUser"))
-		$links .= "<li><a href=\"edituser.php?id=".$id."\">Edit user</a></li>";
+		$links .= "<li><a href=\"editprofile.php?id=".$id."\">".__("Edit user")."</a></li>";
 	if(IsAllowed("snoopPM"))
-		$links .= "<li><a href=\"private.php?user=".$id."\">Show PMs</a></li>";
+		$links .= "<li><a href=\"private.php?user=".$id."\">".__("Show PMs")."</a></li>";
 }
 if($loguserid && IsAllowed("sendPM"))
-	$links .= "<li><a href=\"sendprivate.php?uid=".$id."\">Send PM</a><li>";
+	$links .= "<li><a href=\"sendprivate.php?uid=".$id."\">".__("Send PM")."</a></li>";
 if(IsAllowed("listPosts"))
-	$links .= "<li><a href=\"listposts.php?id=".$id."\">Show posts</a></li>";
+	$links .= "<li><a href=\"listposts.php?id=".$id."\">".__("Show posts")."</a></li>";
 $links .= $blockLayoutLink;
 write("
 	<ul class=\"smallFonts margin pipemenu\">
