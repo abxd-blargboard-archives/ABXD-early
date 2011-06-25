@@ -8,6 +8,10 @@ AssertForbidden("editCats");
 
 if($loguser['powerlevel'] < 3)
 	Kill("You must be an administrator to edit the category list.");
+	
+$key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
+if (isset($_POST['action']) && $key != $_POST['key'])
+	Kill(__("No."));
 
 elseif($_POST['action'] == "Add")
 {
@@ -30,9 +34,10 @@ elseif($_POST['action'] == "Add")
 		<form action=\"editcats.php\" method=\"post\">
 			<input type=\"submit\" name=\"action\" value=\"Yes, do as I say.\" />
 			<input type=\"hidden\" name=\"cid\" value=\"{1}\" />
+			<input type=\"hidden\" name=\"key\" value=\"{2}\" />
 		</form>
 	</div>
-",	$category['name'], (int)$category['id']);
+",	$category['name'], (int)$category['id'], $key);
 }
 elseif($_POST['action'] == "Yes, do as I say.")
 {
@@ -67,11 +72,12 @@ if(NumRows($rCategories))
 				<input type=\"submit\" name=\"action\" value=\"Edit\" />
 				<input type=\"submit\" name=\"action\" value=\"Remove\" />
 				<input type=\"hidden\" name=\"cid\" value=\"{2}\" />
+				<input type=\"hidden\" name=\"key\" value=\"{4}\" />
 			</form>
 		</div>
 ",	htmlval($category['name']),
 	MakeSelect("minpower",$category['minpower'],$levels),
-	$category['id'], $category['corder']);
+	$category['id'], $category['corder'], $key);
 	}
 }
 
@@ -89,11 +95,14 @@ write(
 				{1}
 				<input type=\"text\" name=\"corder\" size=\"2\" value=\"0\" />
 				<input type=\"submit\" name=\"action\" value=\"Add\" />
+				<input type=\"hidden\" name=\"key\" value=\"{2}\" />
 			</div>
 		</div>
 	</form>
-	<p>For more complex things, try PMA. This is just a toy-like quick access.</p>
-",	$cats, MakeSelect("minpower",0,$levels));
+	<p>
+		".__("For more complex things, try PMA. This is just a toy-like quick access.")."
+	</p>
+",	$cats, MakeSelect("minpower",0,$levels), $key);
 
 function MakeSelect($fieldName, $checkedIndex, $choicesList)
 {
