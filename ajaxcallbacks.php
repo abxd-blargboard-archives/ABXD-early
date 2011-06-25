@@ -10,7 +10,7 @@ header("Cache-Control: no-cache");
 
 $action = $_GET['a'];
 $id = (int)$_GET['id'];
-$hideTricks = "<a href=\"javascript:void(0)\" onclick=\"hideTricks(".$id.")\">Back</a>";
+$hideTricks = " <a href=\"javascript:void(0)\" onclick=\"hideTricks(".$id.")\">".__("Back")."</a>";
 if($action == "q")	//Quote
 {
 	$qQuote = "	select 
@@ -26,18 +26,19 @@ if($action == "q")	//Quote
 	$rQuote = Query($qQuote);
 	
 	if(!NumRows($rQuote))
-		die('Unknown post ID.');
+		die(__("Unknown post ID."));
 
 	$quote = Fetch($rQuote);
 
 	//SPY CHECK!
+	//Do we need to translate this line? It's not even displayed in its true form ._.
 	if($quote['minpower'] > $loguser['powerlevel'])
 		$quote['text'] = str_rot13("Pools closed due to not enough power. Prosecutors will be violated.");
 		
 	if ($quote['deleted'])
-		$quote['text'] = "*post deleted*";
+		$quote['text'] = __("Post is deleted");
 
-	$reply = "[quote=\"".htmlval($quote['poster'])."\" id=\"".$quote['id']."\"]".htmlval($quote['text'])."[/quote]";
+	$reply = "[quote=\"".$quote['poster']."\" id=\"".$quote['id']."\"]".$quote['text']."[/quote]";
 	$reply = str_replace("/me", "[b]* ".htmlval($quote['poster'])."[/b]", $reply);
 	die($reply);
 }
@@ -57,11 +58,11 @@ else if ($action == 'rp') // retrieve post
 				where posts.id=".$id;
 	$rPost = Query($qPost);
 	if (!NumRows($rPost))
-		die('Unknown post ID.');
+		die(__("Unknown post ID."));
 	$post = Fetch($rPost);
 		
 	if (!CanMod($loguserid, $post['fid']))
-		die('No.');
+		die(__("No."));
 		
 	if (isset($_GET['o']))
 	{
@@ -124,6 +125,8 @@ else if($action == "ni")	//New Indicators
 	{
 		if($category[$forum['catid']]['minpower'] > $pl)
 			continue;
+		if($forum['hidden'])
+			continue;
 
 		$newstuff = 0;
 		if(!$ignored[$forum['id']])
@@ -142,7 +145,8 @@ elseif($action == "srl")	//Show Revision List
 	if(NumRows($rPost))
 		$post = Fetch($rPost);
 	else
-		die("Unknown post ID #".$id.". ".$hideTricks);
+		die(format(__("Unknown post ID #{0}."), $id)." ".$hideTricks);
+		//die("Unknown post ID #".$id.". ".$hideTricks);
 
 	$qThread = "select forum from threads where id=".$post['thread'];
 	$rThread = Query($qThread);
@@ -151,11 +155,11 @@ elseif($action == "srl")	//Show Revision List
 	$rForum = Query($qForum);
 	$forum = Fetch($rForum);
 	if($forum['minpower'] > $loguser['powerlevel'])
-		die("No. ".$hideTricks);
+		die(__("No.")." ".$hideTricks);
 
-	$reply = "Show revision: ";
+	$reply = __("Show revision:");
 	for($i = 0; $i <= $post['currentrevision']; $i++)
-		$reply .= "<a href=\"javascript:void(0)\" onclick=\"showRevision(".$id.",".$i.")\">".$i."</a> ";
+		$reply .= " <a href=\"javascript:void(0)\" onclick=\"showRevision(".$id.",".$i.")\">".$i."</a>";
 	$reply .= $hideTricks;
 	die($reply);	
 }
@@ -173,7 +177,7 @@ elseif($action == "sr")	//Show Revision
 	if(NumRows($rPost))
 		$post = Fetch($rPost);
 	else
-		die("Unknown post ID #".$id." or revision missing.");
+		die(format(__("Unknown post ID #{0} or revision missing."), $id));
 
 	$qThread = "select forum from threads where id=".$post['thread'];
 	$rThread = Query($qThread);
@@ -182,7 +186,7 @@ elseif($action == "sr")	//Show Revision
 	$rForum = Query($qForum);
 	$forum = Fetch($rForum);
 	if($forum['minpower'] > $loguser['powerlevel'])
-		$post['text'] = "No.";
+		$post['text'] = __("No.");
 
 	LoadBlockLayouts();
 	$isBlocked = $blocklayouts[$post['uid']] /* NumRows($rBlock) */ | $post['globalblock'] | $loguser['blocklayouts'] | $post['options'] & 1;
@@ -201,6 +205,7 @@ elseif($action == "sr")	//Show Revision
 		"date" => cdate($dateformat,$post['date']),
 		"rank" => GetRank($post),
 	);
+	$bucket = "amperTags"; include("./lib/pluginloader.php");
 
 	$post['posts'] = $rankHax;
 
@@ -208,6 +213,8 @@ elseif($action == "sr")	//Show Revision
 		$postHeader = str_replace('$theme', $theme, ApplyTags(CleanUpPost($post['postheader']), $tags));
 
 	$postText = ApplyTags(CleanUpPost($post['text'],$post['name'],$noSmilies), $tags);
+
+	$bucket = "postMangler"; include("./lib/pluginloader.php");
 
 	if($post['signature'] && !$isBlocked)
 	{
@@ -233,5 +240,5 @@ elseif($action == "vc")	//View Counter
 	die(number_format($blah));
 }
 
-die("Unknown action.");
+die(__("Unknown action."));
 ?>
