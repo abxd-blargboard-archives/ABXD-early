@@ -77,6 +77,8 @@ $logopic = "img/themes/default/logo.png";
 if(file_exists("img/themes/".$theme."/logo.png"))
 	$logopic = "img/themes/".$theme."/logo.png";
 
+include("language.php");
+
 if(!isset($noAutoHeader))
 	include("header.php");
 
@@ -94,7 +96,7 @@ function deSlashMagic($text)
 //Simple version -- may expand later.
 function CheckTableBreaks($text)
 {
-	$text = strtolower($text);
+	$text = strtolower(CleanUpPost($text));
 //	$openers = substr_count($text, "<table") + substr_count($text, "<div") + substr_count($text, "[quote");
 //	$closers = substr_count($text, "</table>") + substr_count($text, "</div>") + substr_count($text, "[/quote]");
 //	return ($openers != $closers);
@@ -206,7 +208,7 @@ function Report($stuff, $hidden = 0)
 {
 	//$here = "http://helmet.kafuka.org/nikoboard";
 	$full = GetFullURL();
-	$here = substr($full, 0, strrpos($full, "/"));
+	$here = substr($full, 0, strrpos($full, "/"))."/";
 	Query("insert into reports (time,text,hidden) values (".time().", '".justEscape(str_replace("#HERE#", $here, $stuff))."', ".$hidden.")");
 	Query("delete from reports where time < ".(time() - (60*60*24*30)));
 }
@@ -229,64 +231,63 @@ function AssertForbidden($to, $specifically = 0)
 	
 	if($caught)
 	{
-		$not = "You are not allowed to ";
+		$not = __("You are not allowed to {0}.");
 		$messages = array
 		(
-			"addRanks" => "add new ranks",
-			"battle" => "visit the battle arena",
-			"blockLayouts" => "block layouts",
-			"deleteComments" => "delete usercomments.",
-			"editCats" => "edit the forum categories",
-			"editForum" => "edit the forum list",
-			"editGroups" => "edit usergroups",
-			"editIPBans" => "edit the IP ban list",
-			"editMods" => "edit Local Moderator assignments",
-			"editMoods" => "edit your mood avatars",
-			"editPoRA" => "edit the PoRA box",
-			"editPost" => "edit posts",
-			"editProfile" => "edit your profile",
-			"editSettings" => "edit the board settings",
-			"editSmilies" => "edit the smiley list",
-			"editThread" => "edit threads",
-			"editUser" => "edit users",
-			"haveCookie" => "have a cookie",
-			"listPosts" => "see all posts by a given user",
-			"joinGroups" => "submit join requests for a usergroup",
-			"makeComments" => "post usercomments.",
-			"makeReply" => "reply to threads",
-			"makeThread" => "start new threads",
-			"optimize" => "optimize the tables",
-			"purgeRevs" => "purge old revisions",
-			"recalculate" => "recalculate the board counters",
-			"search" => "use the search function",
-			"sendPM" => "send private messages",
-			"snoopPM" => "view other users' private messages",
-			"useUploader" => "upload files",
-			"viewAdminRoom" => "see the admin room",
-			"viewAvatars" => "see the avatar library",
-			"viewCalendar" => "see the calendar",
-			"viewForum" => "view fora",
-			"viewLKB" => "see the Last Known Browser table",
-			"viewMembers" => "see the memberlist",
-			"viewOnline" => "see who's online",
-			"viewPM" => "view private messages",
-			"viewProfile" => "view user profiles",
-			"viewRanks" => "see the rank lists",
-			"viewRecords" => "see the top scores and DB usage",
-			"viewThread" => "read threads",
-			"viewUploader" => "see the uploader",
-			"vote" => "vote",
+			"addRanks" => __("add new ranks"),
+			"blockLayouts" => __("block layouts"),
+			"deleteComments" => __("delete usercomments."),
+			"editCats" => __("edit the forum categories"),
+			"editForum" => __("edit the forum list"),
+			"editGroups" => __("edit usergroups"),
+			"editIPBans" => __("edit the IP ban list"),
+			"editMods" => __("edit Local Moderator assignments"),
+			"editMoods" => __("edit your mood avatars"),
+			"editPoRA" => __("edit the PoRA box"),
+			"editPost" => __("edit posts"),
+			"editProfile" => __("edit your profile"),
+			"editSettings" => __("edit the board settings"),
+			"editSmilies" => __("edit the smiley list"),
+			"editThread" => __("edit threads"),
+			"editUser" => __("edit users"),
+			"haveCookie" => __("have a cookie"),
+			"listPosts" => __("see all posts by a given user"),
+			"joinGroups" => __("submit join requests for a usergroup"),
+			"makeComments" => __("post usercomments."),
+			"makeReply" => __("reply to threads"),
+			"makeThread" => __("start new threads"),
+			"optimize" => __("optimize the tables"),
+			"purgeRevs" => __("purge old revisions"),
+			"recalculate" => __("recalculate the board counters"),
+			"search" => __("use the search function"),
+			"sendPM" => __("send private messages"),
+			"snoopPM" => __("view other users' private messages"),
+			"useUploader" => __("upload files"),
+			"viewAdminRoom" => __("see the admin room"),
+			"viewAvatars" => __("see the avatar library"),
+			"viewCalendar" => __("see the calendar"),
+			"viewForum" => __("view fora"),
+			"viewLKB" => __("see the Last Known Browser table"),
+			"viewMembers" => __("see the memberlist"),
+			"viewOnline" => __("see who's online"),
+			"viewPM" => __("view private messages"),
+			"viewProfile" => __("view user profiles"),
+			"viewRanks" => __("see the rank lists"),
+			"viewRecords" => __("see the top scores and DB usage"),
+			"viewThread" => __("read threads"),
+			"viewUploader" => __("see the uploader"),
+			"vote" => __("vote"),
 		);
 		$messages2 = array
 		(
-			"viewForum" => "see this forum",
-			"viewThread" => "read this thread",
-			"makeReply" => "reply in this thread",
-			"editUser" => "edit this user",
+			"viewForum" => __("see this forum"),
+			"viewThread" => __("read this thread"),
+			"makeReply" => __("reply in this thread"),
+			"editUser" => __("edit this user"),
 		);
 		if($caught == 2 && array_key_exists($to, $messages2))
-			Kill($not.$messages2[$to].".", "Permission denied.");
-		Kill($not.$messages[$to].".", "Permission denied.");
+			Kill(format($not, $messages2[$to]), __("Permission denied."));
+		Kill(format($not, $messages[$to]), __("Permission denied."));
 	}
 }
 
@@ -368,4 +369,5 @@ function BytesToSize($size, $retstring = '%01.2f&nbsp;%s')
 
 include("write.php");
 $bucket = "init"; include('lib/pluginloader.php');
+
 ?>
