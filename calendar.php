@@ -103,13 +103,13 @@ write(
 		</th>
 	</tr>
 	<tr class=\"header1\">
-		<th {3}>".__("Sunday")."</th>
-		<th {3}>".__("Monday")."</th>
-		<th {3}>".__("Tuesday")."</th>
-		<th {3}>".__("Wednesday")."</th>
-		<th {3}>".__("Thursday")."</th>
-		<th {3}>".__("Friday")."</th>
-		<th {3}>".__("Saturday")."</th>
+		<th {3}>".$days[1]."</th>
+		<th {3}>".$days[2]."</th>
+		<th {3}>".$days[3]."</th>
+		<th {3}>".$days[4]."</th>
+		<th {3}>".$days[5]."</th>
+		<th {3}>".$days[6]."</th>
+		<th {3}>".$days[7]."</th>
 	</tr>
 	{2}
 	<tr>
