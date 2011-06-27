@@ -282,7 +282,7 @@ if(NumRows($rThreads))
 	if($forum['minpowerthread'] > $loguser['powerlevel'])
 		Alert(__("You cannot start any threads here."), __("Empty forum"));
 	elseif($loguserid)
-		Alert(format(__("Would you like to {0}post something{1}?"), "<a href=\"newthread.php?id=".$fid."\">", "</a>?"), __("Empty forum"));
+		Alert(format(__("Would you like to {0}post something{1}?"), "<a href=\"newthread.php?id=".$fid."\">", "</a>"), __("Empty forum"));
 	else
 		Alert(format(__("{0}Log in{1} so you can post something."), "<a href=\"login.php\">", "</a>"), __("Empty forum"));
 
