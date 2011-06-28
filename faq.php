@@ -8,8 +8,8 @@ $title = "FAQ";
 
 $admin = UserLink(Fetch(Query("select name, id, powerlevel, sex from users where id = 1")));
 
-$sexes = array(0=>"Male",1=>"Female",2=>"N/A");
-$powerlevels = array(0=>"Normal user",1=>"Local Moderator",2=>"Full Moderator",3=>"Administrator",4=>"Root");
+$sexes = array(0=>__("Male"),1=>__("Female"),2=>__("N/A"));
+$powerlevels = array(0=>__("Normal user"),1=>__("Local moderator"),2=>__("Full moderator"),3=>__("Administrator"),4=>__("Root"));
 $headers = "";
 $colors = "";
 foreach($sexes as $ss)
@@ -47,7 +47,7 @@ $colortable = format("
 	<tr class=\"cell0\">
 		<td class=\"center\" colspan=\"3\">
 			<a href=\"javascript:void()\"><span class=\"nc0x\" style=\"font-weight: bold;\">
-				Banned user
+				".__("Banned user")."
 			</span></a>
 		</td>
 	</tr>
@@ -58,7 +58,7 @@ $colortable = format("
 $faq = file_get_contents("lib/lang/faq_".$language.".html");
 
 $faq = str_replace("<colortable />", $colortable, $faq);
-if(!isset($theWord))
+if(empty($theWord))
 	$faq = preg_replace("'<iftheword>(.*)</iftheword>'se", "", $faq);
 else
 	$faq = str_replace("<theword />", $theWord, $faq);
@@ -71,7 +71,7 @@ $faq = str_replace("<themelist />", implode(", ", $themeFiles), $faq);
 $faq = str_replace("<admin />", $admin, $faq);
 
 write("
-<div class=\"faq outline margin\" style=\"width: 800px; height: 600px; overflow: auto; margin: auto;\">
+<div class=\"faq outline margin\" style=\"width: 60%; overflow: auto; margin: auto;\">
 {0}
 </div>", $faq);
 
