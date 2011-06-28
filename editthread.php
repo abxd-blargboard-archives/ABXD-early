@@ -74,7 +74,7 @@ if($canMod)
 		Report("[b]".$loguser['name']."[/] unstuck thread [b]".$thread['title']."[/] -> [g]#HERE#?tid=".$tid, $isHidden);
 		Redirect(__("Thread unsticked."), "forum.php?id=".$thread['forum'], __("the forum"));
 	}
-	elseif($_POST['action']=="Move")
+	elseif($_POST['action']==__("Move"))
 	{
 		$moveto = (int)$_POST['moveTo'];
 		

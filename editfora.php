@@ -75,7 +75,7 @@ if(NumRows($rCategories))
 						$mod2 = Fetch($rMod);
 						$localMods .= UserLink($mod2).", ";
 					}
-					$localMods = __("Moderated by: ").substr($localMods,0,strlen($localMods)-2);
+					$localMods = __("Moderated by:")." ".substr($localMods,0,strlen($localMods)-2);
 				}
 				else
 					$localMods = __("No mods");
