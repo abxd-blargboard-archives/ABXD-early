@@ -4,6 +4,9 @@ setlocale(LC_ALL, "en_US");
 
 $birthdayExample = "June 26, 1983";
 
+$dateformats = array("", "m-d-y", "d-m-y", "y-m-d", "Y-m-d", "m/d/Y", "d.m.y", "M j Y", "D jS M Y");
+$timeformats = array("", "h:i A", "h:i:s A", "H:i", "H:i:s");
+
 $months = array(
 	"",
 	"January",
@@ -23,7 +26,7 @@ $months = array(
 $days = array(
 	"",
 	"Sunday",
-	"Mondag",
+	"Monday",
 	"Tuesday",
 	"Wednesday",
 	"Thursday",
