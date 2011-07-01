@@ -7,7 +7,7 @@
  *     Phase 3 - release 3.0 on December 23rd, with the full language pack support.
  */
 
-define("PHASE", 1);
+define("PHASE", 2);
 $language = "en_US";
 
 if(!function_exists("__"))
@@ -49,7 +49,7 @@ if(!function_exists("__"))
 				elseif(array_key_exists($english, $languagePack))
 					$final = $languagePack[$english];
 				if($final == "")
-					$final = "[".$english."]";
+					$final = $english; //$final = "[".$english."]";
 			}
 			else
 				$final = $english;
