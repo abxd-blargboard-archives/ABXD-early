@@ -173,7 +173,7 @@ write(
 			</tr>
 			<tr class=\"cell1\">
 				<td>
-					".__("AJAX")."
+					AJAX
 				</td>
 				<td>
 					<label>
