@@ -355,6 +355,8 @@ if(NumRows($rPosts))
 
 if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['powerlevel'] >= $category['minpower'] && (!$thread['closed'] || $loguser['powerlevel'] > 0) && !isset($replyWarning))
 {
+	$ninja = FetchResult("select id from posts where thread=".$tid." order by date desc limit 0, 1",0,0);
+	
 	//Quick reply goes here		
 	if(CanMod($loguserid, $fid))
 	{
@@ -379,6 +381,7 @@ if($loguserid && $loguser['powerlevel'] >= $forum['minpowerreply'] && $loguser['
 	write(
 	"
 	<form action=\"newreply.php\" method=\"post\">
+		<input type=\"hidden\" name=\"ninja\" value=\"{0}\" />
 		<table class=\"outline margin width75\" style=\"margin: 4px auto;\" id=\"quickreply\">
 			<tr class=\"header1\">
 				<th onclick=\"expandTable('quickreply', this)\" style=\"cursor: pointer;\">
