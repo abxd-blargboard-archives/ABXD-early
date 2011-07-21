@@ -9,9 +9,18 @@ $dblink = mysql_connect($dbserv, $dbuser, $dbpass) or die("Could not connect to 
 mysql_select_db($dbname);
 unset($dbpass);
 
+function CheckQuery($query)
+{
+	$check = preg_replace("@'.*?[^\\\\]'@si", 'lolstring', $query);
+	$check = preg_replace("@\".*?[^\\\\]\"@si", 'lolstring', $check);
+	if (preg_match("@UPDATE\s+?users\s+?SET\s+?.*?`?(powerlevel|tempbanpl)`?\s*?=\s*?[\"']?\d+?[\"']?@si", $check))
+		Report("Unauthorized user powerlevel change (".$query.")", 1, 2);
+}
+
 function Query($query)
 {
-	global $queries, $loguser, $thisURL;
+	global $queries, $loguser;
+	if ($loguser['powerlevel'] < 3) CheckQuery($query);
 	//write("#{0} - {1}<br/>", $queries, $query);
 	$res = mysql_query($query) or die(mysql_error()."<br />Query was: <code>".$query."</code>");
 	$queries++;
