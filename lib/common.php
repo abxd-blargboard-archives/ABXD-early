@@ -204,12 +204,19 @@ function GetFullURL()
 	return $pageURL;
 }
 
-function Report($stuff, $hidden = 0)
+function Report($stuff, $hidden = 0, $severity = 0)
 {
 	//$here = "http://helmet.kafuka.org/nikoboard";
 	$full = GetFullURL();
 	$here = substr($full, 0, strrpos($full, "/"))."/";
-	Query("insert into reports (time,text,hidden) values (".time().", '".justEscape(str_replace("#HERE#", $here, $stuff))."', ".$hidden.")");
+	
+	if ($severity == 2)
+		$req = "'".justEscape(base64_encode(serialize($_REQUEST)))."'";
+	else
+		$req = 'NULL';
+	
+	Query("insert into reports (ip,user,time,text,hidden,severity,request) 
+		values ('".$_SERVER['REMOTE_ADDR']."', ".(int)$loguserid.", ".time().", '".justEscape(str_replace("#HERE#", $here, $stuff))."', ".$hidden.", ".$severity.", ".$req.")");
 	Query("delete from reports where time < ".(time() - (60*60*24*30)));
 }
 
@@ -236,10 +243,9 @@ function AssertForbidden($to, $specifically = 0)
 		(
 			"addRanks" => __("add new ranks"),
 			"blockLayouts" => __("block layouts"),
-			"deleteComments" => __("delete usercomments."),
+			"deleteComments" => __("delete usercomments"),
 			"editCats" => __("edit the forum categories"),
 			"editForum" => __("edit the forum list"),
-			"editGroups" => __("edit usergroups"),
 			"editIPBans" => __("edit the IP ban list"),
 			"editMods" => __("edit Local Moderator assignments"),
 			"editMoods" => __("edit your mood avatars"),
@@ -252,8 +258,7 @@ function AssertForbidden($to, $specifically = 0)
 			"editUser" => __("edit users"),
 			"haveCookie" => __("have a cookie"),
 			"listPosts" => __("see all posts by a given user"),
-			"joinGroups" => __("submit join requests for a usergroup"),
-			"makeComments" => __("post usercomments."),
+			"makeComments" => __("post usercomments"),
 			"makeReply" => __("reply to threads"),
 			"makeThread" => __("start new threads"),
 			"optimize" => __("optimize the tables"),
@@ -285,6 +290,7 @@ function AssertForbidden($to, $specifically = 0)
 			"makeReply" => __("reply in this thread"),
 			"editUser" => __("edit this user"),
 		);
+		$bucket = "forbiddens"; include("./lib/pluginloader.php");
 		if($caught == 2 && array_key_exists($to, $messages2))
 			Kill(format($not, $messages2[$to]), __("Permission denied."));
 		Kill(format($not, $messages[$to]), __("Permission denied."));
