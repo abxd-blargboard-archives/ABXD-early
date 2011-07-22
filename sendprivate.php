@@ -69,7 +69,7 @@ if($_POST['to'])
 	$recipients = explode(";", $_POST['to']);
 	foreach($recipients as $to)
 	{
-		$to = trim(htmlentities($to));
+		$to = mysql_real_escape_string(trim(htmlentities($to)));
 		if($to == "")
 			continue;
 		$qUser = "select id from users where name='".$to."' or displayname='".$to."'";
