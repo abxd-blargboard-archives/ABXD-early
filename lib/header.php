@@ -133,10 +133,31 @@
 	<div id="body">
 <?php
 
+	/*
 	if($isIE6)
 	{
 		print "<div id=\"getabetterbrowseryoulazyfuck\">";
 		print "You seem to be using Microsoft Internet Explorer 6. That is a very old browser. <a href=\"http://www.browserchoice.eu\">Get updated</a>, enjoy a better Web.";
 		print "</div>";
+	}
+	*/
+	if (($browserName == "Internet Explorer" && $browserVers < 8) ||
+		($browserName == "Chrome" && $browserVers < 4) ||
+		($browserName == "Opera" && $browserVers < 10) ||
+		($browserName == "Safari" && $browserVers < 5) ||
+		($browserName == "Firefox" && $browserVers < 4))
+	{
+		$urls = array(
+			"Internet Explorer" => "http://ie.microsoft.com",
+			"Chrome" => "http://www.google.com/chrome",
+			"Opera" => "http://www.opera.com/browser",
+			"Safari" => "http://www.apple.com/safari",
+			"Firefox" => "http://www.mozilla.com/firefox",
+			);
+		write(format("
+		<div id=\"getabetterbrowseryoulazyfuck\">
+			".__("You're running an outdated browser. For your own safety, we highly recommend updating:")."
+			<a href=\"{0}\">{0}</a>
+		</div>", $urls[$browserName]));
 	}
 ?>
