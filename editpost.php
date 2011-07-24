@@ -31,6 +31,9 @@ if(NumRows($rPost))
 	$tid = $post['thread'];
 } else
 	Kill(__("Unknown post ID."));
+	
+if ($post['deleted'])
+	Kill(__("This post has been deleted."));
 
 $qThread = "select * from threads where id=".$tid;
 $rThread = Query($qThread);
