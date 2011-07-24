@@ -1,7 +1,7 @@
 <?php
 
-$isFirefox = FALSE;
-$isIE6 = FALSE;
+//$isFirefox = FALSE;
+//$isIE6 = FALSE;
 
 //$lastKnownBrowser = $_SERVER['HTTP_USER_AGENT'];
 $lastKnownBrowser = "Something";
@@ -65,13 +65,16 @@ foreach($knownBrowsers as $code => $name)
 		if (strpos($ua, "Opera/9.80") !== FALSE && $code != "Opera Mini" || $code == "Safari" && strpos($ua, "Version/") !== FALSE)
 			$version = substr($ua, strpos($ua, "Version/") + 8);
 
-		$isFirefox = ($code == "Firefox");
-		$isIE6 = (strpos($ua, "MSIE 6.") !== FALSE);
+		//$isFirefox = ($code == "Firefox");
+		//$isIE6 = (strpos($ua, "MSIE 6.") !== FALSE);
 
 		$lastKnownBrowser = $name." ".$version;
 		break;
 	}
 }
+
+$browserName = $name;
+$browserVers = (float)$version;
 
 $os = "";
 foreach($knownOSes as $code => $name)
