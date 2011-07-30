@@ -261,7 +261,7 @@ else if($_POST['action'] == "Install")
 	$misc = Query("select * from misc");
 	if(NumRows($misc) == 0)
 		Query("INSERT INTO `misc` (`views`, `hotcount`, `porabox`, `poratitle`, `milestone`, `maxuserstext`) VALUES (0, 30, 'You might want to download the geolocation<br />table and some avatar sets from the same<br />place you got this forum software:<br /><br /><a href=\"http://helmet.kafuka.org/thepile/ABXD\">ABXD page on The Pile</a><br /><br />Then, <a href=\"editpora.php\">edit this panel</a>.', 'Points of Required Attention', 'Nothing yet.', 'Nobody yet.');");
-	Query("UPDATE `misc` SET `version` = 222");
+	Query("UPDATE `misc` SET `version` = 223");
 	$smilies = Query("select * from smilies");
 	if(NumRows($smilies) == 0)
 		Query("
