@@ -62,29 +62,6 @@ $tables = array
 		),
 		"special" => $keyID.", key `catid` (`catid`)"
 	),
-/*
-	"groupaffiliations" => array
-	(
-		"fields" => array
-		(
-			"id" => $AI,
-			"uid" => $genericInt,
-			"gid" => $genericInt,			
-			"status" => $genericInt,
-		),
-		"special" => $keyID
-	),
-	"groups" => array
-	(
-		"fields" => array
-		(
-			"id" => $AI,
-			"name" => $var256,
-			"leader" => $genericInt,
-		),
-		"special" => $keyID
-	),
-*/
 	"guests" => array
 	(
 		"fields" => array
@@ -272,9 +249,13 @@ $tables = array
 	(
 		"fields" => array
 		(
+			"ip" => "varchar(15)".$notNull,
+			"user" => $genericInt,
 			"time" => $genericInt,
 			"text" => "varchar(1024)".$notNull,
 			"hidden" => $bool,
+			"severity" => "tinyint(2) NOT NULL DEFAULT '0'",
+			"request" => $text,
 		),
 	),
 	"smilies" => array
