@@ -2,6 +2,8 @@
 //  AcmlmBoard XD - Theme list
 
 //This file lists all the possible choices for user themes.
+//2.2.3 UPDATE: In the next version, 3.0, this file will no longer be used,
+//in favor of an easier system.
 
 $themes = array(
 	"default"=>"TRaSH (Default)",
@@ -17,7 +19,6 @@ $themes = array(
 	"cheese"=>"Old Cheese",
 
 	//Additions
-	
 );
 
 $themeBylines = array(
@@ -31,7 +32,6 @@ $themeBylines = array(
 	"dos"=>"Design by Kawa",
 	"grayscale"=>"Design by Kawa<br />Variant on ABXD Classic.",
 	"monogreen"=>"Design by Kawa",
-
 
 );
 
