@@ -1,4 +1,4 @@
-<?php
+	<?php
 include("lib/common.php");
 
 if($loguser['powerlevel'] < 1)
@@ -14,10 +14,11 @@ while($item = Fetch($logR))
 {
 	//print $item['text'];
 	$blar = $item['text'];
+	$blar = htmlspecialchars($blar);
 	$blar = str_replace("[g]", "", $blar);
 	$blar = str_replace("[b]", "", $blar);
 	$blar = str_replace("[/]", "", $blar);
-	$blar = str_replace("->", "&rarr;", $blar);
+	$blar = str_replace("-&gt;", "&rarr;", $blar);
 	$blar = ereg_replace("[[:alpha:]]+://[^<>[:space:]]+[[:alnum:]/]","<a href=\"\\0\">\\0</a>", $blar);
 	$blar = str_replace($here, $there, $blar);
 
