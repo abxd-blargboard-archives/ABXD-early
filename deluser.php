@@ -13,7 +13,7 @@ if(isset($_GET['id']))
 		Kill(__("No such user."));
 	if($user['powerlevel'] == 4)
 		Kill(__("You cannot delete a Root user."));
-	Kill(format(__("You are about to utterly destroy {0}. Are you sure?"), $user['name'])."<br/><form method=\"post\" action=\"deluser.php\"><input type=\"submit\" style=\"font-size: 150%; margin: 0.5em; padding: 0px 1em;\" name=\"action\" value=\"DO IT FAGGOT\" /><input type=\"hidden\" name=\"id\" value=\"".$id."\" /></form>", __("Oh boy."));	
+	Kill(format(__("You are about to utterly destroy {0}. Are you sure?"), htmlspecialchars($user['name']))."<br/><form method=\"post\" action=\"deluser.php\"><input type=\"submit\" style=\"font-size: 150%; margin: 0.5em; padding: 0px 1em;\" name=\"action\" value=\"DO IT FAGGOT\" /><input type=\"hidden\" name=\"id\" value=\"".$id."\" /></form>", __("Oh boy."));	
 }
 else if(isset($_POST['id']) && isset($_POST['action']))
 {
