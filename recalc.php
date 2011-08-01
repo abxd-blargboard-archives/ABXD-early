@@ -20,7 +20,7 @@ while($user = Fetch($rUsers))
 {
 	$cellClass = ($cellClass+1) % 2;
 	print "<tr class=\"cell".$cellClass."\">";
-	print "<td>".$user['name']."</td>";
+	print "<td>".htmlspecialchars($user['name'])."</td>";
 	$qPosts = "select count(*) from posts where user=".$user['id'];
 	$posts = FetchResult($qPosts);
 	print "<td>".$posts."</td><td>".$user['posts']."</td>";

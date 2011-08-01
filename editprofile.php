@@ -3,14 +3,23 @@ $noAutoHeader = true;
 include("lib/common.php");
 
 if(!$loguserid)
+{
+	include("lib/header.php");
 	Kill(__("You must be logged in to edit your profile."));
+}
 
 if ($loguser['powerlevel'] < 0)
+{
+	include("lib/header.php");
 	Kill(__("Banned users may not edit their profile."));
+}
 
 $key = hash('sha256', "{$loguserid},{$loguser['pss']},{$salt}");
 if (isset($_POST['action']) && $key != $_POST['key'])
+{
+	include("lib/header.php");
 	Kill(__("No."));
+}
 
 if(isset($_POST['editusermode']) && $_POST['editusermode'] != 0)
 	$_GET['id'] = $_POST['userid'];
@@ -37,15 +46,13 @@ $ranksets[] = __("None");
 while($rankset = Fetch($rRanksets))
 	$ranksets[] = $rankset['name'];
 
-$dateformats = array("", "m-d-y", "d-m-y", "y-m-d", "Y-m-d", "m/d/Y", "d.m.y", "M j Y", "D jS M Y");
-$timeformats = array("", "h:i A", "h:i:s A", "H:i", "H:i:s");
 foreach($dateformats as $format)
 	$datelist[$format] = ($format ? $format.' ('.cdate($format).')':'');
 foreach($timeformats as $format)
 	$timelist[$format] = ($format ? $format.' ('.cdate($format).')':'');
 
 $sexes = array(__("Male"), __("Female"), __("N/A"));
-$powerlevels = array(-1 => __("-1 Banned"), __("0 - Normal user"), __("1 - Local Mod"), __("2 - Full Mod"), __("3 - Admin"));
+$powerlevels = array(-1 => __("-1 - Banned"), __("0 - Normal user"), __("1 - Local Mod"), __("2 - Full Mod"), __("3 - Admin"));
 
 $general = array(
 	"login" => array(
@@ -69,7 +76,7 @@ $general = array(
 		"name" => __("Appearance"),
 		"items" => array(
 			"displayname" => array(
-				"caption" => "Display name",
+				"caption" => __("Display name"),
 				"type" => "text",
 				"value" => $user['displayname'],
 				"width" => "98%",
@@ -78,13 +85,13 @@ $general = array(
 				"callback" => "HandleDisplayname",
 			),
 			"rankset" => array(
-				"caption" => "Rankset",
+				"caption" => __("Rankset"),
 				"type" => "select",
 				"options" => $ranksets,
 				"value" => $user['rankset'],
 			),
 			"title" => array(
-				"caption" => "Title",
+				"caption" => __("Title"),
 				"type" => "text",
 				"value" => $user['title'],
 				"width" => "98%",
@@ -96,13 +103,13 @@ $general = array(
 		"name" => __("Avatar"),
 		"items" => array(
 			"picture" => array(
-				"caption" => "Picture",
+				"caption" => __("Picture"),
 				"type" => "displaypic",
 				"errorname" => "picture",
 				"hint" => format(__("Maximum size is {0} by {0} pixels."), 100),
 			),
 			"minipic" => array(
-				"caption" => "Minipic",
+				"caption" => __("Minipic"),
 				"type" => "minipic",
 				"errorname" => "minipic",
 				"hint" => format(__("Maximum size is {0} by {0} pixels."), 16),
@@ -113,14 +120,14 @@ $general = array(
 		"name" => __("Administrative stuff"),
 		"items" => array(
 			"powerlevel" => array(
-				"caption" => "Power level",
+				"caption" => __("Power level"),
 				"type" => "select",
 				"options" => $powerlevels,
 				"value" => $user['powerlevel'],
 				"callback" => "HandlePowerlevel",
 			),
 			"globalblock" => array(
-				"caption" => "Globally block layout",
+				"caption" => __("Globally block layout"),
 				"type" => "checkbox",
 				"value" => $user['globalblock'],
 			),
@@ -130,35 +137,35 @@ $general = array(
 		"name" => __("Presentation"),
 		"items" => array(
 			"threadsperpage" => array(
-				"caption" => "Threads per page",
+				"caption" => __("Threads per page"),
 				"type" => "number",
 				"value" => $user['threadsperpage'],
 				"min" => 50,
 				"max" => 99,
 			),
 			"postsperpage" => array(
-				"caption" => "Posts per page",
+				"caption" => __("Posts per page"),
 				"type" => "number",
 				"value" => $user['postsperpage'],
 				"min" => 20,
 				"max" => 99,
 			),
 			"dateformat" => array(
-				"caption" => "Date format",
+				"caption" => __("Date format"),
 				"type" => "datetime",
 				"value" => $user['dateformat'],
 				"presets" => $datelist,
 				"presetname" => "presetdate",
 			),
 			"timeformat" => array(
-				"caption" => "Time format",
+				"caption" => __("Time format"),
 				"type" => "datetime",
 				"value" => $user['timeformat'],
 				"presets" => $timelist,
 				"presetname" => "presettime",
 			),
 			"fontsize" => array(
-				"caption" => "Font scale",
+				"caption" => __("Font scale"),
 				"type" => "number",
 				"value" => $user['fontsize'],
 				"min" => 20,
@@ -170,12 +177,12 @@ $general = array(
 		"name" => __("Options"),
 		"items" => array(
 			"blocklayouts" => array(
-				"caption" => "Block all layouts",
+				"caption" => __("Block all layouts"),
 				"type" => "checkbox",
 				"value" => $user['blocklayouts'],
 			),
 			"usebanners" => array(
-				"caption" => "Use nice notification banners",
+				"caption" => __("Use nice notification banners"),
 				"type" => "checkbox",
 				"value" => $user['usebanners'],
 			),
@@ -188,27 +195,27 @@ $personal = array(
 		"name" => __("Personal information"),
 		"items" => array(
 			"sex" => array(
-				"caption" => "Sex",
+				"caption" => __("Sex"),
 				"type" => "radiogroup",
 				"options" => $sexes,
 				"value" => $user['sex'],
 			),
 			"realname" => array(
-				"caption" => "Real name",
+				"caption" => __("Real name"),
 				"type" => "text",
 				"value" => $user['realname'],
 				"width" => "98%",
 				"length" => 60,
 			),
 			"location" => array(
-				"caption" => "Location",
+				"caption" => __("Location"),
 				"type" => "text",
 				"value" => $user['location'],
 				"width" => "98%",
 				"length" => 60,
 			),
 			"birthday" => array(
-				"caption" => "Birthday",
+				"caption" => __("Birthday"),
 				"type" => "birthday",
 				"value" => $user['birthday'],
 				"width" => "98%",
@@ -216,12 +223,12 @@ $personal = array(
 				"extra" => "<span class=\"smallFonts\">".format(__("(example: {0})"), $birthdayExample)."</span>",
 			),
 			"bio" => array(
-				"caption" => "Bio",
+				"caption" => __("Bio"),
 				"type" => "textarea",
 				"value" => $user['bio'],
 			),
 			"timezone" => array(
-				"caption" => "Timezone offset",
+				"caption" => __("Timezone offset"),
 				"type" => "timezone",
 				"value" => $user['timezone'],
 			),
@@ -231,7 +238,7 @@ $personal = array(
 		"name" => __("Contact information"),
 		"items" => array(
 			"email" => array(
-				"caption" => "Email address",
+				"caption" => __("Email address"),
 				"type" => "text",
 				"value" => $user['email'],
 				"width" => "50%",
@@ -240,14 +247,14 @@ $personal = array(
 				"callback" => "HandleEmail",
 			),
 			"homepageurl" => array(
-				"caption" => "Homepage URL",
+				"caption" => __("Homepage URL"),
 				"type" => "text",
 				"value" => $user['homepageurl'],
 				"width" => "98%",
 				"length" => 60,
 			),
 			"homepagename" => array(
-				"caption" => "Homepage name",
+				"caption" => __("Homepage name"),
 				"type" => "text",
 				"value" => $user['homepagename'],
 				"width" => "98%",
@@ -262,19 +269,19 @@ $layout = array(
 		"name" => __("Post layout"),
 		"items" => array(
 			"postheader" => array(
-				"caption" => "Header",
+				"caption" => __("Header"),
 				"type" => "textarea",
 				"value" => $user['postheader'],
 				"rows" => 16,
 			),
 			"signature" => array(
-				"caption" => "Footer",
+				"caption" => __("Footer"),
 				"type" => "textarea",
 				"value" => $user['signature'],
 				"rows" => 16,
 			),
 			"signsep" => array(
-				"caption" => "Show signature separator",
+				"caption" => __("Show signature separator"),
 				"type" => "checkbox",
 				"value" => $user['signsep'],
 				"negative" => true,
@@ -285,7 +292,7 @@ $layout = array(
 
 $bucket = "edituser"; include("lib/pluginloader.php");
 
-if($user['posts'] < $customTitleThreshold || $user['powerlevel'] < 1) 
+if($user['posts'] < $customTitleThreshold && $user['powerlevel'] < 1 && !$editUserMode)
 	unset($general['appearance']['items']['title']);
 if(!$editUserMode)
 {
@@ -373,7 +380,10 @@ if (isset($_POST['theme']) && $user['id'] == $loguserid)
 if($_POST['action'] == __("Tempban") && $user['tempbantime'] == 0)
 {
 	if($user['powerlevel'] == 4)
+	{
+		include("lib/header.php");
 		Kill(__("Trying to ban a root user?"));
+	}
 	$timeStamp = strtotime($_POST['until']);
 	if($timeStamp === FALSE)
 	{
@@ -527,8 +537,8 @@ if($_POST['action'] == __("Edit profile"))
 		}
 	}
 
-	$sets[] = "theme = '".$_POST['theme']."'";
-	$sets[] = "pluginsettings = '".serialize($pluginSettings)."'";
+	$sets[] = "theme = '".justEscape($_POST['theme'])."'";
+	$sets[] = "pluginsettings = '".justEscape(serialize($pluginSettings))."'";
 
 	$query .= join($sets, ", ")." WHERE id = ".$userid;
 	if(!$fallToEditor)
@@ -541,7 +551,10 @@ if($_POST['action'] == __("Edit profile"))
 			Karma();
 
 		include_once("lib/header.php");
-		Report("[b]".$loguser['name']."[/] edited [b]".$user['name']."[/]'s profile. -> [g]#HERE#?uid=".$userid, 1);
+		$his = "[b]".$user['name']."[/]'s";
+		if($loguserid == $userid)
+			$his = HisHer($user['sex']);
+		Report("[b]".$loguser['name']."[/] edited ".$his." profile. -> [g]#HERE#?uid=".$userid, 1);
 		Redirect(__("Profile updated."), "profile.php?id=".$userid, ($userid == $loguserid ? __("your profile") : __("that user's profile")));
 	}
 	else
@@ -926,7 +939,7 @@ function BuildPage($page, $id)
 			switch($item['type'])
 			{
 				case "label":
-					$output .= $item['value']."\n";
+					$output .= htmlspecialchars($item['value'])."\n";
 					break;
 				case "birthday":
 					$item['type'] = "text";

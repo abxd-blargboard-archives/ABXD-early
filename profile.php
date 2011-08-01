@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 //  AcmlmBoard XD - User profile page
 //  Access: all
 
@@ -397,7 +397,7 @@ write("
 	</ul>
 ", $links);
 
-$title = "Profile for ".$user['name'];
+$title = "Profile for ".htmlspecialchars($user['name']);
 
 function IsReallyEmpty($subject)
 {
