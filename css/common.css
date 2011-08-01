@@ -6,7 +6,7 @@ body
 	color: #FFF;
 	font-family: "Verdana", "Lucida Grande", sans-serif;
 	font-size: 1em; /* 10pt; */
-	margin: 0px;
+	margin: 0;
 }
 
 h3
@@ -16,13 +16,13 @@ h3
 	font-weight: bold;
 	border-top: 1px solid #669;
 	border-bottom: 1px solid #669;
-	margin: 0px;
+	margin: 0;
 }
 h4
 {
 	font-family: "Verdana", "Lucida Grande", sans-serif;
 	font-size: 1em; /* 10pt; */
-	margin: 0px;
+	margin: 0;
 }
 
 a
@@ -60,7 +60,7 @@ a:hover
 }
 a:hover span
 {
-	color: #FFF !important;
+	color: #FFF;
 }
 
 .width100
@@ -116,18 +116,18 @@ table.post
 	width: 100%;
 	background: url(../img/themes/defaultold/back2t1.png) #303678;
 	border-collapse: separate;
-	border-spacing: 0px;
+	border-spacing: 0;
 	border-radius: 8px;
 	border: 1px solid #669;
 	box-shadow: 2px 2px 4px #000;
-	outline: none !important;
+	outline: none;
 	margin-bottom: 8px;
 }
 table.post td.side
 {
 	width: 15%;
 	vertical-align: top;
-	border: 0px none;
+	border: 0;
 	border-bottom-left-radius: 8px;
 	border-left: 1px solid #000;
 	border-bottom: 1px solid #000;
@@ -143,14 +143,14 @@ table.post td.post
 }
 table.post td.post td
 {
-	border: 0px none;
+	border: 0;
 }
 table.post td.meta
 {
 	font-size: .85em; /* 8pt; */
 	height: 14px;
-	margin: 0px;
-	border: 0px none;
+	margin: 0;
+	border: 0;
 	border-top-right-radius: 8px;
 	border-top: 1px solid #000;
 	border-right: 1px solid #000;
@@ -160,22 +160,22 @@ table.post td.links
 {
 	font-size: .85em; /* 8pt; */
 	height: 14px;
-	margin: 0px;
-	border: 0px none;
+	margin: 0;
+	border: 0;
 }
 table.post td.userlink
 {
 	border-top-left-radius: 8px;
 	border-bottom-left-radius: 0px;
 	border-top: 1px solid #000;
-	border-bottom: 0px none;
+	border-bottom: 0;
 }
 
 table.outline
 {
-	outline: 0px none !important;
+	outline: 0;
 	border-collapse: separate;
-	border-spacing: 0px;
+	border-spacing: 0;
 	border-top-left-radius: 8px;
 	border-top-right-radius: 8px;
 	border: 1px solid #669;
@@ -195,8 +195,8 @@ table.outline tr:first-child th
 }
 table.outline td
 {
-	border-left: 0px none;
-	border-top: 0px none;
+	border-left: 0;
+	border-top: 0;
 }
 table.outline th
 {
@@ -212,7 +212,7 @@ table.outline tr td:first-child, table.outline tr th:first-child
 	float: right;
 	clear: right;
 	margin-right: 1em;
-	outline: none !important;
+	outline: none;
 	border-radius: 8px;
 	box-shadow: 0px 0px 4px #FFF;
 	font-size: .8em; /* 11px; */
@@ -224,7 +224,7 @@ table.outline tr td:first-child, table.outline tr th:first-child
 
 .left
 {
-	text-align: left !important;
+	text-align: left;
 }
 .right
 {
@@ -244,12 +244,12 @@ table.outline tr td:first-child, table.outline tr th:first-child
 {
 	text-align: center;
 	width: 100%;
-	font-size: .8em !important; /* 10pt; */
+	font-size: .8em; /* 10pt; */
 	clear: both;
 }
 .footer *
 {
-	border: 0px none;
+	border: 0;
 }
 
 .links
@@ -285,8 +285,8 @@ table.outline tr td:first-child, table.outline tr th:first-child
 	text-align: center;
 	color: #EEE;
 	font-size: .85em; /* 8pt; */
-	border-top: 0px none;
-	border-bottom: 0px none;
+	border-top: 0;
+	border-bottom: 0;
 }
 .header1 th
 {
@@ -294,13 +294,13 @@ table.outline tr td:first-child, table.outline tr th:first-child
 	text-align: center;
 	font-size: .85em; /* 8pt; */
 	color: #DDD;
-	border: 0px none #000;
+	border: 0;
 }
 
 table.breadcrumbs, table.breadcrumbs td
 {
 	font-size: 1em; /* 10pt; */
-	border: 0px none;
+	border: 0;
 }
 
 .pages
@@ -338,7 +338,7 @@ td.post code.Code
 
 form
 {
-	margin: 0px;
+	margin: 0;
 }
 
 .errort
@@ -351,7 +351,7 @@ form
 	text-align: center;
 	color: #EEE;
 	border: 1px solid #000;
-	border-top: 0px;
+	border-top: 0;
 }
 
 .minipic
@@ -382,8 +382,8 @@ ul.pipemenu
 {
 	display: inline;
 	list-style-type: none;
-	margin: 0px;
-	padding: 0px;
+	margin: 0;
+	padding: 0;
 }
 ul.pipemenu li
 {
@@ -395,19 +395,15 @@ ul.pipemenu li
 }
 ul.pipemenu li:first-child
 {
-	border-left: 0px none;
+	border-left: 0;
 }
 
-/* In Opera, I noticed that the PoRA Box's outline overlaps this message.
-   This really shouldn't be, and even IE8 does it right -- and you know what?
-   I DON'T CARE and neither should you, because you should only SEE this
-   message in a browser that doesn't do outlines at all! HAW HAW HAW! */
 #getabetterbrowseryoulazyfuck
 {
 	position: absolute;
 	left: 32px;
 	top: 32px;
-	background: #FFC;
+	background: #CCF;
 	border: 4px solid red;
 	color: #000;
 	font-size: 16px;
@@ -443,7 +439,7 @@ ul.pipemenu li:first-child
 }
 .smilies img:hover, #rss img:hover
 {
-	margin: 0px;
+	margin: 0;
 	opacity: 1;
 	background: rgba(255, 255, 255, .25);
 	border: 1px solid rgba(255, 255, 255, .5);
@@ -465,16 +461,16 @@ textarea
 #pmNotice
 {
 	background: #BB8;
-	color: #000 !important;
+	color: #000;
 	width: 100%;
 	position: fixed;
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	padding: 4px 8px;
 	font-size: 1em; /* 12px; */
 	border: 1px none;
 	border-bottom: 2px solid #000;
-	outline: 0px none;
+	outline: 0;
 	opacity: .5;
 	     -o-transition: all .2s ease-in-out;
 		-ms-transition: all .2s ease-in-out;
@@ -493,11 +489,11 @@ textarea
 }
 #pmNotice a:hover span, #pmNotice a:hover
 {
-	color: #000 !important;
+	color: #000;
 }
 #header
 {
-	outline: 0px none;
+	outline: 0;
 	box-shadow: none;	
 }
 #body
@@ -583,7 +579,7 @@ textarea
 	background: #444;
 	font-size: 10px;
 	color: #FFF;
-	margin: 0px;
+	margin: 0;
 	padding: 0px 3px;	
 }
 .bronze
@@ -601,6 +597,11 @@ textarea
 	border-color: gold;
 	background: #E8B400;
 }
+.platinum
+{
+	border-color: darkgray;
+	background: #948e82;
+}
 
 #expandedSet, #expandedHelp
 {
@@ -612,9 +613,9 @@ button.expander
 	font-weight: bold;
 	border: 1px solid #000;
 	border-radius: 8px;
-	padding: 0px;
+	padding: 0;
 	width: 20px;
-	margin: 0px;
+	margin: 0;
 	float: right;
 }
 button.expander:hover
@@ -712,7 +713,7 @@ td.threadIcon
 }
 .post_content table, .post_content table tr td
 {
-	border: 0px;
+	border: 0;
 }
 .post_about, .post_topbar, .post_content
 {
@@ -733,7 +734,7 @@ td.threadIcon
 
 .highlightedPost
 {
-	box-shadow: 0px 0px 1em #FFF !important;
+	box-shadow: 0px 0px 1em #FFF;
 }
 
 div#tabs
@@ -757,7 +758,7 @@ div#tabs button.selected
 
 .noborder
 {
-	border: 0px none;
+	border: 0;
 }
 
 td.threadIcons label > input
@@ -791,7 +792,7 @@ td.threadIcons label > input:checked ~ *
 }
 .avaLib img:hover
 {
-	margin: 0px;
+	margin: 0;
 	opacity: 1;
 	background: rgba(255, 255, 255, .25);
 	border: 1px solid rgba(255, 255, 255, .5);
@@ -806,7 +807,7 @@ td.threadIcons label > input:checked ~ *
 {
 	.nom
 	{
-		display: none !important;
+		display: none;
 	}
 }
 
