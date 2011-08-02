@@ -11,6 +11,8 @@ $bots = array(
 	"Twiceler",
 	"YandexBot",
 	"Baiduspider",
+	"facebook",
+	"bot","spider", //catch-all
 );
 
 $isBot = 0;
