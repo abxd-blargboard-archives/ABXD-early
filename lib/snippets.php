@@ -43,10 +43,10 @@ function DoFooter($buffer)
 		$footer = format(
 "
 		<div class=\"footer\">
-			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2.2.2<br />
+			Powered by <a href=\"http://helmet.kafuka.org/thepile/ABXD\">AcmlmBoard XD</a>, version 2.2.3<br />
 			By Kawa, Mega-Mario, Nikolaj, et al<br />
 			AcmlmBoard &copy; Jean-Fran&ccedil;ois Lapointe<br />
-			Page rendered in {0} seconds with {1}.<br />
+			".__("Page rendered in {0} seconds with {1}.")."<br />
 			{3}
 
 			<a href=\"http://validator.w3.org/check?uri=referer\">
@@ -356,16 +356,16 @@ function DoPostHelp()
 	write("
 	<div class=\"PoRT margin\" style=\"width: 90%;\">
 		<div class=\"errort\"><strong>".__("Post help")."</strong></div>
-		<div class=\"errorc left cell0\">
+		<div class=\"errorc cell0\">
 			<button class=\"expander\" id=\"postHelpExpand\" onclick=\"expandPostHelp();\">&#x25BC;</button>
-			<div id=\"commonHelp\">
+			<div id=\"commonHelp\" class=\"left\">
 				<h4>".__("Presentation")."</h4>
 				[b]&hellip;[/b] &mdash; <strong>".__("bold type")."</strong> <br />
 				[i]&hellip;[/i] &mdash; <em>".__("italic")."</em> <br />
 				[u]&hellip;[/u] &mdash; <span class=\"underline\">".__("underlined")."</span> <br />
 				[s]&hellip;[/s] &mdash; <del>".__("strikethrough")."</del><br />
 			</div>
-			<div id=\"expandedHelp\">
+			<div id=\"expandedHelp\" class=\"left\">
 				[code]&hellip;[/code] &mdash; <code>".__("code block")."</code> <br />
 				[spoiler]&hellip;[/spoiler] &mdash; ".__("spoiler block")." <br />
 				[spoiler=&hellip;]&hellip;[/spoiler] <br />
