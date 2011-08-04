@@ -40,8 +40,7 @@ cell(Format("
 			</td>
 			<td style=\"width: 60%;\">
 				{0}
-			",	$misc['milestone'], ($loguser['powerlevel'] == 4 ? "<li><a href=\"sql.php\">".__("SQL Console")."</a></li>
-" : "")));
+			",	$misc['milestone']));
 
 $bucket = "adminright"; include("./lib/pluginloader.php");
 
@@ -69,6 +68,8 @@ cell("<a href=\"editcats.php\">".__("Edit category list")."</a>");
 cell("<a href=\"editsettings.php\">".__("Edit settings")."</a>");
 cell("<a href=\"optimize.php\">".__("Optimize tables")."</a>");
 cell("<a href=\"log.php\">".__("View log")."</a>");
+//if($loguser['powerlevel'] == 4)
+//	cell("<a href=\"sql.php\">".__("SQL Console")."</a>");
 
 $bucket = "adminleft"; include("./lib/pluginloader.php");
 
